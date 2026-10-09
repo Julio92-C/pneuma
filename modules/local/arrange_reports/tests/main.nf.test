@@ -1,0 +1,21 @@
+nextflow_process {
+    name "Test ARRANGE_REPORTS"
+    script "../main.nf"
+    process "ARRANGE_REPORTS"
+
+    test("writes MERIDIAN tables") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/data/kraken_combined.txt", checkIfExists: true)
+                input[1] = file("${projectDir}/tests/data/bracken_combined.txt", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.bracken[0]).readLines()[0] == '#perc,tot_all,S1,S2,taxid,name'
+            assert path(process.out.kraken[0]).readLines()[0].startsWith('#perc')
+        }
+    }
+}

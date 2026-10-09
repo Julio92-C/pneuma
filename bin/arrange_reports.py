@@ -17,6 +17,17 @@ def read_from_perc(lines):
     return [line.rstrip("\r\n") for line in lines[starts[0]:]]
 
 
+def sample_names_from_preamble(lines):
+    """Sample names written by `combine_kreports.py --sample-names`: '#<name>\t<path>' lines."""
+    names = []
+    for line in lines:
+        if line.startswith("#perc\t"):
+            break
+        if line.startswith("#") and "\t" in line:
+            names.append(line[1:].split("\t")[0])
+    return names
+
+
 def fmt_number(value):
     value = round(value, 4)
     if float(value).is_integer():
@@ -24,16 +35,22 @@ def fmt_number(value):
     return f"{value:.4f}".rstrip("0").rstrip(".")
 
 
-def arrange_bracken(lines):
+def arrange_bracken(lines, names=None):
     header = lines[0].split("\t")
     sample_cols = [c for c in header if c.endswith("_all") and c != "tot_all"]
     samples = [c[: -len("_all")] for c in sample_cols]
+    # combine_kreports.py labels the columns 1_all, 2_all, ...; real names are in the preamble
+    if names and len(names) == len(samples) and all(x.isdigit() for x in samples):
+        samples = list(names)
     idx = {c: header.index(c) for c in sample_cols + ["taxid", "name"]}
     body = []
     for line in lines[1:]:
         if not line.strip():
             continue
         fields = line.split("\t")
+        if len(fields) < len(header) and fields[-3:-2] == ["U"]:
+            # combine_kreports.py writes a totals-only unclassified row when no report has one
+            fields = fields[:3] + ["0"] * (len(header) - 6) + fields[-3:]
         counts = [float(fields[idx[c]]) for c in sample_cols]
         body.append((counts, fields[idx["taxid"]], fields[idx["name"]].strip()))
     n_total = sum(sum(c) for c, _, name in body if name in ("root", "unclassified"))
@@ -61,7 +78,8 @@ def main(argv=None):
         out.write("\n".join(kraken) + "\n")
 
     with open(args.bracken) as fh:
-        rows = arrange_bracken(read_from_perc(fh.readlines()))
+        raw = [line.rstrip("\r\n") for line in fh.readlines()]
+    rows = arrange_bracken(read_from_perc(raw), sample_names_from_preamble(raw))
     with open(args.bracken_out, "w", newline="") as out:
         csv.writer(out, lineterminator="\n").writerows(rows)
 

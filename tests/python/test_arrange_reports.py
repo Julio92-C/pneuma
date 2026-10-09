@@ -39,3 +39,25 @@ def test_cli_writes_both_files(tmp_path):
     assert k_out.read_text().startswith("#perc\t")
     with open(b_out) as fh:
         assert next(csv.reader(fh))[0] == "#perc"
+
+
+REAL_STYLE = [
+    "#Number of Samples: 2",
+    "#Total Number of Reads: 200",
+    "#EBF0-0001\treports/a.txt",
+    "#SPF0-0001\treports/b.txt",
+    "#perc\ttot_all\ttot_lvl\t1_all\t1_lvl\t2_all\t2_lvl\tlvl_type\ttaxid\tname",
+    "0.0000\t0\t0\tU\t0\tunclassified",
+    "100.0000\t200\t0\t100\t0\t100\t0\tR\t1\troot",
+    "100.0000\t200\t200\t100\t100\t100\t100\tS\t2697049\t  Severe acute respiratory syndrome coronavirus 2",
+]
+
+
+def test_real_combine_kreports_style():
+    """Numbered columns + totals-only unclassified row, as written by KrakenTools 1.2."""
+    names = ar.sample_names_from_preamble(REAL_STYLE)
+    assert names == ["EBF0-0001", "SPF0-0001"]
+    rows = ar.arrange_bracken(ar.read_from_perc(REAL_STYLE), names)
+    assert rows[0] == ["#perc", "tot_all", "EBF0-0001", "SPF0-0001", "taxid", "name"]
+    assert rows[1][:4] == ["0", "0", "0", "0"]
+    assert rows[3][1:4] == ["200", "100", "100"]
