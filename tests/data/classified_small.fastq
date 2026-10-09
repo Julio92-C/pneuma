@@ -1,0 +1,8 @@
+@read1 runid=abc kraken:taxid|1301
+ACGTACGT
++
+IIIIIIII
+@read2 kraken:taxid|727
+GGCC
++
+@@II
