@@ -1,0 +1,35 @@
+nextflow_workflow {
+    name "Test PIPELINE_INITIALISATION"
+    script "../main.nf"
+    workflow "PIPELINE_INITIALISATION"
+
+    test("groups runs per sample and keeps control flag") {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                input[0] = false
+                input[1] = false
+                input[2] = false
+                input[3] = []
+                input[4] = "$outputDir"
+                input[5] = "${projectDir}/assets/samplesheet_test.csv"
+                input[6] = false
+                input[7] = false
+                input[8] = false
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def items = workflow.out.samplesheet
+            assert items.size() == 3
+            def eb = items.find { it[0].id == 'EBF0-0001' }
+            assert eb[0].run_ids == ['RUN1', 'RUN2']
+            assert eb[1].size() == 2
+            assert eb[0].single_end == true
+            def cn = items.find { it[0].id == 'CNF0-0001' }
+            assert cn[0].is_control == true
+        }
+    }
+}
