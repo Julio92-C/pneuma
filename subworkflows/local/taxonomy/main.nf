@@ -56,18 +56,30 @@ workflow TAXONOMY {
     // Bracken's per-sample errorStrategy is 'ignore' (exit 1 = no taxa above threshold), so a
     // sample can silently lack a Bracken output. Compare the two sets here: warn per missing
     // sample, and fail loudly if there is no Bracken output at all (likely misconfiguration).
+    ch_low_depth_ids = ch_kraken_ok
+        .filter { meta, _r -> meta.low_depth }
+        .map { meta, _r -> meta.id }
+        .toSortedList()
+        .map { ids -> [ ids ] }   // keep as one element: combine() flattens tuples
     ch_checked = collectSorted(ch_kraken_ok)
         .combine(collectSorted(BRACKEN_BRACKEN.out.txt))
-        .map { k_names, k_files, b_names, b_files ->
+        .combine(ch_low_depth_ids)
+        .map { k_names, k_files, b_names, b_files, low_ids ->
             if (!k_names) {
                 error "TAXONOMY: no sample has classified Kraken2 reads; cannot build combined tables"
             }
             if (!b_names) {
+                if (low_ids.size() == k_names.size()) {
+                    error "TAXONOMY: all samples with classified reads are LOW_DEPTH (< --min_reads ${params.min_reads}): ${low_ids.join(', ')}. Bracken is skipped for LOW_DEPTH samples, so no Bracken estimates or MERIDIAN tables can be produced. Lower --min_reads or check the input."
+                }
                 error "TAXONOMY: Bracken produced no output for any sample. Likely causes: params.bracken_read_length (${params.bracken_read_length}) has no matching database<N>mers.kmer_distrib in the Kraken2 DB, the DB lacks Bracken files, or params.bracken_level/bracken_threshold are invalid. Check the BRACKEN_BRACKEN task logs."
             }
-            def missing = k_names - b_names
+            if (low_ids) {
+                log.warn "TAXONOMY: ${low_ids.size()} LOW_DEPTH sample(s) skipped for Bracken by design: ${low_ids.join(', ')}; absent from bracken_arranged.csv"
+            }
+            def missing = k_names - b_names - low_ids
             if (missing) {
-                log.warn "TAXONOMY: no Bracken output for ${missing.size()} sample(s) with Kraken2 reports (low depth, or no taxa above threshold): ${missing.join(', ')}; absent from bracken_arranged.csv"
+                log.warn "TAXONOMY: no Bracken output for ${missing.size()} sample(s) with Kraken2 reports (no taxa above threshold or Bracken failed): ${missing.join(', ')}; absent from bracken_arranged.csv"
             }
             [ k_names, k_files, b_names, b_files ]
         }
