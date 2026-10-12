@@ -61,3 +61,9 @@ def test_real_combine_kreports_style():
     assert rows[0] == ["#perc", "tot_all", "EBF0-0001", "SPF0-0001", "taxid", "name"]
     assert rows[1][:4] == ["0", "0", "0", "0"]
     assert rows[3][1:4] == ["200", "100", "100"]
+
+
+def test_preamble_name_count_mismatch_raises():
+    names = ["EBF0-0001"]  # table has two '_all' columns
+    with pytest.raises(ValueError, match="preamble lists 1 sample"):
+        ar.arrange_bracken(ar.read_from_perc(REAL_STYLE), names)

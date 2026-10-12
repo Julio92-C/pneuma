@@ -13,11 +13,14 @@ process COMBINE_KREPORTS {
     path "versions.yml" , emit: versions
 
     script:
+    // a single staged file arrives as a bare Path (iterating a Path yields its segments), so wrap it
+    def report_list = reports instanceof List ? reports : [reports]
+    def name_list   = names instanceof List ? names : [names]
     """
     combine_kreports.py \
-        -r ${reports.join(' ')} \
+        -r ${report_list.join(' ')} \
         -o ${prefix}.txt \
-        --sample-names ${names.join(' ')}
+        --sample-names ${name_list.join(' ')}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

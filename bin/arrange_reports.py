@@ -40,8 +40,15 @@ def arrange_bracken(lines, names=None):
     sample_cols = [c for c in header if c.endswith("_all") and c != "tot_all"]
     samples = [c[: -len("_all")] for c in sample_cols]
     # combine_kreports.py labels the columns 1_all, 2_all, ...; real names are in the preamble
-    if names and len(names) == len(samples) and all(x.isdigit() for x in samples):
-        samples = list(names)
+    # No preamble at all (names empty/None) is the legacy path: keep the header labels as-is.
+    if names:
+        if len(names) != len(samples):
+            raise ValueError(
+                f"preamble lists {len(names)} sample name(s) but the table has "
+                f"{len(samples)} '_all' column(s); refusing to guess the mapping"
+            )
+        if all(x.isdigit() for x in samples):
+            samples = list(names)
     idx = {c: header.index(c) for c in sample_cols + ["taxid", "name"]}
     body = []
     for line in lines[1:]:
@@ -49,7 +56,11 @@ def arrange_bracken(lines, names=None):
             continue
         fields = line.split("\t")
         if len(fields) < len(header) and fields[-3:-2] == ["U"]:
-            # combine_kreports.py writes a totals-only unclassified row when no report has one
+            # combine_kreports.py writes a totals-only unclassified row (6 fields) when no input
+            # report has a 'U' line, which is always the case for Bracken kreports. Per-sample
+            # counts are unavailable, so they are padded with 0. Consequence: the '#perc'
+            # denominator (root + unclassified, summed over samples) is effectively the root
+            # total only, i.e. percentages are relative to classified reads in that case.
             fields = fields[:3] + ["0"] * (len(header) - 6) + fields[-3:]
         counts = [float(fields[idx[c]]) for c in sample_cols]
         body.append((counts, fields[idx["taxid"]], fields[idx["name"]].strip()))
