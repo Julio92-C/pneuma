@@ -1,0 +1,26 @@
+nextflow_workflow {
+    name "Test FUNCTIONAL_READS"
+    script "../main.nf"
+    workflow "FUNCTIONAL_READS"
+
+    test("two samples of real Kraken2-classified reads give one merged summary") {
+        when {
+            params { abricate_dbs = 'card,vfdb,plasmidfinder'; abricate_minid = 80; abricate_mincov = 80 }
+            workflow {
+                """
+                def fq = file("${projectDir}/tests/data/EBF0-0001.classified.fastq.gz", checkIfExists: true)
+                input[0] = channel.of(
+                    [ [id:'EBF0-0001'], fq ],
+                    [ [id:'SPF0-0001'], fq ]
+                )
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.per_sample.size() == 2
+            def lines = path(workflow.out.summary[0]).readLines()
+            assert lines.count { it.startsWith('#FILE') } == 1
+        }
+    }
+}
