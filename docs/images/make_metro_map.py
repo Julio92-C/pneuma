@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate docs/images/pneuma_metro_map.svg (nf-core "tube map" style).
 
-Eight labelled stage blocks (two rows of four), one coloured line per block.
-Standard library only; output is deterministic, so re-running must leave
-the committed SVG unchanged:
+Coloured transit lines with stations, 45-degree branch / merge bends and a
+wider interchange at Kraken2 and MERIDIAN; small uppercase stage labels
+replace the old boxed blocks. Standard library only; output is
+deterministic, so re-running must leave the committed SVG unchanged:
 
     python docs/images/make_metro_map.py
 """
@@ -12,65 +13,20 @@ from pathlib import Path
 OUT = Path(__file__).with_name("pneuma_metro_map.svg")
 
 BG = "#f6f8fa"       # light backing panel (readable on light and dark GitHub themes)
-BOX = "#ffffff"      # block fill
 INK = "#1f2328"
 MUTED = "#57606a"
 GREY = "#8c959f"
 FONT = "Helvetica, Arial, sans-serif"
 
-BW, GAP, MX = 270, 30, 30          # block width, column gap, outer margin
-W = MX * 2 + 4 * BW + 3 * GAP      # 1230
-TOP1 = 76                          # top of row 1
-ROW_GAP = 46                       # vertical gap between the two rows
+C_QC, C_AB, C_CO = "#0072B2", "#009E73", "#D55E00"
+C_FN, C_DS = "#9B3FA8", "#D4A017"
 
-# key, colour, title, subtitle, planned, items
-# item = (name, descriptor, kind)   kind: "" station | "opt" optional | "sub" sub-station
-BLOCKS = [
-    ("inp", "#56B4E9", "Input", "samplesheet + ONT FASTQ", False, [
-        ("samplesheet.csv", "one row per sample x run", ""),
-        ("ONT FASTQ", "multi-run / multi-batch pooling", ""),
-    ]),
-    ("qc", "#0072B2", "QC &amp; host removal", "low-biomass safeguards", False, [
-        ("cat", "pool runs per sample", ""),
-        ("Porechop_ABI", "adapter trimming (optional)", "opt"),
-        ("nanoq", "length / quality filter", ""),
-        ("NanoPlot", "", ""),
-        ("SeqKit stats", "", ""),
-        ("Hostile", "host read removal", ""),
-        ("LOW_DEPTH flag", "fewer than --min_reads reads", ""),
-    ]),
-    ("tax", "#009E73", "Taxonomic classification", "", False, [
-        ("Kraken2", "PlusPF index", ""),
-    ]),
-    ("abu", "#7A9A01", "Abundance estimation", "", False, [
-        ("Bracken", "", ""),
-        ("KrakenTools combine", "", ""),
-        ("Krona", "", ""),
-    ]),
-    ("con", "#D55E00", "Contamination assessment", "", False, [
-        ("Recentrifuge", "negative-control subtraction", ""),
-    ]),
-    ("fun", "#9B3FA8", "Functional profiling", "ABRicate on taxon-tagged reads", False, [
-        ("Tag reads", "by taxid", ""),
-        ("ABRicate", "80 % identity / 80 % coverage", ""),
-        ("AMR", "CARD", "sub"),
-        ("Virulence", "VFDB", "sub"),
-        ("MGE", "PlasmidFinder", "sub"),
-    ]),
-    ("mer", "#B07D00", "Downstream analysis", "MERIDIAN", False, [
-        ("Diversity", "", ""),
-        ("Differential abundance", "", ""),
-        ("Resistome / virulome / mobilome", "", ""),
-        ("Report", "", ""),
-    ]),
-    ("rec", GREY, "Metagenome reconstruction", "planned, Phase 2", True, [
-        ("Priority-pathogen binning", "and assembly", ""),
-        ("CheckM2", "", ""),
-        ("Bakta", "", ""),
-        ("MLST", "", ""),
-        ("Pathogen report", "", ""),
-    ]),
-]
+W, H = 1300, 460
+LW = 6                      # line width
+
+# lane geometry
+Y0 = 232                    # trunk / functional / downstream line
+YA, YC, YR = 118, 170, 322  # abundance, contamination, reconstruction lanes
 
 out = []
 
@@ -79,7 +35,7 @@ def add(s):
     out.append(s)
 
 
-def rpath(pts, r=22):
+def rpath(pts, r=14):
     """Polyline through pts with rounded (quadratic) corners."""
     d = f"M{pts[0][0]} {pts[0][1]}"
     for i in range(1, len(pts) - 1):
@@ -97,144 +53,175 @@ def rpath(pts, r=22):
     return d
 
 
-def text(x, y, lines, anchor="middle", size=12.5, weight="400", fill=INK,
-         halo=BOX, style=""):
-    tsp = "".join(f'<tspan x="{x}" dy="{0 if i == 0 else 15}">{t}</tspan>'
+def line(pts, col, dashed=False):
+    dash = ' stroke-dasharray="11 8"' if dashed else ""
+    add(f'<path d="{rpath(pts)}" fill="none" stroke="{col}" stroke-width="{LW}" '
+        f'stroke-linecap="round" stroke-linejoin="round"{dash}/>')
+
+
+def text(x, y, lines, anchor="middle", size=12, weight="400", fill=INK,
+         style="", lh=13, spacing=None):
+    tsp = "".join(f'<tspan x="{x}" dy="{0 if i == 0 else lh}">{t}</tspan>'
                   for i, t in enumerate(lines))
+    ls = f' letter-spacing="{spacing}"' if spacing else ""
+    st = f' font-style="{style}"' if style else ""
     add(f'<text x="{x}" y="{y}" text-anchor="{anchor}" font-size="{size}" '
-        f'font-weight="{weight}" fill="{fill}" stroke="{halo}" stroke-width="3.5" '
-        f'paint-order="stroke" stroke-linejoin="round"{style}>{tsp}</text>')
+        f'font-weight="{weight}" fill="{fill}"{ls}{st} stroke="{BG}" '
+        f'stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">{tsp}</text>')
 
 
-def station(x, y, dashed=False, stroke=INK, r=7.5):
-    dash = ' stroke-dasharray="3 2"' if dashed else ""
-    add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#ffffff" stroke="{stroke}" '
-        f'stroke-width="2.5"{dash}/>')
+def stage(x, y, label, anchor="start"):
+    text(x, y, [label], anchor=anchor, size=9.5, weight="700", fill=MUTED, spacing="1.2")
 
 
-def arrow(pts, dashed=False):
-    dash = ' stroke-dasharray="7 5"' if dashed else ""
-    add(f'<path d="{rpath(pts, 14)}" fill="none" stroke="{MUTED}" stroke-width="3" '
-        f'stroke-linejoin="round"{dash}/>')
-    (x0, y0), (x1, y1) = pts[-2], pts[-1]
-    if abs(x1 - x0) >= abs(y1 - y0):
-        s = 1 if x1 > x0 else -1
-        tri = f"{x1} {y1} {x1 - 10 * s} {y1 - 6} {x1 - 10 * s} {y1 + 6}"
+def station(x, y, kind="", r=6.5):
+    """kind: '' process | 'opt' optional (dotted) | 'plan' planned (hollow dotted)."""
+    if kind == "opt":
+        add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#ffffff" stroke="{INK}" '
+            f'stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>')
+    elif kind == "plan":
+        add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{BG}" stroke="{GREY}" '
+            f'stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>')
     else:
-        s = 1 if y1 > y0 else -1
-        tri = f"{x1} {y1} {x1 - 6} {y1 - 10 * s} {x1 + 6} {y1 - 10 * s}"
-    add(f'<polygon points="{tri}" fill="{MUTED}"/>')
+        add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#ffffff" stroke="{INK}" '
+            f'stroke-width="2.5"/>')
 
 
-def item_height(it):
-    return 40 if it[1] and it[2] != "sub" else 30
+def interchange(cx, y, w=84):
+    add(f'<rect x="{cx - w / 2:.0f}" y="{y - 12}" width="{w}" height="24" rx="12" '
+        f'fill="#ffffff" stroke="{INK}" stroke-width="3"/>')
 
 
-def block_height(items):
-    return 62 + sum(item_height(i) for i in items) + 10
+def terminus(x, y, col=INK):
+    add(f'<circle cx="{x}" cy="{y}" r="9" fill="#ffffff" stroke="{col}" stroke-width="3"/>')
+    add(f'<circle cx="{x}" cy="{y}" r="3.5" fill="{col}"/>')
 
-
-H1 = max(block_height(b[5]) for b in BLOCKS[:4])
-H2 = max(block_height(b[5]) for b in BLOCKS[4:])
-TOP2 = TOP1 + H1 + ROW_GAP
-LEG_Y = TOP2 + H2 + 24
-LEG_H = 122
-H = LEG_Y + LEG_H + 20
 
 # ---------------------------------------------------------------- header
 add(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" '
     f'height="{H}" role="img" font-family="{FONT}">')
 add("<title>PNEUMA pipeline metro map</title>")
-add("<desc>Metro-map overview of the PNEUMA pipeline as eight labelled stage "
-    "blocks: Input, QC and host removal, Taxonomic classification, Abundance "
-    "estimation, Contamination assessment, Functional profiling, Downstream "
-    "analysis (MERIDIAN) and the planned Phase 2 Metagenome reconstruction.</desc>")
+add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal "
+    "trunk (cat, Porechop_ABI, nanoq, NanoPlot, SeqKit stats, Hostile) reaches the "
+    "Kraken2 interchange, which branches into Abundance (Bracken, KrakenTools "
+    "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
+    "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome "
+    "reconstruction line. The first three merge at MERIDIAN for downstream "
+    "analysis and the Report.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
-text(MX, 40, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
-     anchor="start", size=18, weight="700", halo=BG)
+text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
+     anchor="start", size=18, weight="700")
 
-# ---------------------------------------------------------------- blocks
-geom = []
-for n, (key, col, title, sub, planned, items) in enumerate(BLOCKS):
-    row, c = divmod(n, 4)
-    bx = MX + c * (BW + GAP)
-    by = TOP1 if row == 0 else TOP2
-    bh = H1 if row == 0 else H2
-    geom.append((bx, by, bh))
-    dash = ' stroke-dasharray="9 6"' if planned else ""
-    add(f'<rect x="{bx}" y="{by}" width="{BW}" height="{bh}" rx="14" fill="{BOX}" '
-        f'stroke="{col}" stroke-width="2.5"{dash}/>')
-    # numbered header
-    add(f'<circle cx="{bx + 24}" cy="{by + 26}" r="12" fill="{col}"/>')
-    add(f'<text x="{bx + 24}" y="{by + 31}" text-anchor="middle" font-size="13" '
-        f'font-weight="700" fill="#ffffff">{n + 1}</text>')
-    text(bx + 44, by + 26, [title], anchor="start", size=14, weight="700")
-    if sub:
-        text(bx + 44, by + 43, [sub], anchor="start", size=11, fill=MUTED)
-    add(f'<line x1="{bx + 12}" y1="{by + 54}" x2="{bx + BW - 12}" y2="{by + 54}" '
-        f'stroke="{col}" stroke-width="1.5" stroke-opacity="0.5"/>')
-    # station track
-    lx = bx + 28
-    ys, y = [], by + 62
-    for it in items:
-        ys.append(y + 15)
-        y += item_height(it)
-    if len(ys) > 1:
-        dl = ' stroke-dasharray="12 8"' if planned else ""
-        add(f'<line x1="{lx}" y1="{ys[0]}" x2="{lx}" y2="{ys[-1]}" stroke="{col}" '
-            f'stroke-width="6" stroke-linecap="round"{dl}/>')
-    for (name, desc, kind), sy in zip(items, ys):
-        sub_st = kind == "sub"
-        station(lx, sy, dashed=(kind == "opt" or planned),
-                stroke=MUTED if planned else INK, r=5.5 if sub_st else 7.5)
-        if sub_st:
-            add(f'<text x="{lx + 22}" y="{sy + 4}" font-size="12.5" fill="{MUTED}" '
-                f'stroke="{BOX}" stroke-width="3.5" paint-order="stroke" '
-                f'stroke-linejoin="round">{name}: <tspan font-weight="700" '
-                f'fill="{INK}">{desc}</tspan></text>')
-        else:
-            text(lx + 22, sy + 4, [name], anchor="start", size=12.5,
-                 weight="400" if planned else "700",
-                 fill=MUTED if planned else INK)
-            if desc:
-                text(lx + 22, sy + 19, [desc], anchor="start", size=11, fill=MUTED)
+# ---------------------------------------------------------------- geometry
+KX = 585                              # Kraken2 interchange centre
+MX = 1137                             # MERIDIAN interchange centre
+M0 = MX - 42                          # its left edge
+RX = 1245                             # Report terminus
+TX = 60                               # input terminus
 
-# ---------------------------------------------------------------- flow arrows
-for n in range(7):
-    bx, by, bh = geom[n]
-    nx, ny, nbh = geom[n + 1]
-    planned = BLOCKS[n + 1][4]
-    if n == 3:  # wrap: row 1 -> row 2
-        x0, x1 = bx + BW // 2, nx + BW // 2
-        mid = TOP1 + H1 + ROW_GAP // 2
-        arrow([(x0, by + bh), (x0, mid), (x1, mid), (x1, ny)])
-    else:
-        arrow([(bx + BW, by + 26), (nx, ny + 26)], dashed=planned)
+# lines (drawn first, stations on top)
+line([(TX, Y0), (KX - 20, Y0)], C_QC)
+# abundance (green): fan out, run, merge
+xa = 650
+line([(KX, Y0), (xa, Y0), (xa + Y0 - YA, YA), (975, YA),
+      (975 + Y0 - YA, Y0), (M0, Y0)], C_AB)
+# contamination (orange)
+xc = 690
+line([(KX, Y0), (xc, Y0), (xc + Y0 - YC, YC), (995, YC),
+      (995 + Y0 - YC, Y0), (M0, Y0)], C_CO)
+# functional (purple): straight lane with three spurs
+FX0, FX1 = 880, 1040                  # fork / merge start
+SP = 30
+line([(KX, Y0), (FX0, Y0)], C_FN)
+line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
+line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
+line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
+# downstream (gold)
+line([(M0, Y0), (RX, Y0)], C_DS)
+# reconstruction (grey, dashed)
+xr = 650
+line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1100, YR)], GREY, dashed=True)
+
+# ---------------------------------------------------------------- trunk stations
+qc = [("cat", 130, "", 1), ("Porechop_ABI", 204, "opt", -1), ("nanoq", 278, "", 1),
+      ("NanoPlot", 352, "", -1), ("SeqKit stats", 426, "", 1), ("Hostile", 500, "", -1)]
+for name, x, kind, side in qc:
+    station(x, Y0, kind)
+    ly = Y0 - 14 if side > 0 else Y0 + 22
+    text(x, ly, [name], size=12, weight="700")
+text(500, Y0 + 35, ["LOW_DEPTH flag"], size=10, fill=MUTED, style="italic")
+stage(100, Y0 - 44, "QC &amp; HOST REMOVAL")
+
+# input terminus
+terminus(TX, Y0)
+text(24, Y0 + 28, ["samplesheet +", "ONT FASTQ", "(multi-run pooling)"],
+     anchor="start", size=11, fill=MUTED)
+
+# Kraken2 interchange
+interchange(KX, Y0)
+text(KX, Y0 - 20, ["Kraken2 (PlusPF)"], size=12, weight="700")
+stage(KX, Y0 - 44, "TAXONOMY", anchor="middle")
+
+# ---------------------------------------------------------------- abundance
+for name, x in [("Bracken", 810), ("KrakenTools|combine", 880), ("Krona", 950)]:
+    station(x, YA)
+    text(x, YA - 14 - (13 if "|" in name else 0), name.split("|"), size=12, weight="700")
+stage(782, YA + 20, "ABUNDANCE")
+
+# ---------------------------------------------------------------- contamination
+station(810, YC)
+text(810, YC - 14, ["Recentrifuge"], size=12, weight="700")
+text(866, YC - 12, ["negative-control aware"], anchor="start", size=10, fill=MUTED,
+     style="italic")
+stage(765, YC + 20, "CONTAMINATION")
+
+# ---------------------------------------------------------------- functional
+for name, x in [("Tag reads", 770), ("ABRicate", 850)]:
+    station(x, Y0)
+    text(x, Y0 - 14, [name], size=12, weight="700")
+SX = (FX0 + SP + FX1) // 2
+for name, y, dy in [("CARD", Y0 - SP, -12), ("VFDB", Y0, -12), ("PlasmidFinder", Y0 + SP, 20)]:
+    station(SX, y, r=5.5)
+    text(SX, y + dy, [name], size=12, weight="700")
+stage(745, Y0 + 28, "FUNCTIONAL")
+
+# ---------------------------------------------------------------- downstream
+interchange(MX, Y0)
+text(MX, Y0 - 20, ["MERIDIAN"], size=12, weight="700")
+terminus(RX, Y0, C_DS)
+text(RX, Y0 - 20, ["Report"], size=12, weight="700")
+stage(MX, Y0 + 32, "DOWNSTREAM", anchor="middle")
+
+# ---------------------------------------------------------------- reconstruction (planned)
+for name, x in [("binning /|assembly", 800), ("CheckM2", 880), ("Bakta", 950),
+                ("MLST", 1015)]:
+    station(x, YR, "plan")
+    parts = name.split("|")
+    text(x, YR - 14 - 13 * (len(parts) - 1), parts, size=12, weight="400", fill=MUTED)
+terminus(1100, YR, GREY)
+text(1100, YR - 20, ["Pathogen report"], size=12, weight="400", fill=MUTED)
+stage(745, YR + 28, "METAGENOME RECONSTRUCTION (PLANNED)")
 
 # ---------------------------------------------------------------- legend
-add(f'<rect x="{MX}" y="{LEG_Y}" width="{W - 2 * MX}" height="{LEG_H}" rx="12" '
-    f'fill="{BOX}" fill-opacity="0.6" stroke="#d0d7de" stroke-width="1.5"/>')
-text(MX + 16, LEG_Y + 24, ["LEGEND"], anchor="start", size=12, weight="700", halo=BG)
-colw = (W - 2 * MX - 32) / 4
-for n, (key, col, title, sub, planned, _) in enumerate(BLOCKS):
-    cx = MX + 16 + (n % 4) * colw
-    cy = LEG_Y + 46 + (n // 4) * 24
-    dash = ' stroke-dasharray="8 5"' if planned else ""
-    add(f'<line x1="{cx:.0f}" y1="{cy}" x2="{cx + 40:.0f}" y2="{cy}" stroke="{col}" '
-        f'stroke-width="6"{dash}/>')
-    lab = f"{n + 1}  {title}" + (" (planned)" if planned else "")
-    text(cx + 52, cy + 4, [lab], anchor="start", size=12.5, halo=BG)
-sy = LEG_Y + 104
-sx = MX + 16
-station(sx + 8, sy)
-text(sx + 26, sy + 4, ["Process / tool"], anchor="start", size=12.5, halo=BG)
-station(sx + colw + 8, sy, dashed=True)
-text(sx + colw + 26, sy + 4, ["Optional step"], anchor="start", size=12.5, halo=BG)
-station(sx + 2 * colw + 8, sy, dashed=True, stroke=MUTED)
-text(sx + 2 * colw + 26, sy + 4, ["Planned (Phase 2)"], anchor="start", size=12.5, halo=BG)
-arrow([(sx + 3 * colw - 2, sy), (sx + 3 * colw + 32, sy)])
-text(sx + 3 * colw + 46, sy + 4, ["Data flow"], anchor="start", size=12.5, halo=BG)
+LY = 402
+stage(30, LY - 18, "LEGEND")
+lines_leg = [("QC &amp; taxonomy", C_QC, False), ("Abundance", C_AB, False),
+             ("Contamination", C_CO, False), ("Functional (AMR / VF / MGE)", C_FN, False),
+             ("Downstream", C_DS, False), ("Planned", GREY, True)]
+xs = [30, 190, 320, 470, 700, 840]
+for (lab, col, dashed), x in zip(lines_leg, xs):
+    dash = ' stroke-dasharray="8 6"' if dashed else ""
+    add(f'<line x1="{x}" y1="{LY}" x2="{x + 34}" y2="{LY}" stroke="{col}" '
+        f'stroke-width="{LW}" stroke-linecap="round"{dash}/>')
+    text(x + 44, LY + 4, [lab], anchor="start", size=12)
+SY = LY + 32
+sym = [("Process", "", 30), ("Optional step", "opt", 150), ("Planned step", "plan", 300)]
+for lab, kind, x in sym:
+    station(x + 8, SY, kind)
+    text(x + 24, SY + 4, [lab], anchor="start", size=12)
+interchange(470 + 24, SY, w=44)
+text(470 + 56, SY + 4, ["Interchange"], anchor="start", size=12)
 
 add("</svg>")
 
