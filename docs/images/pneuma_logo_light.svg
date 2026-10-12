@@ -12,5 +12,5 @@
     <path d="M122 66 q10 -8 20 0 t20 0"/>
   </g>
   <text x="180" y="78" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="5" fill="#1f2328">PNEUMA</text>
-  <text x="182" y="108" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="16" letter-spacing="1" fill="#57606a">respiratory metagenomics pipeline</text>
+  <text x="182" y="108" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="16" letter-spacing="1" fill="#57606a">low-biomass respiratory metagenomics</text>
 </svg>
