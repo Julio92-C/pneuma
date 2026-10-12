@@ -76,6 +76,18 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
+    // Required PNEUMA parameters
+    //
+    ['host_index', 'kraken2_db', 'taxdump'].each { p ->
+        if (!params[p]) {
+            error("--${p} is required")
+        }
+    }
+    if (!params.skip_meridian && !(params.meridian_metadata && params.meridian_group)) {
+        error("--meridian_metadata and --meridian_group are required unless --skip_meridian is set")
+    }
+
+    //
     // Check config provided to the pipeline
     //
     UTILS_NFCORE_PIPELINE (

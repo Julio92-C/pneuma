@@ -1,0 +1,18 @@
+nextflow_pipeline {
+    name "PNEUMA end-to-end (test profile)"
+    script "../main.nf"
+    profile "test"
+
+    test("core outputs exist") {
+        when { params { outdir = "$outputDir" } }
+        then {
+            assert workflow.success
+            assert path("$outputDir/taxonomy/bracken_arranged.csv").readLines()[0] ==
+                   '#perc,tot_all,CNF0-0001,EBF0-0001,SPF0-0001,taxid,name'
+            assert path("$outputDir/taxonomy/kraken2_combined_reports.txt").exists()
+            assert path("$outputDir/contamination/pneuma.rcf.data.csv").exists()
+            assert path("$outputDir/functional/summary_reportClean.csv").readLines()[0].startsWith('#FILE')
+            assert path("$outputDir/multiqc/multiqc_report.html").exists()
+        }
+    }
+}

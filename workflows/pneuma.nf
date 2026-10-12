@@ -8,6 +8,11 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_pneuma_pipeline'
+include { PREPROCESS             } from '../subworkflows/local/preprocess/main'
+include { TAXONOMY               } from '../subworkflows/local/taxonomy/main'
+include { CONTAMINATION          } from '../subworkflows/local/contamination/main'
+include { FUNCTIONAL_READS       } from '../subworkflows/local/functional_reads/main'
+include { MERIDIAN               } from '../subworkflows/local/meridian/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,6 +33,31 @@ workflow PNEUMA {
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
+
+    PREPROCESS(ch_samplesheet, file(params.host_index, checkIfExists: true))
+    TAXONOMY(PREPROCESS.out.reads, params.kraken2_db)
+    CONTAMINATION(TAXONOMY.out.assignments, params.taxdump)
+    FUNCTIONAL_READS(TAXONOMY.out.classified)
+
+    ch_versions = ch_versions.mix(PREPROCESS.out.versions, TAXONOMY.out.versions,
+                                  CONTAMINATION.out.versions, FUNCTIONAL_READS.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS.out.multiqc)
+
+    if (!params.skip_meridian) {
+        def ch_controls = ch_samplesheet
+            .filter { meta, _fastqs -> meta.is_control }
+            .map { meta, _fastqs -> meta.id }
+            .collect()
+            .ifEmpty([])
+        MERIDIAN(ch_controls, FUNCTIONAL_READS.out.summary, TAXONOMY.out.kraken_combined,
+                 TAXONOMY.out.bracken_arranged, CONTAMINATION.out.rcf_csv)
+        ch_versions = ch_versions.mix(MERIDIAN.out.versions)
+    }
+
+    if (params.database_manifest) {
+        channel.fromPath(params.database_manifest, checkIfExists: true)
+            .collectFile(name: 'database_manifest.tsv', storeDir: "${outdir}/pipeline_info")
+    }
 
     //
     // Collate and save software versions
