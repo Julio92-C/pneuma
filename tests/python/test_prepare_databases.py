@@ -40,8 +40,8 @@ def _write_exe(path, text):
     path.chmod(path.stat().st_mode | stat.S_IEXEC)
 
 
-def test_manifest_records_abricate_dbs_with_mocked_container(tmp_path):
-    """Full (non-dry) run with wget/tar/unzip/singularity mocked."""
+def _mock_env(tmp_path):
+    """wget/tar/unzip/singularity mocked; returns (env, fakebin)."""
     fakebin = tmp_path / "fakebin"
     fakebin.mkdir()
     _write_exe(fakebin / "wget", '#!/usr/bin/env bash\nwhile [[ $# -gt 0 ]]; do [[ "$1" == -O ]] && { echo data > "$2"; shift; }; shift; done\n')
@@ -49,7 +49,8 @@ def test_manifest_records_abricate_dbs_with_mocked_container(tmp_path):
     _write_exe(fakebin / "unzip", "#!/usr/bin/env bash\nexit 0\n")
     # fake `singularity exec IMAGE CMD...`: emulate hostile and the abricate tools
     _write_exe(fakebin / "singularity", r'''#!/usr/bin/env bash
-shift 2   # exec IMAGE
+echo "RAW $@" >> "$MOCK_LOG"
+shift 4   # exec --bind DIR IMAGE
 echo "$@" >> "$MOCK_LOG"
 case "$1" in
   hostile) echo idx > "$HOSTILE_CACHE_DIR/human-t2t-hla.mmi" ;;
@@ -59,13 +60,23 @@ case "$1" in
   abricate)
     if [[ "$2" == "--list" ]]; then
       printf 'DATABASE\tSEQUENCES\tDBTYPE\tDATE\n'
-      printf 'card\t100\tnucl\t2026-Oct-01\nvfdb\t50\tnucl\t2026-Oct-02\nplasmidfinder\t10\tnucl\t2026-Oct-03\n'
+      if [[ -n "$MOCK_NO_DATE" ]]; then printf 'card\t100\tnucl\n'; else printf 'card\t100\tnucl\t2026-Oct-01\n'; fi
+      printf 'vfdb\t50\tnucl\t2026-Oct-02\nplasmidfinder\t10\tnucl\t2026-Oct-03\n'
     fi ;;
 esac
 ''')
-    out = tmp_path / "db"
     env = dict(os.environ, PATH=f"{fakebin}:{os.environ['PATH']}",
                PNEUMA_CONTAINER_RT="singularity", MOCK_LOG=str(tmp_path / "calls.log"))
+    return env, fakebin
+
+
+ARGS = ("--kraken-release", "20250402", "--taxdump-month", "2025-04")
+
+
+def test_manifest_records_abricate_dbs_with_mocked_container(tmp_path):
+    """Full (non-dry) run with wget/tar/unzip/singularity mocked."""
+    env, _ = _mock_env(tmp_path)
+    out = tmp_path / "db"
     r = run("--outdir", str(out), "--kraken-release", "20250402", "--taxdump-month", "2025-04", env=env)
     assert r.returncode == 0, r.stderr
     rows = [l.split("\t") for l in (out / "database_manifest.tsv").read_text().splitlines()]
@@ -81,3 +92,43 @@ esac
     assert "--database_manifest" in r.stdout
     calls = (tmp_path / "calls.log").read_text()
     assert "abricate --setupdb --datadir" in calls
+    assert f"--bind {out}" in calls
+
+
+def test_outdir_with_spaces_works(tmp_path):
+    env, _ = _mock_env(tmp_path)
+    out = tmp_path / "my db dir"
+    r = run("--outdir", str(out), *ARGS, env=env)
+    assert r.returncode == 0, r.stderr
+    assert (out / "database_manifest.tsv").exists()
+    calls = (tmp_path / "calls.log").read_text()
+    assert "abricate --setupdb --datadir" in calls
+    assert (out / "abricate" / "card" / "sequences").exists()
+
+
+def test_empty_sha_fails(tmp_path):
+    env, fakebin = _mock_env(tmp_path)
+    _write_exe(fakebin / "sha256sum", "#!/usr/bin/env bash\nexit 0\n")   # prints nothing
+    r = run("--outdir", str(tmp_path / "db"), *ARGS, env=env)
+    assert r.returncode != 0
+    assert "sha256" in r.stderr
+
+
+def test_empty_abricate_date_fails(tmp_path):
+    env, _ = _mock_env(tmp_path)
+    env["MOCK_NO_DATE"] = "1"
+    r = run("--outdir", str(tmp_path / "db"), *ARGS, env=env)
+    assert r.returncode != 0
+    assert "date" in r.stderr and "card" in r.stderr
+    assert not (tmp_path / "db" / "database_manifest.tsv").exists() or         "unknown" not in (tmp_path / "db" / "database_manifest.tsv").read_text()
+
+
+def test_missing_hostile_index_fails(tmp_path):
+    env, fakebin = _mock_env(tmp_path)
+    # hostile mock writes nothing -> find matches nothing
+    mock = (fakebin / "singularity").read_text().replace(
+        'hostile) echo idx > "$HOSTILE_CACHE_DIR/human-t2t-hla.mmi" ;;', 'hostile) : ;;')
+    _write_exe(fakebin / "singularity", mock)
+    r = run("--outdir", str(tmp_path / "db"), *ARGS, env=env)
+    assert r.returncode != 0
+    assert "human-t2t-hla" in r.stderr
