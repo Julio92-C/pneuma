@@ -155,6 +155,13 @@
                     "description": "Comma-separated ABRicate databases.",
                     "default": "card,vfdb,plasmidfinder"
                 },
+                "abricate_db": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Directory of current ABRicate databases (card/, vfdb/, plasmidfinder/ subfolders), as written by bin/prepare_databases.sh to <outdir>/abricate. Passed to abricate as --datadir. Unset: use the databases bundled in the container (dated 2021-Mar-27).",
+                    "fa_icon": "fas fa-database"
+                },
                 "abricate_minid": {
                     "type": "integer",
                     "default": 80,

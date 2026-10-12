@@ -8,7 +8,8 @@ workflow FUNCTIONAL_READS {
 
     main:
     TAG_READS(ch_classified)
-    ABRICATE_READS(TAG_READS.out.fasta)
+    ch_abricate_db = params.abricate_db ? channel.value(file(params.abricate_db, checkIfExists: true, type: 'dir')) : channel.value([])
+    ABRICATE_READS(TAG_READS.out.fasta, ch_abricate_db)
     ABRICATE_MERGE(ABRICATE_READS.out.csv.map { _meta, csv -> csv }.collect())
 
     emit:

@@ -9,6 +9,7 @@ nextflow_process {
             process {
                 """
                 input[0] = [ [id:'S0'], file("${projectDir}/tests/data/S0_kraken2ID_PFP.fasta", checkIfExists: true) ]
+                input[1] = []
                 """
             }
         }
@@ -24,6 +25,7 @@ nextflow_process {
             process {
                 """
                 input[0] = [ [id:'S1'], file("${projectDir}/tests/data/S1_kraken2ID_PFP.fasta", checkIfExists: true) ]
+                input[1] = []
                 """
             }
         }

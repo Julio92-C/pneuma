@@ -5,6 +5,7 @@ process ABRICATE_READS {
 
     input:
     tuple val(meta), path(fasta)
+    path abricate_db    // optional: directory with current databases; [] = bundled ones
 
     output:
     tuple val(meta), path("${meta.id}_abricate.csv"), emit: csv
@@ -12,11 +13,12 @@ process ABRICATE_READS {
 
     script:
     def dbs = params.abricate_dbs.tokenize(',')
+    def datadir = abricate_db ? "--datadir ${abricate_db}" : ''
     """
     : > ${meta.id}_abricate.csv
     if [ -s ${fasta} ]; then
         for db in ${dbs.join(' ')}; do
-            abricate ${fasta} --db \$db \
+            abricate ${fasta} --db \$db ${datadir} \
                 --minid ${params.abricate_minid} --mincov ${params.abricate_mincov} \
                 --threads ${task.cpus} --csv >> ${meta.id}_abricate.csv
         done
@@ -25,7 +27,7 @@ process ABRICATE_READS {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         abricate: \$(abricate --version | sed 's/abricate //')
-        abricate_dbs: "\$(abricate --list | awk 'NR>1 {printf "%s:%s ", \$1, \$4}')"
+        abricate_dbs: "\$(abricate --list ${datadir} | awk 'NR>1 {printf "%s:%s ", \$1, \$4}')"
     END_VERSIONS
     """
 }
