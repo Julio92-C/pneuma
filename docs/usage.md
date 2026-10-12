@@ -2,7 +2,10 @@
 
 ## 1. Stage databases (once, on Myriad login node)
 
-    bin/prepare_databases.sh --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
+Fetch a pinned release and run the script from the Nextflow assets directory (pin `-r <tag>` for reproducibility):
+
+    nextflow pull Julio92-C/pneuma -r v0.1.0
+    bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
 
 The script downloads the pinned Kraken2 PlusPF index and NCBI taxdump, fetches the Hostile
 `human-t2t-hla` index, and downloads **current** ABRicate databases (`card`, `vfdb`,
@@ -14,7 +17,7 @@ is not set. It needs singularity (or apptainer, or docker) on the node.
 It writes `database_manifest.tsv` (`name`, `version`, `path`, `sha256`) with one row per
 database; for ABRicate the version is the database date and the sha256 is that of its
 `sequences` file. Copy the five `--param` lines it prints (`--kraken2_db`, `--taxdump`,
-`--host_index`, `--abricate_db`, `--database_manifest`). Use `--dry-run` to print the commands only.
+`--host_index`, `--abricate_db`, `--database_manifest`). Use `--dry-run` to print the commands only. From a development clone use `bin/prepare_databases.sh` directly.
 
 ## 2. Samplesheet
 
@@ -24,11 +27,14 @@ several flow cells gets several rows with the same `sample`; their reads are con
 
 ## 3. Run
 
-    nextflow run Julio92-C/pneuma -r <tag> -profile myriad \
+    nextflow run Julio92-C/pneuma -r v0.1.0 -profile <docker|singularity|myriad> \
       --input samplesheet.csv --outdir results \
       --kraken2_db ... --taxdump ... --host_index ... --abricate_db ... --database_manifest ... \
       --meridian_metadata metadata.csv --meridian_group sample_type --meridian_random_effect ID \
       -resume
+
+`--input` and `--outdir` are required; always pin `-r <tag>` for reproducibility. From a development
+clone use `nextflow run . -profile ...`.
 
 ### ABRicate databases
 
@@ -36,7 +42,7 @@ several flow cells gets several rows with the same `sample`; their reads are con
 `prepare_databases.sh` (`<outdir>/abricate`, containing `card/`, `vfdb/`, `plasmidfinder/`).
 When set, the directory is staged into each `ABRICATE_READS` task and passed as
 `abricate --datadir`. When unset, the databases bundled in the container are used.
-`--abricate_dbs` (default `card,vfdb,plasmidfinder`) selects which databases are searched.
+`--abricate_dbs` (default `card,vfdb,plasmidfinder`) is the comma-separated list of database *names* searched inside that directory.
 
 ## 4. Outputs
 
@@ -45,7 +51,7 @@ When set, the directory is staged into each `ABRICATE_READS` task and passed as
 - `contamination/` `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.html`
 - `functional/` per-sample ABRicate, `summary_reportClean.csv`
 - `meridian/` MERIDIAN Datasets/Figures/Reports
-- `pipeline_info/` software versions, `database_manifest.tsv`
+- `pipeline_info/` timestamped Nextflow reports, `pneuma_software_mqc_versions.yml`, `database_manifest.tsv`
 
 ## Known Myriad issues
 

@@ -80,17 +80,30 @@ Requirements:
 - [Docker](https://www.docker.com/) or [Singularity / Apptainer](https://sylabs.io/docs/)
 - Reference databases: Kraken2 PlusPF index, NCBI taxdump, Hostile index and ABRicate databases
 
-This repository is private, so clone it with an account that has access:
+Run directly from GitHub (no clone needed). Pin a release tag with `-r` so the exact pipeline
+code is recorded and the run is reproducible:
+
+```bash
+nextflow pull Julio92-C/pneuma -r v0.1.0
+```
+
+Stage the databases once with [`bin/prepare_databases.sh`](bin/prepare_databases.sh). After
+`nextflow pull` the script is at `~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh`:
+
+```bash
+bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh   --outdir ~/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
+```
+
+It prints the `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and
+`--database_manifest` parameters to reuse. See [docs/usage.md](docs/usage.md) for details and
+for the UCL Myriad notes.
+
+**For development**, clone the repository instead:
 
 ```bash
 git clone https://github.com/Julio92-C/pneuma.git
 cd pneuma
-git checkout <tag-or-branch>
 ```
-
-Stage the databases once with [`bin/prepare_databases.sh`](bin/prepare_databases.sh); it prints
-the `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and `--database_manifest`
-parameters to reuse. See [docs/usage.md](docs/usage.md) for details and for the UCL Myriad notes.
 
 ---
 
@@ -99,22 +112,27 @@ parameters to reuse. See [docs/usage.md](docs/usage.md) for details and for the 
 Check the installation with the bundled test profile (small public test data, MERIDIAN skipped):
 
 ```bash
-nextflow run . -profile test,docker --outdir results_test
+nextflow run Julio92-C/pneuma -r v0.1.0 -profile test,docker --outdir results_test
 ```
 
-Run on your own data:
+Run on your own data, choosing the profile `docker`, `singularity` or `myriad` (UCL HPC):
 
 ```bash
-nextflow run . -profile docker \
-  --input samplesheet.csv --outdir results \
-  --kraken2_db <db> --taxdump <taxdump> --host_index <hostile_index> \
-  --abricate_db <abricate_dir> --database_manifest <database_manifest.tsv> \
-  --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column> \
-  -resume
+nextflow run Julio92-C/pneuma -r v0.1.0 -profile <docker|singularity|myriad>   --input samplesheet.csv --outdir results   --kraken2_db <db> --taxdump <taxdump> --host_index <hostile_index>   --abricate_db <abricate_dir> --database_manifest <database_manifest.tsv>   --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column>   -resume
 ```
 
-On UCL Myriad use `-profile myriad` (see [docs/usage.md](docs/usage.md)). Pass pipeline
-parameters on the command line or with `-params-file`, not in a custom `-c` config.
+Always pin `-r <tag>` (for example `-r v0.1.0`) for reproducibility; without it Nextflow runs the
+default branch. `--input` and `--outdir` are always required, `--kraken2_db`, `--taxdump` and
+`--host_index` are required, and `--meridian_metadata` / `--meridian_group` are required unless you
+pass `--skip_meridian`. Pass pipeline parameters on the command line or with `-params-file`, not
+in a custom `-c` config. See [docs/usage.md](docs/usage.md) for the Myriad notes.
+
+From a development clone, replace `Julio92-C/pneuma -r v0.1.0` with `.`.
+
+**Database parameters.** `--abricate_db` is the *directory* that holds the ABRicate databases
+(the `<outdir>/abricate` folder written by `prepare_databases.sh`, containing `card/`, `vfdb/`
+and `plasmidfinder/`). It is not a database name. The separate `--abricate_dbs` parameter is the
+comma-separated list of database *names* to search (default `card,vfdb,plasmidfinder`).
 
 ---
 
