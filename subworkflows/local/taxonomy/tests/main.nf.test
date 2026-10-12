@@ -1,0 +1,76 @@
+nextflow_workflow {
+    name "Test TAXONOMY"
+    script "../main.nf"
+    workflow "TAXONOMY"
+    config "../../../../conf/test.config"
+
+    test("classifies, re-estimates and arranges") {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                def fq = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
+                input[0] = channel.of(
+                    [ [id:'EBF0-0001', single_end:true, low_depth:false], fq ],
+                    [ [id:'SPF0-0001', single_end:true, low_depth:false], fq ]
+                )
+                input[1] = params.kraken2_db
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def header = path(workflow.out.bracken_arranged[0]).readLines()[0]
+            assert header == '#perc,tot_all,EBF0-0001,SPF0-0001,taxid,name'
+            assert workflow.out.assignments.size() == 2
+        }
+    }
+
+    test("zero-classified sample is excluded from combined tables with a warning") {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                def ok    = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
+                def empty = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/nanopore/fastq/test.fastq.gz', checkIfExists: true)
+                input[0] = channel.of(
+                    [ [id:'EBF0-0001', single_end:true, low_depth:false], ok ],
+                    [ [id:'NEG0-0001', single_end:true, low_depth:false], empty ]
+                )
+                input[1] = params.kraken2_db
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def header = path(workflow.out.bracken_arranged[0]).readLines()[0]
+            assert header == '#perc,tot_all,EBF0-0001,taxid,name'
+            assert workflow.out.assignments.size() == 2
+            // log.warn goes to nextflow.log (not stdout/stderr); it sits in the sibling meta/ dir
+            def logText = new File("$outputDir/../meta/nextflow.log").text
+            assert logText.contains("sample 'NEG0-0001' has no classified reads")
+        }
+    }
+
+    test("fails with an accurate message when every classified sample is LOW_DEPTH") {
+        when {
+            params { outdir = "$outputDir" }
+            workflow {
+                """
+                def fq = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz', checkIfExists: true)
+                input[0] = channel.of(
+                    [ [id:'EBF0-0001', single_end:true, low_depth:true], fq ]
+                )
+                input[1] = params.kraken2_db
+                """
+            }
+        }
+        then {
+            assert workflow.failed
+            def logText = new File("$outputDir/../meta/nextflow.log").text
+            def msg = workflow.stdout.join(' ') + workflow.stderr.join(' ') + logText
+            assert msg.contains('LOW_DEPTH')
+            assert msg.contains('--min_reads')
+        }
+    }
+}

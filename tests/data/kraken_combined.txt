@@ -1,0 +1,9 @@
+#Number of Samples: 2
+#Total Number of Reads: 100
+#Sample 1: S1
+#Sample 2: S2
+#perc	tot_all	tot_lvl	S1_all	S1_lvl	S2_all	S2_lvl	lvl_type	taxid	name
+10.00	10	10	4	4	6	6	U	0	unclassified
+90.00	90	0	36	0	54	0	R	1	root
+60.00	60	60	30	30	30	30	S	1301	    Streptococcus pneumoniae
+30.00	30	30	6	6	24	24	S	727	    Haemophilus influenzae

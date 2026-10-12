@@ -1,0 +1,28 @@
+nextflow_workflow {
+    name "Test PREPROCESS"
+    script "../main.nf"
+    workflow "PREPROCESS"
+    config "../../../../conf/test.config"
+
+    test("merges runs, filters, removes host, flags depth") {
+        when {
+            params { outdir = "$outputDir"; min_reads = 10 }
+            workflow {
+                """
+                def fq = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/nanopore/fastq/test.fastq.gz', checkIfExists: true)
+                input[0] = Channel.of(
+                    [ [id:'EBF0-0001', single_end:true, is_control:false, run_ids:['RUN1','RUN2']], [fq, fq] ],
+                    [ [id:'SPF0-0001', single_end:true, is_control:false, run_ids:['RUN1']], [fq] ]
+                )
+                input[1] = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def out = workflow.out.reads.collectEntries { [ it[0].id, it[0] ] }
+            assert out['EBF0-0001'].n_reads == 2 * out['SPF0-0001'].n_reads
+            assert out['SPF0-0001'].low_depth == false
+        }
+    }
+}

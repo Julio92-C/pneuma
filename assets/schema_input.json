@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Julio92-C/pneuma/main/assets/schema_input.json",
+  "title": "PNEUMA samplesheet",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "sample": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*$",
+        "errorMessage": "sample must match ^[A-Za-z0-9][A-Za-z0-9-]*$ (letters, digits, '-'; no '_' or '.')",
+        "meta": ["id"]
+      },
+      "run_id": { "type": "string", "pattern": "^\\S+$", "errorMessage": "run_id must be non-empty, no spaces", "meta": ["run_id"] },
+      "batch":  { "type": "string", "pattern": "^\\S+$", "errorMessage": "batch must be non-empty, no spaces", "meta": ["batch"] },
+      "site":   { "type": "string", "meta": ["site"] },
+      "fastq": {
+        "type": "string",
+        "format": "file-path",
+        "exists": true,
+        "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+        "errorMessage": "fastq must be an existing .fastq.gz/.fq.gz path"
+      },
+      "is_control": { "type": "boolean", "meta": ["is_control"] }
+    },
+    "required": ["sample", "run_id", "batch", "fastq", "is_control"]
+  },
+  "uniqueEntries": ["sample", "run_id"]
+}

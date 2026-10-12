@@ -1,0 +1,25 @@
+nextflow_process {
+    name "Test MERIDIAN_RUN (stub)"
+    script "../main.nf"
+    process "MERIDIAN_RUN"
+    options "-stub"
+
+    test("stages inputs and produces report dirs") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/assets/meridian_config.template.yaml")
+                input[1] = file("${projectDir}/tests/data/metadata_test.csv")
+                input[2] = file("${projectDir}/tests/data/abricate_S1.csv")
+                input[3] = file("${projectDir}/tests/data/kraken_combined.txt")
+                input[4] = file("${projectDir}/tests/data/bracken_combined.txt")
+                input[5] = file("${projectDir}/tests/data/abricate_S2_empty.csv")
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path("${process.out.reports[0]}/pipeline_report.html").exists()
+        }
+    }
+}

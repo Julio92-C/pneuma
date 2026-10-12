@@ -1,0 +1,61 @@
+nextflow_process {
+    name "Test ABRICATE_READS"
+    script "../main.nf"
+    process "ABRICATE_READS"
+
+    test("empty fasta gives empty csv") {
+        when {
+            params { abricate_dbs = 'card,vfdb,plasmidfinder'; abricate_minid = 80; abricate_mincov = 80 }
+            process {
+                """
+                input[0] = [ [id:'S0'], file("${projectDir}/tests/data/S0_kraken2ID_PFP.fasta", checkIfExists: true) ]
+                input[1] = []
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.csv[0][1]).text == ''
+        }
+    }
+
+    test("CARD hit keeps sample file name and taxid tag") {
+        when {
+            params { abricate_dbs = 'card'; abricate_minid = 80; abricate_mincov = 80 }
+            process {
+                """
+                input[0] = [ [id:'S1'], file("${projectDir}/tests/data/S1_kraken2ID_PFP.fasta", checkIfExists: true) ]
+                input[1] = []
+                """
+            }
+        }
+        then {
+            assert process.success
+            def lines = path(process.out.csv[0][1]).readLines()
+            assert lines[0].startsWith('#FILE')
+            assert lines.size() > 1
+            assert lines.drop(1).every { it.startsWith('S1_kraken2ID_PFP.fasta,read1_kraken:taxid|562,') }
+        }
+    }
+
+    test("abricate_db directory is passed as --datadir and used") {
+        when {
+            params { abricate_dbs = 'card'; abricate_minid = 80; abricate_mincov = 80 }
+            process {
+                """
+                input[0] = [ [id:'S1'], file("${projectDir}/tests/data/S1_kraken2ID_PFP.fasta", checkIfExists: true) ]
+                input[1] = file("${projectDir}/tests/data/abricate_db", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            // tiny database built with `abricate --setupdb` (one 300 bp "tinyARG" entry)
+            def script = new File(new File(process.out.csv[0][1].toString()).parentFile, '.command.sh').text
+            assert script.contains('--datadir abricate_db')
+            def lines = path(process.out.csv[0][1]).readLines()
+            assert lines.size() > 1
+            assert lines.drop(1).any { it.contains(',tinyARG,') }
+        }
+    }
+}

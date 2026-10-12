@@ -1,0 +1,21 @@
+nextflow_process {
+    name "Test HOSTILE_CLEAN"
+    script "../main.nf"
+    process "HOSTILE_CLEAN"
+
+    test("removes reads against a small host fasta") {
+        when {
+            process {
+                """
+                input[0] = [ [id:'S1'], file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/nanopore/fastq/test.fastq.gz', checkIfExists: true) ]
+                input[1] = file('https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.reads[0][1]).linesGzip.size() > 0
+            assert path(process.out.log[0][1]).text.contains('reads_in')
+        }
+    }
+}
