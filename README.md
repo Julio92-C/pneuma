@@ -1,90 +1,258 @@
-# Julio92-C/pneuma
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/pneuma_logo_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/pneuma_logo_light.svg">
+    <img alt="PNEUMA: respiratory metagenomics pipeline" src="docs/images/pneuma_logo_light.svg" width="420">
+  </picture>
+</p>
 
-[![GitHub Actions CI Status](https://github.com/Julio92-C/pneuma/actions/workflows/nf-test.yml/badge.svg)](https://github.com/Julio92-C/pneuma/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/Julio92-C/pneuma/actions/workflows/linting.yml/badge.svg)](https://github.com/Julio92-C/pneuma/actions/workflows/linting.yml)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
-[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
+<p align="center">
+  <b>An end-to-end Nextflow DSL2 pipeline for Oxford Nanopore (ONT) long-read respiratory metagenomics</b><br/>
+  Raw reads to host-free taxonomy, contamination assessment, resistome / virulome / plasmid profiling<br/>
+  and a MERIDIAN downstream report, with multi-batch and multi-run pooling built in.
+</p>
 
-[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
-[![nf-core template version](https://img.shields.io/badge/nf--core_template-4.1.0-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/4.1.0)
-[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
-[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
-[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/Julio92-C/pneuma)
+<p align="center">
+  <img alt="Nextflow" src="https://img.shields.io/badge/Nextflow-%E2%89%A5%2025.10.4-0DC09D?logo=nextflow&logoColor=white">
+  <img alt="nf-core template" src="https://img.shields.io/badge/nf--core%20template-4.1.0-24B064?logo=nfcore&logoColor=white">
+  <img alt="Docker" src="https://img.shields.io/badge/run%20with-docker-0db7ed?logo=docker&logoColor=white">
+  <img alt="Singularity" src="https://img.shields.io/badge/run%20with-singularity-1d355c">
+  <img alt="Status" src="https://img.shields.io/badge/status-Phase%201%20core-orange">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
+</p>
 
-## Introduction
+---
 
-**Julio92-C/pneuma** is a bioinformatics pipeline that ...
+## ✨ Why PNEUMA
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+Respiratory metagenomic cohorts are low-biomass, host-dominated and frequently sequenced across
+several flow cells and batches. Turning ONT reads into a defensible taxonomic and resistome
+picture normally means stitching together a dozen tools by hand, tracking databases and versions
+in a notebook, and re-deriving contamination and pooling decisions for every study.
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/community/brand/workflow-schematics#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+**PNEUMA** is an end-to-end Nextflow DSL2 pipeline for ONT long-read respiratory metagenomics,
+built on the nf-core template. It targets cohort research: one samplesheet describes every
+sample × run, reads from the same sample are pooled across runs and batches, negative controls
+drive contamination assessment, and the results are handed straight to
+[MERIDIAN](https://github.com/Julio92-C/meridian) for statistics and a publication-ready report.
+Databases and tool versions are recorded in `pipeline_info/` for provenance.
 
-## Usage
+---
 
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/get_started/environment_setup/overview) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) with `-profile test` before running the workflow on actual data.
+## 🗺️ Pipeline overview
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
+<p align="center">
+  <img alt="PNEUMA metro map: Preprocess, Taxonomy, Contamination, Functional and MERIDIAN lines, plus the planned Phase 2 pathogen line" src="docs/images/pneuma_metro_map.svg" width="100%">
+</p>
 
-First, prepare a samplesheet with your input data that looks as follows:
+The diagram is generated by [`docs/images/make_metro_map.py`](docs/images/make_metro_map.py)
+(standard library only). Grey dashed lines and stations are planned, not yet implemented.
 
-`samplesheet.csv`:
+---
 
-```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-```
+## 🚀 Features
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+**Phase 1 (implemented)**
 
--->
+- **Preprocess**: `cat` (pool runs per sample), `porechop_abi` (optional adapter trimming), `nanoq` (length/quality filter), `NanoPlot` and `seqkit stats` (QC), `Hostile` host removal, and a `LOW_DEPTH` flag for samples with fewer than `--min_reads` reads after host removal.
+- **Taxonomy**: `Kraken2` (PlusPF index), `Bracken`, `KrakenTools` report combination and `Krona`.
+- **Contamination**: `Recentrifuge` in plain mode and, when the samplesheet marks negative controls, in control mode.
+- **Functional reads**: `ABRicate` with `card`, `vfdb` and `plasmidfinder` (80 % identity / 80 % coverage) on Kraken-tagged reads.
+- **MERIDIAN hand-off**: config generation plus a run in the container `ghcr.io/julio92-c/meridian:v1.0.0`.
+- Profiles: `docker`, `singularity`, `test`, and `myriad` (UCL HPC). Reproducible database staging with `bin/prepare_databases.sh`.
 
-Now, you can run the pipeline using:
+**Phase 2 (planned)**
 
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+- Priority-pathogen reconstruction: assembly, CheckM2, Bakta, MLST, and AMR/VF/MGE calls collected in a pathogen report.
+- A WHO-priority respiratory panel in tiers 1, 2, 3 and D, plus a reservoir commensals list.
+
+**Phase 3 (planned)**
+
+- Validation: regression tests, spike-ins and a full cohort run.
+
+---
+
+## 📦 Installation
+
+Requirements:
+
+- [Nextflow](https://www.nextflow.io/) `>= 25.10.4`
+- [Docker](https://www.docker.com/) or [Singularity / Apptainer](https://sylabs.io/docs/)
+- Reference databases: Kraken2 PlusPF index, NCBI taxdump, Hostile index and ABRicate databases
+
+This repository is private, so clone it with an account that has access:
 
 ```bash
-nextflow run Julio92-C/pneuma \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+git clone https://github.com/Julio92-C/pneuma.git
+cd pneuma
+git checkout <tag-or-branch>
 ```
 
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/running/run-pipelines#using-parameter-files).
+Stage the databases once with [`bin/prepare_databases.sh`](bin/prepare_databases.sh); it prints
+the `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and `--database_manifest`
+parameters to reuse. See [docs/usage.md](docs/usage.md) for details and for the UCL Myriad notes.
 
-## Credits
+---
 
-Julio92-C/pneuma was originally written by Julio Cesar Ortega Cambara.
+## ⚡ Quickstart
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+Check the installation with the bundled test profile (small public test data, MERIDIAN skipped):
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+```bash
+nextflow run . -profile test,docker --outdir results_test
+```
 
-## Contributions and Support
+Run on your own data:
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](docs/CONTRIBUTING.md).
+```bash
+nextflow run . -profile docker \
+  --input samplesheet.csv --outdir results \
+  --kraken2_db <db> --taxdump <taxdump> --host_index <hostile_index> \
+  --abricate_db <abricate_dir> --database_manifest <database_manifest.tsv> \
+  --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column> \
+  -resume
+```
 
-## Citations
+On UCL Myriad use `-profile myriad` (see [docs/usage.md](docs/usage.md)). Pass pipeline
+parameters on the command line or with `-params-file`, not in a custom `-c` config.
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use Julio92-C/pneuma for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+---
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+## 📥 Inputs (samplesheet)
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+A CSV with one row per **sample × run** (schema: [`assets/schema_input.json`](assets/schema_input.json)).
+A sample sequenced on several flow cells gets several rows with the same `sample`; their reads are
+concatenated.
 
-This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/main/LICENSE).
+| Column | Required | Description |
+| --- | --- | --- |
+| `sample` | yes | Sample name; must match `^[A-Za-z0-9][A-Za-z0-9-]*$` (no `_` or `.`) |
+| `run_id` | yes | Sequencing run / flow cell identifier (no spaces); `sample` + `run_id` must be unique |
+| `batch` | yes | Batch identifier (no spaces) |
+| `site` | no | Sampling site or cohort label |
+| `fastq` | yes | Path to an existing `.fastq.gz` / `.fq.gz` file |
+| `is_control` | yes | `true` for negative controls (used by Recentrifuge control mode), otherwise `false` |
+
+```csv
+sample,run_id,batch,site,fastq,is_control
+SAMPLE-01,RUN1,BATCH1,SITEA,/path/to/SAMPLE-01_run1.fastq.gz,false
+SAMPLE-01,RUN2,BATCH1,SITEA,/path/to/SAMPLE-01_run2.fastq.gz,false
+CONTROL-01,RUN1,BATCH1,SITEA,/path/to/CONTROL-01_run1.fastq.gz,true
+```
+
+Optional study metadata for MERIDIAN is a separate CSV passed with `--meridian_metadata`.
+
+---
+
+## 📤 Outputs
+
+Results are written under `--outdir`:
+
+| Directory | Contents |
+| --- | --- |
+| `preprocess/` | nanoq stats, host-free reads (`clean_reads/`), NanoPlot, seqkit stats |
+| `taxonomy/` | Kraken2 reports and per-read assignments, Bracken, combined reports, `bracken_arranged.csv`, Krona |
+| `contamination/` | `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.*` (when controls are present) |
+| `functional/` | per-sample ABRicate tables and `summary_reportClean.csv` |
+| `meridian/` | MERIDIAN `config.yaml`, `Datasets/`, `Figures/`, `Reports/` |
+| `multiqc/` | MultiQC report |
+| `pipeline_info/` | Nextflow reports, software versions, `database_manifest.tsv` |
+
+A file-by-file description is in [docs/output.md](docs/output.md).
+
+---
+
+## 🔗 MERIDIAN hand-off
+
+PNEUMA ends where [MERIDIAN](https://github.com/Julio92-C/meridian) begins. The `MERIDIAN`
+subworkflow rearranges the combined Kraken2/Bracken reports, the Recentrifuge table and the
+ABRicate summary into MERIDIAN's input layout, renders a `config.yaml` from
+[`assets/meridian_config.template.yaml`](assets/meridian_config.template.yaml) (checking the
+metadata against the samples), and runs MERIDIAN in the container
+`ghcr.io/julio92-c/meridian:v1.0.0`.
+
+| Parameter | Purpose |
+| --- | --- |
+| `--meridian_metadata` | study metadata CSV (one row per sample) |
+| `--meridian_group` | metadata column holding the comparison groups |
+| `--meridian_random_effect` | metadata column holding the repeated-measure / patient identifier |
+| `--meridian_study_id` | study label (default `pneuma`) |
+| `--skip_meridian` | stop after the PNEUMA stages |
+
+---
+
+## 🧭 Roadmap
+
+- [x] **Phase 1, core**: preprocess, taxonomy, contamination, functional reads, MERIDIAN hand-off, Myriad profile and database staging.
+- [ ] **Phase 2, pathogens**: priority-pathogen reconstruction (assembly, CheckM2, Bakta, MLST, AMR/VF/MGE pathogen report) and the WHO-priority respiratory panel (tiers 1, 2, 3, D) with a reservoir commensals list.
+- [ ] **Phase 3, validation**: regression tests, spike-ins and a full cohort.
+
+---
+
+## 🗂️ Repository layout
+
+```text
+main.nf, nextflow.config, nextflow_schema.json   entry point, defaults and parameter schema
+workflows/pneuma.nf                              top-level workflow
+subworkflows/local/                              preprocess, taxonomy, contamination, functional_reads, meridian
+modules/local/ , modules/nf-core/                pipeline-specific and nf-core modules
+conf/                                            profiles (test, myriad, containers) and publishDir rules
+bin/                                             helper scripts (prepare_databases.sh, read tagging, ABRicate merge, ...)
+assets/                                          samplesheet schema and examples, MERIDIAN config template
+docs/                                            usage, output, images (metro map, logos)
+tests/                                           nf-test files, pytest suite (tests/python), fixtures (tests/data)
+```
+
+---
+
+## 🤝 Contributing
+
+Development happens on feature branches; the pipeline follows nf-core conventions. See the
+[contributing guidelines](docs/CONTRIBUTING.md). Run the unit tests with:
+
+```bash
+pip install pytest && pytest tests/python -q
+nf-test test --profile docker
+```
+
+The tiny ABRicate fixture database in `tests/data/abricate_db/` was built with
+`abricate --setupdb` inside `quay.io/biocontainers/abricate:1.0.1--ha8f3691_1`. It must be
+regenerated if the ABRicate image is bumped (the BLAST index version can change). Fixture
+provenance is listed in [tests/data/README.md](tests/data/README.md).
+
+---
+
+## 📚 Citation
+
+Manuscript in preparation.
+
+Please also cite the tools used by the pipeline; they are listed with DOIs in
+[`CITATIONS.md`](CITATIONS.md). PNEUMA uses code and infrastructure from the
+[nf-core](https://nf-co.re) community, reused under the
+[MIT license](https://github.com/nf-core/tools/blob/main/LICENSE).
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+
+---
+
+## 📬 Contact
+
+👤 **Julio C. Ortega Cambara**
+
+🎓 PhD Candidate — Computational Bioinformatics
+
+🏛️ School of Biomedical Sciences, University of West London
+
+📍 St Mary's Rd, London W5 5RF
+
+✉️ Email: [32104617@student.uwl.ac.uk](mailto:32104617@student.uwl.ac.uk)
+
+---
+
+## 📜 License
+
+Released under the [MIT License](LICENSE).

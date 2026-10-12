@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 130" width="540" height="130" role="img" aria-label="PNEUMA, respiratory metagenomics pipeline">
+  <title>PNEUMA</title>
+  <g fill="none" stroke="#0072B2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 14 V56"/>
+    <path d="M60 56 L45 76"/>
+    <path d="M60 56 L75 76"/>
+    <path d="M50 52 C30 48 12 76 14 106 C16 122 38 124 48 110 C54 100 53 76 50 52 Z"/>
+    <path d="M70 52 C90 48 108 76 106 106 C104 122 82 124 72 110 C66 100 67 76 70 52 Z"/>
+  </g>
+  <g fill="none" stroke="#0072B2" stroke-width="3" stroke-linecap="round" opacity="0.7">
+    <path d="M122 50 q10 -8 20 0 t20 0"/>
+    <path d="M122 66 q10 -8 20 0 t20 0"/>
+  </g>
+  <text x="180" y="78" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="5" fill="#1f2328">PNEUMA</text>
+  <text x="182" y="108" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="16" letter-spacing="1" fill="#57606a">respiratory metagenomics pipeline</text>
+</svg>

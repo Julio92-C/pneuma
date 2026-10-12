@@ -2,18 +2,94 @@
 
 ## Introduction
 
-This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
+This document describes the output produced by PNEUMA. All paths are relative to the results directory given with `--outdir`. Directory names are fixed by `publishDir` rules in [`conf/modules.config`](../conf/modules.config); the rule applying to every other process is `<outdir>/<first word of the process name, lower-case>`.
 
-The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
-
-<!-- TODO nf-core: Write this documentation describing your workflow's output -->
+Per-sample file names start with the sample name from the samplesheet (`SAMPLE-01` below is a placeholder). Reads from several runs of the same sample are pooled before analysis, so there is one set of per-sample outputs per `sample`.
 
 ## Pipeline overview
 
-The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
+- [`preprocess/`](#preprocess): read QC, host removal
+- [`taxonomy/`](#taxonomy): Kraken2, Bracken, combined reports, Krona
+- [`contamination/`](#contamination): Recentrifuge
+- [`functional/`](#functional): ABRicate on taxid-tagged reads
+- [`meridian/`](#meridian): MERIDIAN config and results
+- [`multiqc/`](#multiqc)
+- [`pipeline_info/`](#pipeline-information)
 
-- [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
-- [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
+### Preprocess
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `preprocess/nanoq/`
+  - `<sample>.nanoq.stats`: read-length and quality summary from nanoq (published `*.stats` only).
+- `preprocess/clean_reads/`
+  - `<sample>.hostile.fastq.gz`: reads after host removal with Hostile; these feed the taxonomy stage.
+  - `<sample>.hostile.json`: Hostile run log (JSON).
+- `preprocess/nanoplot/<sample>/`: NanoPlot HTML report, plots and summary text files.
+- `preprocess/seqkit/`: `seqkit stats -T -a` tables.
+
+</details>
+
+Reads are optionally adapter-trimmed (`porechop_abi`, `--run_porechop`), filtered with nanoq (`--nanoq_min_length`, `--nanoq_min_qscore`) and depleted of host reads with Hostile. A sample with fewer than `--min_reads` reads after host removal is flagged `LOW_DEPTH` in the log and skipped by Bracken.
+
+### Taxonomy
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `taxonomy/kraken2/`
+  - `<sample>.report.txt`: Kraken2 report.
+  - `<sample>.classifiedreads.txt`: per-read Kraken2 assignments (also used by Recentrifuge).
+- `taxonomy/bracken/`: Bracken abundance tables and Bracken-style reports per sample (`-l`, `-t`, `-r` from `--bracken_level`, `--bracken_threshold`, `--bracken_read_length`).
+- `taxonomy/`
+  - `kraken2_combined_reports.txt`: KrakenTools-combined Kraken2 reports for all samples, arranged for MERIDIAN.
+  - `bracken_arranged.csv`: combined Bracken table arranged for MERIDIAN.
+- `taxonomy/krona/`: interactive Krona HTML charts.
+
+</details>
+
+Classification uses the Kraken2 PlusPF index (`--kraken2_db`, `--kraken2_confidence`); the NCBI taxdump (`--taxdump`) supplies lineages.
+
+### Contamination
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `contamination/`
+  - `pneuma.rcf.data.csv`: Recentrifuge per-taxon table across samples.
+  - `pneuma.rcf.html`: interactive Recentrifuge report (plain mode).
+  - `pneuma_controls.rcf.*`: control-mode report, written only when the samplesheet marks negative controls (`is_control = true`).
+
+</details>
+
+### Functional
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `functional/`
+  - `<sample>_abricate.csv`: ABRicate hits for the Kraken-tagged reads of one sample, searched against the databases in `--abricate_dbs` (default `card,vfdb,plasmidfinder`) at `--abricate_minid` / `--abricate_mincov` (default 80 / 80).
+  - `summary_reportClean.csv`: hits of all samples merged into one table.
+
+</details>
+
+The tagged read FASTA files that feed ABRicate are intermediate and not published.
+
+### MERIDIAN
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `meridian/`
+  - `config.yaml`: the MERIDIAN configuration generated from `assets/meridian_config.template.yaml`.
+  - `Datasets/`: tables produced by MERIDIAN.
+  - `Figures/`: figures produced by MERIDIAN.
+  - `Reports/`: the MERIDIAN HTML report.
+
+</details>
+
+Only produced when `--skip_meridian` is not set. See the [MERIDIAN repository](https://github.com/Julio92-C/meridian) for how to read these files.
 
 ### MultiQC
 
@@ -27,9 +103,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 </details>
 
-[MultiQC](http://multiqc.info) is a visualization tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.
-
-Results generated by MultiQC collate pipeline QC from supported tools e.g. FastQC. The pipeline has special steps which also allow the software versions to be reported in the MultiQC output for future traceability. For more information about how to use MultiQC reports, see <http://multiqc.info>.
+[MultiQC](http://multiqc.info) summarises the QC results of the preprocess stage and the software versions used by the run.
 
 ### Pipeline information
 
@@ -38,10 +112,14 @@ Results generated by MultiQC collate pipeline QC from supported tools e.g. FastQ
 
 - `pipeline_info/`
   - Reports generated by Nextflow: `execution_report.html`, `execution_timeline.html`, `execution_trace.txt` and `pipeline_dag.dot`/`pipeline_dag.svg`.
-  - Reports generated by the pipeline: `pipeline_report.html`, `pipeline_report.txt` and `software_versions.yml`. The `pipeline_report*` files will only be present if the `--email` / `--email_on_fail` parameter's are used when running the pipeline.
-  - Reformatted samplesheet files used as input to the pipeline: `samplesheet.valid.csv`.
-  - Parameters used by the pipeline run: `params.json`.
+  - `pneuma_software_mqc_versions.yml`: software versions of every process.
+  - `database_manifest.tsv`: name, version, path and sha256 of each reference database (only when `--database_manifest` is given).
+  - Reports generated by the pipeline: `pipeline_report.html`, `pipeline_report.txt`; present only if `--email` / `--email_on_fail` is used.
 
 </details>
 
-[Nextflow](https://docs.seqera.io/platform-cloud/reports/overview) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
+[Nextflow](https://docs.seqera.io/platform-cloud/reports/overview) generates reports useful for troubleshooting: launch commands, run times and resource usage.
+
+## Planned outputs
+
+Phase 2 (priority-pathogen reconstruction and the WHO-priority respiratory panel) will add a pathogen report directory; it does not exist yet.
