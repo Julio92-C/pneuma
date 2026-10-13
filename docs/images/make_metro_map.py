@@ -103,7 +103,7 @@ add(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" 
 add("<title>PNEUMA pipeline metro map</title>")
 add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal "
     "trunk (cat, Porechop_ABI, nanoq, NanoPlot, SeqKit stats, Hostile) reaches the "
-    "Kraken2 interchange, which branches into Abundance (Bracken, KrakenTools "
+    "Kraken2 interchange (a spur from the trunk ends at MultiQC, the QC report), which branches into Abundance (Bracken, KrakenTools "
     "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
     "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome "
     "reconstruction line. The first three merge at MERIDIAN for downstream "
@@ -119,6 +119,9 @@ MX = 1137                             # MERIDIAN interchange centre
 M0 = MX - 42                          # its left edge
 RX = 1245                             # Report terminus
 TX = 60                               # input terminus
+MQX = 322                             # MultiQC spur start on the trunk
+MQY = 150                             # MultiQC lane
+MQE = 500                             # MultiQC terminus
 
 # lines (drawn first, stations on top)
 line([(TX, Y0), (KX - 20, Y0)], C_QC)
@@ -137,6 +140,8 @@ line([(KX, Y0), (FX0, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
+# MultiQC spur (blue): leaves the QC trunk between NanoPlot and SeqKit stats
+line([(MQX, Y0), (MQX + Y0 - MQY, MQY), (MQE, MQY)], C_QC)
 # downstream (gold)
 line([(M0, Y0), (RX, Y0)], C_DS)
 # reconstruction (grey, dashed)
@@ -152,6 +157,11 @@ for name, x, kind, side in qc:
     text(x, ly, [name], size=12, weight="700")
 text(500, Y0 + 35, ["LOW_DEPTH flag"], size=10, fill=MUTED, style="italic")
 stage(100, Y0 - 44, "QC &amp; HOST REMOVAL")
+
+# MultiQC terminus
+terminus(MQE, MQY, C_QC)
+text(MQE, MQY - 20, ["MultiQC"], size=12, weight="700")
+text(MQE, MQY + 28, ["QC report"], size=10, fill=MUTED, style="italic")
 
 # input terminus
 terminus(TX, Y0)

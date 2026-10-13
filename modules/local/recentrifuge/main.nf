@@ -34,7 +34,7 @@ process RECENTRIFUGE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        recentrifuge: \$(rcf --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        recentrifuge: \$(rcf --version 2>&1 | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' | head -1)
     END_VERSIONS
     """
 }
