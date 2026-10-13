@@ -95,7 +95,7 @@ Run directly from GitHub (no clone needed). Pin a release tag with `-r` so the e
 code is recorded and the run is reproducible:
 
 ```bash
-nextflow pull Julio92-C/pneuma -r v0.1.0
+nextflow pull Julio92-C/pneuma -r v0.1.1
 ```
 
 Stage the databases once with [`bin/prepare_databases.sh`](bin/prepare_databases.sh). After
@@ -123,22 +123,22 @@ cd pneuma
 Check the installation with the bundled test profile (small public test data, MERIDIAN skipped):
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.1.0 -profile test,docker --outdir results_test
+nextflow run Julio92-C/pneuma -r v0.1.1 -profile test,docker --outdir results_test
 ```
 
 Run on your own data, choosing the profile `docker`, `singularity` or `myriad` (UCL HPC):
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.1.0 -profile <docker|singularity|myriad>   --input samplesheet.csv --outdir results   --kraken2_db <db> --taxdump <taxdump> --host_index <hostile_index>   --abricate_db <abricate_dir> --database_manifest <database_manifest.tsv>   --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column>   -resume
+nextflow run Julio92-C/pneuma -r v0.1.1 -profile <docker|singularity|myriad>   --input samplesheet.csv --outdir results   --kraken2_db <db> --taxdump <taxdump> --host_index <hostile_index>   --abricate_db <abricate_dir> --database_manifest <database_manifest.tsv>   --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column>   -resume
 ```
 
-Always pin `-r <tag>` (for example `-r v0.1.0`) for reproducibility; without it Nextflow runs the
+Always pin `-r <tag>` (for example `-r v0.1.1`) for reproducibility; without it Nextflow runs the
 default branch. `--input` and `--outdir` are always required, `--kraken2_db`, `--taxdump` and
 `--host_index` are required, and `--meridian_metadata` / `--meridian_group` are required unless you
 pass `--skip_meridian`. Pass pipeline parameters on the command line or with `-params-file`, not
 in a custom `-c` config. See [docs/usage.md](docs/usage.md) for the Myriad notes.
 
-From a development clone, replace `Julio92-C/pneuma -r v0.1.0` with `.`.
+From a development clone, replace `Julio92-C/pneuma -r v0.1.1` with `.`.
 
 **Database parameters.** `--abricate_db` is the *directory* that holds the ABRicate databases
 (the `<outdir>/abricate` folder written by `prepare_databases.sh`, containing `card/`, `vfdb/`

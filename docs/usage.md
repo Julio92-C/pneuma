@@ -4,7 +4,7 @@
 
 Fetch a pinned release and run the script from the Nextflow assets directory (pin `-r <tag>` for reproducibility):
 
-    nextflow pull Julio92-C/pneuma -r v0.1.0
+    nextflow pull Julio92-C/pneuma -r v0.1.1
     bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
 
 The script downloads the pinned Kraken2 PlusPF index and NCBI taxdump, fetches the Hostile
@@ -27,7 +27,7 @@ several flow cells gets several rows with the same `sample`; their reads are con
 
 ## 3. Run
 
-    nextflow run Julio92-C/pneuma -r v0.1.0 -profile <docker|singularity|myriad> \
+    nextflow run Julio92-C/pneuma -r v0.1.1 -profile <docker|singularity|myriad> \
       --input samplesheet.csv --outdir results \
       --kraken2_db ... --taxdump ... --host_index ... --abricate_db ... --database_manifest ... \
       --meridian_metadata metadata.csv --meridian_group sample_type --meridian_random_effect ID \
