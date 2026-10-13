@@ -33,6 +33,12 @@ several flow cells gets several rows with the same `sample`; their reads are con
       --meridian_metadata metadata.csv --meridian_group sample_type --meridian_random_effect ID \
       -resume
 
+On UCL Myriad use `-profile myriad` (and `-profile test,myriad` for the test): it enables
+Singularity and sets `singularity.cacheDir` to `~/Scratch/singularity_cache`. If you instead
+combine `singularity` with another profile (for example `-profile test,singularity`), Nextflow warns
+"Singularity cache directory has not been defined"; export `NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache`
+before running to avoid repeated image pulls.
+
 `--input` and `--outdir` are required; always pin `-r <tag>` for reproducibility. From a development
 clone use `nextflow run . -profile ...`.
 
@@ -46,6 +52,7 @@ When set, the directory is staged into each `ABRICATE_READS` task and passed as
 
 ## 4. Outputs
 
+- `multiqc/` `multiqc_report.html` (QC and software versions)
 - `preprocess/` nanoq stats, host-free reads, NanoPlot, seqkit stats
 - `taxonomy/` Kraken2 reports + per-read assignments, Bracken, `bracken_arranged.csv`, `kraken2_combined_reports.txt`, Krona
 - `contamination/` `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.html`
