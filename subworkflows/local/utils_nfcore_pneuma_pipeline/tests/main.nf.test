@@ -32,4 +32,120 @@ nextflow_workflow {
             assert cn[0].is_control == true
         }
     }
+
+    test("--db_dir alone satisfies the database requirements") {
+        when {
+            params {
+                outdir = "$outputDir"
+                db_dir = "${projectDir}/tests/data/db_dir"
+                kraken2_db = null
+                taxdump = null
+                host_index = null
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = false
+                input[2] = false
+                input[3] = []
+                input[4] = "$outputDir"
+                input[5] = "${projectDir}/assets/samplesheet_test.csv"
+                input[6] = false
+                input[7] = false
+                input[8] = false
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.samplesheet.size() == 3
+        }
+    }
+
+    test("analysis mode fails without kraken2_db/taxdump/host_index and no --db_dir") {
+        when {
+            params {
+                outdir = "$outputDir"
+                kraken2_db = null
+                taxdump = null
+                host_index = null
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = false
+                input[2] = false
+                input[3] = []
+                input[4] = "$outputDir"
+                input[5] = "${projectDir}/assets/samplesheet_test.csv"
+                input[6] = false
+                input[7] = false
+                input[8] = false
+                """
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).join('\n').contains('--kraken2_db is required')
+        }
+    }
+
+    test("--build_databases needs no samplesheet and emits none") {
+        when {
+            params {
+                build_databases = true
+                db_outdir = "$outputDir/db"
+                kraken_release = '20250402'
+                taxdump_month = '2025-04'
+                input = null
+                outdir = null
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = false
+                input[2] = false
+                input[3] = []
+                input[4] = "$outputDir/db"
+                input[5] = null
+                input[6] = false
+                input[7] = false
+                input[8] = false
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.samplesheet.size() == 0
+        }
+    }
+
+    test("--build_databases without a release fails with a clear message") {
+        when {
+            params {
+                build_databases = true
+                db_outdir = "$outputDir/db"
+                kraken_release = null
+                taxdump_month = '2025-04'
+                input = null
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = false
+                input[2] = false
+                input[3] = []
+                input[4] = "$outputDir/db"
+                input[5] = null
+                input[6] = false
+                input[7] = false
+                input[8] = false
+                """
+            }
+        }
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).join('\n').contains('--kraken_release YYYYMMDD is required')
+        }
+    }
 }

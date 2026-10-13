@@ -15,7 +15,7 @@ def test_dry_run_prints_pinned_urls(tmp_path):
     assert r.returncode == 0, r.stderr
     assert "https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_20250402.tar.gz" in r.stdout
     assert "taxdmp_2025-04-01.zip" in r.stdout
-    assert "hostile fetch --aligner minimap2 --name human-t2t-hla" in r.stdout
+    assert "hostile index fetch --name human-t2t-hla --minimap2" in r.stdout
     assert "hostile:2.0.2--pyhdfd78af_0" in r.stdout
 
 
@@ -144,7 +144,7 @@ def test_skip_kraken_and_taxdump_need_no_release_and_download_nothing(tmp_path):
     r = run("--outdir", str(tmp_path), "--skip-kraken", "--skip-taxdump", "--dry-run")
     assert r.returncode == 0, r.stderr
     assert "k2_pluspf" not in r.stdout and "taxdmp" not in r.stdout
-    assert "hostile fetch" in r.stdout and "abricate-get_db" in r.stdout
+    assert "hostile index fetch" in r.stdout and "abricate-get_db" in r.stdout
 
 
 def test_skip_all_dry_run_does_nothing_but_mkdir(tmp_path):

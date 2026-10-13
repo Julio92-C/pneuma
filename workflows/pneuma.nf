@@ -28,16 +28,17 @@ workflow PNEUMA {
     multiqc_logo
     multiqc_methods_description
     outdir
+    databases // map: kraken2_db, taxdump, host_index, abricate_db, database_manifest (see resolveDatabases)
 
     main:
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
 
-    PREPROCESS(ch_samplesheet, file(params.host_index, checkIfExists: true))
-    TAXONOMY(PREPROCESS.out.reads, params.kraken2_db)
-    CONTAMINATION(TAXONOMY.out.assignments, params.taxdump)
-    FUNCTIONAL_READS(TAXONOMY.out.classified)
+    PREPROCESS(ch_samplesheet, file(databases.host_index, checkIfExists: true))
+    TAXONOMY(PREPROCESS.out.reads, databases.kraken2_db)
+    CONTAMINATION(TAXONOMY.out.assignments, databases.taxdump)
+    FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
 
     ch_versions = ch_versions.mix(PREPROCESS.out.versions, TAXONOMY.out.versions,
                                   CONTAMINATION.out.versions, FUNCTIONAL_READS.out.versions)
@@ -54,8 +55,8 @@ workflow PNEUMA {
         ch_versions = ch_versions.mix(MERIDIAN.out.versions)
     }
 
-    if (params.database_manifest) {
-        channel.fromPath(params.database_manifest, checkIfExists: true)
+    if (databases.database_manifest) {
+        channel.fromPath(databases.database_manifest, checkIfExists: true)
             .collectFile(name: 'database_manifest.tsv', storeDir: "${outdir}/pipeline_info")
     }
 

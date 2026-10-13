@@ -10,10 +10,6 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": [
-                "input",
-                "outdir"
-            ],
             "properties": {
                 "input": {
                     "type": "string",
@@ -22,14 +18,14 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment. Required for an analysis run (not with --build_databases).",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "description": "The output directory where the results will be saved. Required for an analysis run (not with --build_databases). You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
                 "email": {
@@ -46,6 +42,70 @@
                 }
             }
         },
+        "database_options": {
+            "title": "Database options",
+            "type": "object",
+            "fa_icon": "fas fa-database",
+            "description": "Build the reference databases inside the pipeline (--build_databases) or reuse a folder built that way (--db_dir).",
+            "help_text": "`--build_databases --db_outdir <dir>` runs only the database download (no analysis, no --input) and publishes everything into `<dir>` together with `database_manifest.tsv`. Later runs pass `--db_dir <dir>` to fill --kraken2_db, --taxdump, --host_index, --abricate_db and --database_manifest from it; parameters given explicitly still override. nf-schema cannot express conditional requirements, so the dependencies between these parameters are checked at start-up in PIPELINE_INITIALISATION.",
+            "properties": {
+                "build_databases": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Download and prepare the databases into --db_outdir and exit; no analysis is run and --input is not needed.",
+                    "fa_icon": "fas fa-hammer"
+                },
+                "db_outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Directory that receives the prepared databases and database_manifest.tsv (required with --build_databases).",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "kraken_release": {
+                    "type": "string",
+                    "pattern": "^\\d{8}$",
+                    "description": "Kraken2 PlusPF release, YYYYMMDD (https://benlangmead.github.io/aws-indexes/k2). Required with --build_databases unless --skip_kraken_download.",
+                    "fa_icon": "fas fa-calendar"
+                },
+                "taxdump_month": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                    "description": "NCBI taxdump archive month, YYYY-MM (match the Kraken2 release month). Required with --build_databases unless --skip_taxdump_download.",
+                    "fa_icon": "fas fa-calendar"
+                },
+                "skip_kraken_download": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "With --build_databases: do not download Kraken2 PlusPF (no manifest row); pass your own --kraken2_db when analysing.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "skip_taxdump_download": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "With --build_databases: do not download the NCBI taxdump (no manifest row).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "skip_hostile_download": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "With --build_databases: do not fetch the Hostile index (no manifest row); pass your own --host_index when analysing.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "skip_abricate_download": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "With --build_databases: do not download the ABRicate databases (no manifest row).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "db_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Analysis mode: folder written by --build_databases. Fills --kraken2_db, --taxdump, --host_index, --abricate_db and --database_manifest that are not given explicitly.",
+                    "fa_icon": "fas fa-folder"
+                }
+            }
+        },
         "preprocessing_options": {
             "title": "Preprocessing options",
             "type": "object",
@@ -54,7 +114,7 @@
             "properties": {
                 "host_index": {
                     "type": "string",
-                    "description": "Host reference for Hostile: a FASTA or minimap2 .mmi index (local path or URL).",
+                    "description": "Host reference for Hostile: a FASTA or minimap2 .mmi index (local path or URL). Required unless it can be resolved from --db_dir.",
                     "format": "path",
                     "fa_icon": "fas fa-dna"
                 },
@@ -82,10 +142,7 @@
                     "description": "Samples with fewer reads after host removal are flagged LOW_DEPTH and skipped for Bracken.",
                     "minimum": 0
                 }
-            },
-            "required": [
-                "host_index"
-            ]
+            }
         },
         "taxonomy_options": {
             "title": "Taxonomy and contamination options",
@@ -95,13 +152,13 @@
             "properties": {
                 "kraken2_db": {
                     "type": "string",
-                    "description": "Kraken2 database: a directory or a .tar.gz archive (local path or URL).",
+                    "description": "Kraken2 database: a directory or a .tar.gz archive (local path or URL). Required unless it can be resolved from --db_dir.",
                     "format": "path",
                     "fa_icon": "fas fa-database"
                 },
                 "taxdump": {
                     "type": "string",
-                    "description": "NCBI taxonomy directory containing nodes.dmp and names.dmp, used by Recentrifuge.",
+                    "description": "NCBI taxonomy directory containing nodes.dmp and names.dmp, used by Recentrifuge. Required unless it can be resolved from --db_dir.",
                     "format": "directory-path",
                     "fa_icon": "fas fa-folder"
                 },
@@ -138,11 +195,7 @@
                     "description": "Read length matching a database<N>mers.kmer_distrib file in the Kraken2 database.",
                     "minimum": 1
                 }
-            },
-            "required": [
-                "kraken2_db",
-                "taxdump"
-            ]
+            }
         },
         "functional_options": {
             "title": "Functional profiling options",
@@ -159,7 +212,7 @@
                     "type": "string",
                     "format": "directory-path",
                     "exists": true,
-                    "description": "Directory of current ABRicate databases (card/, vfdb/, plasmidfinder/ subfolders), as written by bin/prepare_databases.sh to <outdir>/abricate. Passed to abricate as --datadir. Unset: use the databases bundled in the container (dated 2021-Mar-27).",
+                    "description": "Directory of current ABRicate databases (card/, vfdb/, plasmidfinder/ subfolders), as written by --build_databases (or bin/prepare_databases.sh) to <db_outdir>/abricate. Passed to abricate as --datadir. Unset: taken from --db_dir when present there, else the databases bundled in the container (dated 2021-Mar-27).",
                     "fa_icon": "fas fa-database"
                 },
                 "abricate_minid": {
@@ -221,7 +274,7 @@
             "properties": {
                 "database_manifest": {
                     "type": "string",
-                    "description": "Optional TSV describing database versions/checksums; copied to pipeline_info/database_manifest.tsv.",
+                    "description": "Optional TSV describing database versions/checksums; copied to pipeline_info/database_manifest.tsv. Taken from --db_dir when unset.",
                     "format": "file-path",
                     "exists": true
                 }
@@ -391,6 +444,9 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/database_options"
         },
         {
             "$ref": "#/$defs/preprocessing_options"

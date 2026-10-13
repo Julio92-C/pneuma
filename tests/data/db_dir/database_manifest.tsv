@@ -1,0 +1,7 @@
+name	version	path	sha256
+kraken2_pluspf	20250402	/db/kraken2_pluspf_20250402	ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb
+ncbi_taxdump	2025-04	/db/taxdump_2025-04	0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f
+hostile_index	human-t2t-hla	/db/hostile/human-t2t-hla.mmi	a3a5e715f0cc574a73c3f9bebb6bc24f32ffd5b67b387244c2c909da779a1478
+abricate_card	2025-Jan-01	/db/abricate/card	8d74beec1be996322ad76813bafb92d40839895d6dd7ee808b17ca201eac98be
+abricate_vfdb	2025-Jan-01	/db/abricate/vfdb	a2bbdb2de53523b8099b37013f251546f3d65dbe7a0774fa41af0a4176992fd4
+abricate_plasmidfinder	2025-Jan-01	/db/abricate/plasmidfinder	092fcfbbcfca3b5be7ae1b5e58538e92c35ab273ae13664fed0d67484c8e78a6

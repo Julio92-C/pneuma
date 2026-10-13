@@ -5,10 +5,11 @@ include { ABRICATE_MERGE } from '../../../modules/local/abricate_merge/main'
 workflow FUNCTIONAL_READS {
     take:
     ch_classified   // [ meta, classified.fastq.gz ]
+    abricate_db     // string: directory of current ABRicate databases, or null = databases bundled in the container
 
     main:
     TAG_READS(ch_classified)
-    ch_abricate_db = params.abricate_db ? channel.value(file(params.abricate_db, checkIfExists: true, type: 'dir')) : channel.value([])
+    ch_abricate_db = abricate_db ? channel.value(file(abricate_db, checkIfExists: true, type: 'dir')) : channel.value([])
     ABRICATE_READS(TAG_READS.out.fasta, ch_abricate_db)
     ABRICATE_MERGE(ABRICATE_READS.out.csv.map { _meta, csv -> csv }.collect())
 

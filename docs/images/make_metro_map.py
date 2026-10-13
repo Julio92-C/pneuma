@@ -20,6 +20,7 @@ FONT = "Helvetica, Arial, sans-serif"
 
 C_QC, C_AB, C_CO = "#0072B2", "#009E73", "#D55E00"
 C_FN, C_DS = "#9B3FA8", "#D4A017"
+C_DB = "#8C5A2B"            # database mode (separate run)
 
 W, H = 1300, 460
 LW = 6                      # line width
@@ -107,7 +108,9 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
     "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome "
     "reconstruction line. The first three merge at MERIDIAN for downstream "
-    "analysis and the Report.</desc>")
+    "analysis and the Report. A separate brown Databases line (run with "
+    "--build_databases, no samplesheet) downloads Kraken2 PlusPF, the NCBI taxdump, "
+    "the Hostile index and the ABRicate databases and ends at database_manifest.tsv.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
 text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
@@ -144,6 +147,9 @@ line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
 line([(MQX, Y0), (MQX + Y0 - MQY, MQY), (MQE, MQY)], C_QC)
 # downstream (gold)
 line([(M0, Y0), (RX, Y0)], C_DS)
+# database mode (brown): separate run, --build_databases
+DBY, DBS, DBE = 342, 100, 590
+line([(DBS, DBY), (DBE, DBY)], C_DB)
 # reconstruction (grey, dashed)
 xr = 650
 line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1100, YR)], GREY, dashed=True)
@@ -213,13 +219,24 @@ terminus(1100, YR, GREY)
 text(1100, YR - 20, ["Pathogen report"], size=12, weight="400", fill=MUTED)
 stage(745, YR + 28, "METAGENOME RECONSTRUCTION (PLANNED)")
 
+# ---------------------------------------------------------------- database mode
+terminus(DBS, DBY, C_DB)
+for name, x, side in [("Kraken2 PlusPF", 180, -1), ("NCBI taxdump", 280, 1),
+                      ("Hostile index", 380, -1), ("ABRicate DBs", 480, 1)]:
+    station(x, DBY)
+    text(x, DBY - 14 if side < 0 else DBY + 22, [name], size=12, weight="700")
+terminus(DBE, DBY, C_DB)
+text(DBE, DBY - 20, ["database_manifest.tsv"], size=12, weight="700")
+stage(DBS, DBY - 34, "DATABASES (--build_databases, SEPARATE RUN)")
+
 # ---------------------------------------------------------------- legend
 LY = 402
 stage(30, LY - 18, "LEGEND")
 lines_leg = [("QC &amp; taxonomy", C_QC, False), ("Abundance", C_AB, False),
              ("Contamination", C_CO, False), ("Functional (AMR / VF / MGE)", C_FN, False),
-             ("Downstream", C_DS, False), ("Planned", GREY, True)]
-xs = [30, 190, 320, 470, 700, 840]
+             ("Downstream", C_DS, False), ("Planned", GREY, True),
+             ("Databases (--build_databases)", C_DB, False)]
+xs = [30, 190, 320, 470, 700, 840, 960]
 for (lab, col, dashed), x in zip(lines_leg, xs):
     dash = ' stroke-dasharray="8 6"' if dashed else ""
     add(f'<line x1="{x}" y1="{LY}" x2="{x + 34}" y2="{LY}" stroke="{col}" '
