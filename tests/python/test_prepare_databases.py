@@ -132,3 +132,46 @@ def test_missing_hostile_index_fails(tmp_path):
     r = run("--outdir", str(tmp_path / "db"), *ARGS, env=env)
     assert r.returncode != 0
     assert "human-t2t-hla" in r.stderr
+
+
+def test_help_prints_usage_and_exits_zero():
+    r = run("--help")
+    assert r.returncode == 0
+    assert "--skip-kraken" in r.stdout and "Usage" in r.stdout
+
+
+def test_skip_kraken_and_taxdump_need_no_release_and_download_nothing(tmp_path):
+    r = run("--outdir", str(tmp_path), "--skip-kraken", "--skip-taxdump", "--dry-run")
+    assert r.returncode == 0, r.stderr
+    assert "k2_pluspf" not in r.stdout and "taxdmp" not in r.stdout
+    assert "hostile fetch" in r.stdout and "abricate-get_db" in r.stdout
+
+
+def test_skip_all_dry_run_does_nothing_but_mkdir(tmp_path):
+    r = run("--outdir", str(tmp_path), "--skip-kraken", "--skip-taxdump",
+            "--skip-hostile", "--skip-abricate", "--dry-run")
+    assert r.returncode == 0, r.stderr
+    assert "wget" not in r.stdout and "hostile" not in r.stdout and "abricate" not in r.stdout
+
+
+def test_skipped_databases_are_omitted_from_manifest_and_params(tmp_path):
+    env, _ = _mock_env(tmp_path)
+    out = tmp_path / "db"
+    r = run("--outdir", str(out), "--skip-kraken", "--skip-taxdump", env=env)
+    assert r.returncode == 0, r.stderr
+    rows = [l.split("\t") for l in (out / "database_manifest.tsv").read_text().splitlines()]
+    names = {row[0] for row in rows[1:]}
+    assert names == {"hostile_index", "abricate_card", "abricate_vfdb", "abricate_plasmidfinder"}
+    assert "--kraken2_db" not in r.stdout and "--taxdump" not in r.stdout
+    assert "--host_index" in r.stdout and "--database_manifest" in r.stdout
+
+
+def test_skip_hostile_and_abricate_keeps_kraken_and_taxdump(tmp_path):
+    env, _ = _mock_env(tmp_path)
+    out = tmp_path / "db"
+    r = run("--outdir", str(out), *ARGS, "--skip-hostile", "--skip-abricate", env=env)
+    assert r.returncode == 0, r.stderr
+    rows = [l.split("\t") for l in (out / "database_manifest.tsv").read_text().splitlines()]
+    assert {row[0] for row in rows[1:]} == {"kraken2_pluspf", "ncbi_taxdump"}
+    assert "--host_index" not in r.stdout and "--abricate_db" not in r.stdout
+    assert not (tmp_path / "calls.log").exists()

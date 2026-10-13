@@ -99,15 +99,30 @@ nextflow pull Julio92-C/pneuma -r v0.1.1
 ```
 
 Stage the databases once with [`bin/prepare_databases.sh`](bin/prepare_databases.sh). After
-`nextflow pull` the script is at `~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh`:
+`nextflow pull` the script is at `~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh`.
+On Myriad use Scratch, not your home directory (the home quota is small):
 
 ```bash
-bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh   --outdir ~/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
+bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
 ```
 
 It prints the `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and
-`--database_manifest` parameters to reuse. See [docs/usage.md](docs/usage.md) for details and
-for the UCL Myriad notes.
+`--database_manifest` parameters to reuse. Run it with `--help` for all options. See
+[docs/usage.md](docs/usage.md) for a Myriad job script, for reusing databases you already have
+(`--skip-kraken`, `--skip-taxdump`, `--skip-hostile`, `--skip-abricate`) and for the UCL Myriad notes.
+
+**Database sizes** (approximate; Kraken2 PlusPF figures from the
+[Kraken2 index list](https://benlangmead.github.io/aws-indexes/k2), the rest from the download URLs):
+
+| Database | Download | Disk after setup | Needed at run time |
+| --- | --- | --- | --- |
+| Kraken2 PlusPF (`--kraken2_db`) | 85 GB (`.tar.gz`) | 110 GB index (+ 85 GB tarball, deletable once extracted) | about 110 GB RAM (the index is loaded into memory; the `myriad` profile requests 110 GB) |
+| NCBI taxdump (`--taxdump`) | 70 MB | under 1 GB | negligible |
+| Hostile `human-t2t-hla` (`--host_index`) | 1 GB | a few GB (minimap2 index built locally) | a few GB |
+| ABRicate `card`, `vfdb`, `plasmidfinder` (`--abricate_db`) | tens of MB | under 1 GB | negligible |
+
+Plan for about 200 GB of free space while the script runs (about 115 GB once the Kraken2
+tarball is removed).
 
 **For development**, clone the repository instead:
 

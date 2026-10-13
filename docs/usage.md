@@ -1,6 +1,6 @@
 # PNEUMA usage
 
-## 1. Stage databases (once, on Myriad login node)
+## 1. Stage databases (once)
 
 Fetch a pinned release and run the script from the Nextflow assets directory (pin `-r <tag>` for reproducibility):
 
@@ -18,6 +18,63 @@ It writes `database_manifest.tsv` (`name`, `version`, `path`, `sha256`) with one
 database; for ABRicate the version is the database date and the sha256 is that of its
 `sequences` file. Copy the five `--param` lines it prints (`--kraken2_db`, `--taxdump`,
 `--host_index`, `--abricate_db`, `--database_manifest`). Use `--dry-run` to print the commands only. From a development clone use `bin/prepare_databases.sh` directly.
+
+Use `~/Scratch/...` on Myriad: the home quota is too small for the Kraken2 index. Run
+`prepare_databases.sh --help` for all options.
+
+### Sizes and memory
+
+| Database | Download | Disk after setup | Needed at run time |
+| --- | --- | --- | --- |
+| Kraken2 PlusPF | 85 GB (`.tar.gz`) | 110 GB (+ 85 GB tarball, deletable once extracted) | about 110 GB RAM |
+| NCBI taxdump | 70 MB | under 1 GB | negligible |
+| Hostile `human-t2t-hla` | 1 GB | a few GB | a few GB |
+| ABRicate (3 DBs) | tens of MB | under 1 GB | negligible |
+
+Sizes are approximate (Kraken2 figures from the Kraken2 index list for PlusPF, others from the
+download URLs). Kraken2 loads the whole index into RAM, so it needs about the index size; the
+`myriad` profile requests 110 GB for `KRAKEN2_KRAKEN2`, which matches PlusPF. Budget about 200 GB
+of free disk while the script runs.
+
+### Myriad job script for the download
+
+The script needs little CPU or RAM but a lot of time and disk. Example (adjust the time, `-wd`
+and the dates; `tmpfs` is the node-local scratch):
+
+    #!/bin/bash -l
+    #$ -N pneuma_db
+    #$ -l h_rt=12:00:00
+    #$ -l mem=4G
+    #$ -l tmpfs=20G
+    #$ -pe smp 1
+    #$ -wd /home/<user>/Scratch/pneuma_db_logs
+    module load singularity-env   # or whatever provides singularity on your system
+    export NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache
+    bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh       --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
+
+If compute nodes have no outbound internet, run the script on a login node inside `tmux` or
+`screen` instead (so it survives a dropped connection), then use the printed parameters.
+
+### Reusing an existing database
+
+`--kraken2_db` takes a directory containing `hash.k2d`, `opts.k2d` and `taxo.k2d`. Bracken also
+needs `database<READLEN>mers.kmer_distrib` in that directory, where `<READLEN>` matches
+`--bracken_read_length` (default `300`); if your database only has other read lengths, set
+`--bracken_read_length` to one of them (or build the file with `bracken-build`).
+
+To fetch only the databases you do not have, skip the others. Skipped databases are not
+downloaded, are left out of `database_manifest.tsv`, and no parameter line is printed for them;
+pass your own path for them on the `nextflow run` command line. For example, with an existing
+Kraken2 database:
+
+    bash ~/.nextflow/assets/Julio92-C/pneuma/bin/prepare_databases.sh       --outdir ~/Scratch/pneuma_db --skip-kraken --taxdump-month <YYYY-MM>
+    # then: --kraken2_db /path/to/existing/kraken2_db  plus the printed --taxdump, --host_index,
+    #       --abricate_db and --database_manifest
+
+(The manifest then lacks a Kraken2 row; add one by hand with the `name`, `version`, `path`,
+`sha256` columns if you want it recorded.) The other switches are `--skip-taxdump`,
+`--skip-hostile` and `--skip-abricate`; `--kraken-release` / `--taxdump-month` are only required
+for databases that are not skipped.
 
 ## 2. Samplesheet
 
