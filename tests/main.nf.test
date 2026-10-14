@@ -11,6 +11,9 @@ nextflow_pipeline {
                    '#perc,tot_all,CNF0-0001,EBF0-0001,SPF0-0001,taxid,name'
             assert path("$outputDir/taxonomy/kraken2_combined_reports.txt").exists()
             assert path("$outputDir/contamination/pneuma.rcf.data.csv").exists()
+            // Recentrifuge sample names must be bare ids (no kraken/ prefix, no .kraken2.classifiedreads suffix)
+            def rcfTable = new File("$outputDir/multiqc/multiqc_data/multiqc_recentrifuge_table.txt").readLines()
+            assert rcfTable.drop(1).collect { it.split('\t')[0] }.toSet() == ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].toSet()
             assert path("$outputDir/functional/summary_reportClean.csv").readLines()[0].startsWith('#FILE')
             assert path("$outputDir/multiqc/multiqc_report.html").exists()
         }

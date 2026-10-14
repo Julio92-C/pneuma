@@ -206,6 +206,8 @@ def readDatabaseManifest(manifest) {
         def c = line.split('\t', -1)
         if (c.size() >= 4) {
             rows[c[0]] = [version: c[1], path: c[2], sha256: c[3]]
+        } else {
+            log.warn "Ignoring malformed row in ${manifest} (expected 4 tab-separated columns, found ${c.size()}): '${line}'"
         }
     }
     return rows
@@ -271,6 +273,9 @@ def resolveDatabases(p) {
         }
         def manifestFile = root.resolve('database_manifest.tsv')
         def manifest = manifestFile.exists() ? readDatabaseManifest(manifestFile) : [:]
+        if (!manifestFile.exists()) {
+            log.warn "No database_manifest.tsv in --db_dir '${p.db_dir}': database versions cannot be recorded and the newest matching directories are picked by name"
+        }
         def hint = "Pass the parameter explicitly or rebuild with --build_databases."
 
         if (!res.database_manifest && manifestFile.exists()) {
@@ -318,6 +323,9 @@ def resolveDatabases(p) {
             } else {
                 res.abricate_db = adir.toString()
             }
+        }
+        if (!res.abricate_db && !root.resolve('abricate').isDirectory()) {
+            log.warn "No abricate/ folder in --db_dir '${p.db_dir}' and no --abricate_db: ABRicate will use the databases bundled in the container (2021-Mar-27)"
         }
     }
 

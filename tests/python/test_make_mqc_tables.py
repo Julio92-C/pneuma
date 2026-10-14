@@ -96,3 +96,84 @@ def test_main_writes_all_custom_content_files(tmp_path):
 def test_main_without_inputs_writes_nothing(tmp_path):
     mqc.main(["--outdir", str(tmp_path / "o")])
     assert list((tmp_path / "o").iterdir()) == []
+
+
+# --- failure visibility -------------------------------------------------------
+
+def test_bad_hostile_json_warns_and_fails(tmp_path, capsys):
+    bad = tmp_path / "S1.hostile.json"
+    bad.write_text("{not json")
+    rc = mqc.main(["--hostile", str(bad), "--outdir", str(tmp_path / "o")])
+    err = capsys.readouterr().err
+    assert "WARNING: %s not parsed: invalid JSON" % bad in err
+    assert rc == 1
+
+
+def test_hostile_without_reads_in_warns_and_fails(tmp_path, capsys):
+    f = tmp_path / "S1.hostile.json"
+    f.write_text('[{"version": "2.0.2"}]')
+    rc = mqc.main(["--hostile", str(f), "--outdir", str(tmp_path / "o")])
+    assert "WARNING: %s not parsed: no reads_in" % f in capsys.readouterr().err
+    assert rc == 1
+
+
+def test_empty_kraken_report_warns_and_fails(tmp_path, capsys):
+    f = tmp_path / "S1.kraken2.report.txt"
+    f.write_text("")
+    rc = mqc.main(["--kraken", str(f), "--outdir", str(tmp_path / "o")])
+    assert "WARNING: %s not parsed: empty" % f in capsys.readouterr().err
+    assert rc == 1
+
+
+def test_stub_hostile_json_is_not_an_error(tmp_path, capsys):
+    stub = tmp_path / "S1.hostile.json"
+    stub.write_text("{}")
+    rc = mqc.main(["--hostile", str(stub), "--outdir", str(tmp_path / "o")])
+    assert rc == 0
+    assert "WARNING" not in capsys.readouterr().err
+
+
+def test_partial_failure_warns_but_succeeds(tmp_path, capsys):
+    good = _hostile(tmp_path / "S1.hostile.json", 100, 90)
+    bad = tmp_path / "S2.hostile.json"
+    bad.write_text("oops")
+    rc = mqc.main(["--hostile", str(good), str(bad), "--outdir", str(tmp_path / "o")])
+    assert rc == 0
+    assert "S2.hostile.json not parsed" in capsys.readouterr().err
+    assert (tmp_path / "o" / "hostile_mqc.tsv").exists()
+
+
+# --- Recentrifuge sample names (real Myriad shape, anonymised IDs) -------------
+
+RCF_STAT = (
+    ",kraken/S1.kraken2.classifiedreads,kraken/S2.kraken2.classifiedreads,"
+    "kraken/S3.kraken2.classifiedreads,kraken/CTRL1.kraken2.classifiedreads\n"
+    "Seqs. read,21076.0,6204.0,4855.0,186528.0\n"
+    "Seqs. unclass.,20000.0,6000.0,4800.0,186000.0\n"
+    "Seqs. class.,1076.0,204.0,55.0,528.0\n"
+    "Seqs. filtered,7344.0\n"
+)
+
+
+def test_parse_rcf_stat_real_shape_names_and_short_row(tmp_path):
+    f = tmp_path / "pneuma_controls.rcf.stat.csv"
+    f.write_text(RCF_STAT)
+    data = mqc.parse_rcf_stat(f)
+    assert list(data) == ["S1", "S2", "S3", "CTRL1"]
+    assert data["CTRL1"]["Seqs. read"] == 186528.0
+    assert data["S1"]["Seqs. filtered"] == 7344.0
+    assert "Seqs. filtered" not in data["S2"]
+
+
+def test_strip_directory_and_classifiedreads_suffixes():
+    for raw in ("kraken/S1.kraken2.classifiedreads", "kraken/S1.kraken2.classifiedreads.txt",
+                "S1.classifiedreads", "a/b/S1.classifiedreads.txt", "kraken\\S1.kraken2.classifiedreads"):
+        assert mqc.sample_name(raw, mqc.RCF_SUFFIXES) == "S1"
+
+
+def test_zero_byte_abricate_csv_warns_and_fails(tmp_path, capsys):
+    f = tmp_path / "S1_abricate.csv"
+    f.write_text("")
+    rc = mqc.main(["--abricate", str(f), "--outdir", str(tmp_path / "o")])
+    assert "WARNING: %s not parsed: empty file" % f in capsys.readouterr().err
+    assert rc == 1

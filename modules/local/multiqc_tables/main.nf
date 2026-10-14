@@ -9,7 +9,7 @@ process MULTIQC_TABLES {
     path rcf_stat       // pneuma_controls.rcf.stat.csv (optional: [] when there are no controls)
 
     output:
-    path "*_mqc.tsv"   , emit: tables, optional: true
+    path "*_mqc.tsv"   , emit: tables
     path "versions.yml", emit: versions
 
     script:

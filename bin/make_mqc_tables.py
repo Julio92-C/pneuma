@@ -28,10 +28,29 @@ ABRICATE_DBS = ("card", "vfdb", "plasmidfinder")
 
 
 def _strip(name, suffixes):
+    """Drop any directory prefix (POSIX or Windows) and the first matching suffix."""
+    name = name.replace("\\", "/").rsplit("/", 1)[-1]
     for suffix in suffixes:
         if name.endswith(suffix):
             return name[: -len(suffix)]
     return os.path.splitext(name)[0]
+
+
+RCF_SUFFIXES = (".kraken2.classifiedreads.txt", ".classifiedreads.txt",
+                ".kraken2.classifiedreads", ".classifiedreads")
+
+
+def _warn(path, reason):
+    print("WARNING: %s not parsed: %s" % (path, reason), file=sys.stderr)
+
+
+def _is_stub(path):
+    """True for the empty `{}` placeholder JSON written by stub runs."""
+    try:
+        with open(str(path)) as fh:
+            return json.load(fh) == {}
+    except (OSError, ValueError):
+        return False
 
 
 def sample_name(path, suffixes):
@@ -51,10 +70,13 @@ def parse_hostile(paths):
         with open(path) as fh:
             try:
                 doc = json.load(fh)
-            except ValueError:
+            except ValueError as exc:
+                _warn(path, "invalid JSON (%s)" % exc)
                 continue
         records = [r for r in (doc if isinstance(doc, list) else [doc]) if isinstance(r, dict)]
         if not any("reads_in" in r for r in records):
+            if doc != {}:
+                _warn(path, "no reads_in field")
             continue
         reads_in = sum(int(r.get("reads_in", 0)) for r in records)
         reads_out = sum(int(r.get("reads_out", 0)) for r in records)
@@ -70,15 +92,20 @@ def parse_kraken(paths):
     data = OrderedDict()
     for path in sorted(str(p) for p in paths):
         unclassified = classified = 0
+        seen = False
         with open(path) as fh:
             for line in fh:
                 f = line.rstrip("\n").split("\t")
                 if len(f) < 6 or not f[1].strip().isdigit():
                     continue
+                seen = True
                 if f[3].strip() == "U":
                     unclassified = int(f[1])
                 elif f[3].strip() == "R" and f[5].strip() == "root":
                     classified = int(f[1])
+        if not seen:
+            _warn(path, "empty or unrecognised Kraken2 report")
+            continue
         total = unclassified + classified
         data[sample_name(path, (".kraken2.report.txt", ".report.txt", ".txt"))] = OrderedDict(
             unclassified=unclassified, classified=classified,
@@ -92,6 +119,9 @@ def parse_abricate(paths, dbs=ABRICATE_DBS):
     for path in sorted(str(p) for p in paths):
         per_db = Counter()
         genes = set()
+        if os.path.getsize(path) == 0:
+            _warn(path, "empty file (no ABRicate header)")
+            continue
         with open(path, newline="") as fh:
             header = None
             for row in csv.reader(fh):
@@ -120,11 +150,13 @@ def parse_rcf_stat(path):
     with open(str(path), newline="") as fh:
         rows = [r for r in csv.reader(fh) if r]
     if len(rows) < 2:
+        _warn(path, "no statistics rows")
         return data
-    names = [sample_name(c, (".kraken2.classifiedreads", ".classifiedreads")) for c in rows[0][1:]]
+    names = [sample_name(c, RCF_SUFFIXES) for c in rows[0][1:]]
     for name in names:
         data[name] = OrderedDict()
     for row in rows[1:]:
+        # short/ragged rows (e.g. "Seqs. filtered,7344.0") only fill the leading samples
         for name, value in zip(names, row[1:]):
             try:
                 data[name][row[0]] = float(value)
@@ -272,8 +304,14 @@ def main(argv=None):
     def out(name):
         return os.path.join(args.outdir, name)
 
+    failed = []
+
     hostile = parse_hostile(args.hostile)
+    if args.hostile and not hostile and not all(_is_stub(p) for p in args.hostile):
+        failed.append("--hostile")
     kraken = parse_kraken(args.kraken)
+    if args.kraken and not kraken:
+        failed.append("--kraken")
     if hostile or kraken:
         write_general_stats(out("pneuma_general_stats_mqc.tsv"), hostile, kraken)
         written.append("pneuma_general_stats_mqc.tsv")
@@ -281,14 +319,24 @@ def main(argv=None):
         write_hostile(out("hostile_mqc.tsv"), hostile)
         written.append("hostile_mqc.tsv")
     if args.abricate:
-        write_abricate(out("abricate_mqc.tsv"), parse_abricate(args.abricate))
-        written.append("abricate_mqc.tsv")
+        abricate = parse_abricate(args.abricate)
+        if abricate:
+            write_abricate(out("abricate_mqc.tsv"), abricate)
+            written.append("abricate_mqc.tsv")
+        else:
+            failed.append("--abricate")
     rcf = parse_rcf_stat(args.rcf_stat[0]) if args.rcf_stat else {}
     if rcf:
         write_rcf(out("recentrifuge_mqc.tsv"), rcf)
         written.append("recentrifuge_mqc.tsv")
+    elif args.rcf_stat:
+        failed.append("--rcf-stat")
     print("wrote: " + (", ".join(written) or "nothing"), file=sys.stderr)
+    if failed:
+        print("ERROR: no rows could be built from: " + ", ".join(failed), file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

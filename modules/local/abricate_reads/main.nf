@@ -27,6 +27,9 @@ process ABRICATE_READS {
             first=0
         done
         rm -f abricate_*.tmp.csv
+    else
+        # no tagged reads: still write the single ABRicate header line (header only = no hits)
+        echo '#FILE,SEQUENCE,START,END,STRAND,GENE,COVERAGE,COVERAGE_MAP,GAPS,%COVERAGE,%IDENTITY,DATABASE,ACCESSION,PRODUCT,RESISTANCE' >> ${meta.id}_abricate.csv
     fi
 
     cat <<-END_VERSIONS > versions.yml
