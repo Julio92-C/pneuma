@@ -17,11 +17,16 @@ process ABRICATE_READS {
     """
     : > ${meta.id}_abricate.csv
     if [ -s ${fasta} ]; then
+        first=1
         for db in ${dbs.join(' ')}; do
             abricate ${fasta} --db \$db ${datadir} \
                 --minid ${params.abricate_minid} --mincov ${params.abricate_mincov} \
-                --threads ${task.cpus} --csv >> ${meta.id}_abricate.csv
+                --threads ${task.cpus} --csv > abricate_\$db.tmp.csv
+            # each ABRicate call prints its own header: keep only the first one
+            if [ \$first -eq 1 ]; then cat abricate_\$db.tmp.csv; else tail -n +2 abricate_\$db.tmp.csv; fi >> ${meta.id}_abricate.csv
+            first=0
         done
+        rm -f abricate_*.tmp.csv
     fi
 
     cat <<-END_VERSIONS > versions.yml

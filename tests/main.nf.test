@@ -15,4 +15,69 @@ nextflow_pipeline {
             assert path("$outputDir/multiqc/multiqc_report.html").exists()
         }
     }
+
+    test("MultiQC summarises the whole pipeline") {
+        when { params { outdir = "$outputDir" } }
+        then {
+            assert workflow.success
+            def data = "$outputDir/multiqc/multiqc_data"
+            def report = new File("$outputDir/multiqc/multiqc_report.html").text
+
+            // QC -> host removal -> taxonomy -> contamination -> functional: each stage has a section
+            // (table ids of MultiQC modules and of the custom-content tables built by bin/make_mqc_tables.py)
+            ['multiqc_nanostat.txt',               // NanoPlot NanoStats.txt
+             'multiqc_seqkit_stats.txt',           // SeqKit stats
+             'multiqc_nanoq.txt',                  // nanoq
+             'multiqc_hostile_table.txt',          // Hostile (custom content)
+             'multiqc_kraken_kraken.txt',          // Kraken2
+             'multiqc_bracken_bracken.txt',        // Bracken
+             'multiqc_recentrifuge_table.txt',     // Recentrifuge (custom content; test samplesheet has a control)
+             'multiqc_abricate_hits_table.txt',    // ABRicate (custom content)
+             'multiqc_software_versions.txt'].each { f ->
+                assert new File("$data/$f").exists() : "missing MultiQC data file ${f}"
+            }
+            ['nanostat', 'seqkit', 'nanoq', 'hostile', 'kraken', 'bracken', 'recentrifuge_stats', 'abricate_hits'].each { id ->
+                assert report.contains("mqc-section-${id}") : "missing MultiQC section ${id}"
+            }
+
+            // sections follow the pipeline flow
+            def order = ['nanostat', 'hostile', 'kraken', 'recentrifuge_stats', 'abricate_hits']
+                .collect { id -> report.indexOf("id=\"mqc-section-wrapper-${id}") }
+            assert order.every { i -> i > 0 }
+            assert order == order.sort(false)
+
+            // top-level General Statistics columns
+            def general = new File("$data/multiqc_general_stats.txt").readLines()[0]
+            ['reads_after_qc', 'pct_host_removed', 'pct_classified'].each { col ->
+                assert general.contains(col) : "General Statistics lacks ${col}"
+            }
+
+            // one NanoStats row per sample (colliding NanoStats.txt names used to drop samples)
+            def nano = new File("$data/multiqc_nanostat.txt").readLines()
+            assert nano.size() == 4   // header + 3 samples
+
+            // hostile and ABRicate tables list every sample
+            ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].each { s ->
+                assert new File("$data/multiqc_hostile_table.txt").text.contains(s)
+                assert new File("$data/multiqc_abricate_hits_table.txt").text.contains(s)
+            }
+        }
+    }
+
+    test("published layout has no stray folders and single-header ABRicate tables") {
+        when { params { outdir = "$outputDir" } }
+        then {
+            assert workflow.success
+            def top = new File("$outputDir").listFiles().findAll { f -> f.isDirectory() }.collect { f -> f.name }.sort()
+            assert top == ['contamination', 'functional', 'multiqc', 'pipeline_info', 'preprocess', 'taxonomy']
+            assert path("$outputDir/taxonomy/krona").exists()
+            ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].each { s ->
+                def lines = path("$outputDir/functional/${s}_abricate.csv").readLines()
+                assert lines.count { l -> l.startsWith('#FILE') } == 1
+                assert lines[0].startsWith('#FILE')
+            }
+            def merged = path("$outputDir/functional/summary_reportClean.csv").readLines()
+            assert merged.count { l -> l.startsWith('#FILE') } == 1
+        }
+    }
 }

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - In-pipeline database mode: `--build_databases --db_outdir <dir>` runs only the new `PREPARE_DATABASES` subworkflow (no `--input`, no analysis). It downloads Kraken2 PlusPF (`--kraken_release`), the NCBI taxdump (`--taxdump_month`), the Hostile `human-t2t-hla` index and the ABRicate `card`, `vfdb` and `plasmidfinder` databases, each in a pinned container, publishes them to `--db_outdir` (copy) and writes `database_manifest.tsv` (`name`, `version`, `path`, `sha256`; fails on an empty sha256 or date). `--skip_kraken_download`, `--skip_taxdump_download`, `--skip_hostile_download` and `--skip_abricate_download` leave a database out.
 - `--db_dir <dir>` for analysis runs: fills `--taxdump`, `--host_index`, `--abricate_db`, `--database_manifest` and `--kraken2_db` from a folder built by `--build_databases` (or `bin/prepare_databases.sh`). Explicit parameters still override; the required files are validated with clear errors.
+- MultiQC now summarises the whole pipeline in the order QC -> host removal -> taxonomy -> contamination -> functional: NanoStat, SeqKit stats, nanoq, Porechop (with `--run_porechop`), Kraken2 and Bracken sections, plus custom-content tables for Hostile (reads in/out, % host removed), Recentrifuge (`pneuma_controls.rcf.stat.csv`) and ABRicate (hits per sample and database). The General Statistics table gets `Reads after QC`, `% Host removed` and `% Classified` columns. Tables are built by the new `bin/make_mqc_tables.py` (process `MULTIQC_TABLES`, also published to `multiqc/custom_tables/`) with pytest and nf-test coverage.
 - `bin/build_database_manifest.py`, modules `PREPARE_KRAKEN2_DB`, `PREPARE_TAXDUMP`, `PREPARE_HOSTILE_INDEX`, `PREPARE_ABRICATE_DB`, `DATABASE_MANIFEST`, with `-stub` blocks; nf-test and pytest coverage; database mode on the metro map.
 
 ### `Changed`
@@ -18,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- KrakenTools `kreport2krona` outputs were published to a stray top-level `krakentools/` folder. They are now intermediate (not published); every process in `conf/modules.config` was checked, and the same fix applies to `CAT_FASTQ` (`cat/`) and `UNTAR` (`untar/`, the unpacked Kraken2 database). `PORECHOP_ABI` now publishes only its log, to `preprocess/porechop_abi/`. An nf-test asserts the published top-level folders.
+- Per-sample `functional/<sample>_abricate.csv` repeated the header once per database; it now has a single header (`summary_reportClean.csv` is unchanged).
+- NanoPlot wrote an identically named `NanoStats.txt` for every sample, so MultiQC saw only one sample; the files are now named `<sample>.NanoStats.txt`. nanoq runs with `-vv` so that its report is parseable by MultiQC.
 - `hostile fetch` no longer exists in Hostile 2.0.2 (the pinned version); `bin/prepare_databases.sh` now calls `hostile index fetch --name human-t2t-hla --minimap2`.
 
 ### `Known issues`

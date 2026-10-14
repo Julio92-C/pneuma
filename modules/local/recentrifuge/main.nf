@@ -11,6 +11,7 @@ process RECENTRIFUGE {
     path "pneuma.rcf.data.csv"   , emit: csv
     path "pneuma.rcf.html"       , emit: html
     path "pneuma_controls.rcf.*" , emit: controls_html, optional: true
+    path "pneuma_controls.rcf.stat.csv", emit: stat, optional: true
     path "versions.yml"          , emit: versions
 
     script:

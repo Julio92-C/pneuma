@@ -171,7 +171,7 @@ When set (or taken from `--db_dir`), the directory is staged into each `ABRICATE
 
 ## 4. Outputs
 
-- `multiqc/` `multiqc_report.html` (QC and software versions)
+- `multiqc/` `multiqc_report.html` (QC, host removal, taxonomy, contamination, ABRicate hits and software versions)
 - `preprocess/` nanoq stats, host-free reads, NanoPlot, seqkit stats
 - `taxonomy/` Kraken2 reports + per-read assignments, Bracken, `bracken_arranged.csv`, `kraken2_combined_reports.txt`, Krona
 - `contamination/` `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.html`

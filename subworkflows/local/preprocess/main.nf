@@ -28,6 +28,7 @@ workflow PREPROCESS {
     if (params.run_porechop) {
         PORECHOP_ABI(ch_merged, [])
         ch_merged   = PORECHOP_ABI.out.reads
+        ch_multiqc  = ch_multiqc.mix(PORECHOP_ABI.out.log.map { _meta, f -> f })
     }
 
     NANOQ(ch_merged, 'fastq.gz')
@@ -37,7 +38,8 @@ workflow PREPROCESS {
 
     NANOPLOT(HOSTILE_CLEAN.out.reads)
     SEQKIT_STATS(HOSTILE_CLEAN.out.reads)
-    ch_multiqc  = ch_multiqc.mix(NANOPLOT.out.txt.collect { _meta, f -> f }, NANOQ.out.stats.collect { _meta, f -> f })
+    ch_multiqc  = ch_multiqc.mix(NANOPLOT.out.txt.collect { _meta, f -> f }, NANOQ.out.stats.collect { _meta, f -> f },
+                                 SEQKIT_STATS.out.stats.collect { _meta, f -> f })
 
     // seqkit stats -T: header + one row; column 3 (0-based) = num_seqs
     ch_counts = SEQKIT_STATS.out.stats.map { meta, tsv ->
@@ -58,5 +60,6 @@ workflow PREPROCESS {
     emit:
     reads    = ch_clean
     multiqc  = ch_multiqc
+    hostile_log = HOSTILE_CLEAN.out.log.map { _meta, f -> f }   // Hostile JSON logs, for the MultiQC tables
     versions = ch_versions
 }
