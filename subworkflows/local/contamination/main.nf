@@ -13,6 +13,7 @@ workflow CONTAMINATION {
 
     emit:
     rcf_csv  = RECENTRIFUGE.out.csv
+    rcf_stat = RECENTRIFUGE.out.stat.ifEmpty([])   // [] when there are no negative controls
     html     = RECENTRIFUGE.out.html.mix(RECENTRIFUGE.out.controls_html)
     versions = RECENTRIFUGE.out.versions
 }

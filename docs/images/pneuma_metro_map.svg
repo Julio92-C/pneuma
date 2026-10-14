@@ -1,101 +1,117 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 460" width="1300" height="460" role="img" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 610" width="1400" height="610" role="img" font-family="Helvetica, Arial, sans-serif">
 <title>PNEUMA pipeline metro map</title>
-<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal trunk (cat, Porechop_ABI, nanoq, NanoPlot, SeqKit stats, Hostile) reaches the Kraken2 interchange (a spur from the trunk ends at MultiQC, the QC report), which branches into Abundance (Bracken, KrakenTools combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome reconstruction line. The first three merge at MERIDIAN for downstream analysis and the Report.</desc>
-<rect x="1" y="1" width="1298" height="458" rx="18" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
-<text x="30" y="42" text-anchor="start" font-size="18" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="30" dy="0">PNEUMA: ONT metagenomics for low-biomass respiratory samples</tspan></text>
-<path d="M60 232 L565 232" fill="none" stroke="#0072B2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M585 232 L636.0 232.0 Q650 232 659.9 222.1 L754.1 127.9 Q764 118 778.0 118.0 L961.0 118.0 Q975 118 984.9 127.9 L1079.1 222.1 Q1089 232 1103.0 232.0 L1095 232" fill="none" stroke="#009E73" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M585 232 L676.0 232.0 Q690 232 699.9 222.1 L742.1 179.9 Q752 170 766.0 170.0 L981.0 170.0 Q995 170 1004.9 179.9 L1047.1 222.1 Q1057 232 1071.0 232.0 L1095 232" fill="none" stroke="#D55E00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M585 232 L880 232" fill="none" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M880 232 L900.1 211.9 Q910 202 924.0 202.0 L1026.0 202.0 Q1040 202 1049.9 211.9 L1070 232" fill="none" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M880 232 L900.1 252.1 Q910 262 924.0 262.0 L1026.0 262.0 Q1040 262 1049.9 252.1 L1070 232" fill="none" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M880 232 L1056.0 232.0 Q1070 232 1084.0 232.0 L1095 232" fill="none" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M322 232 L394.1 159.9 Q404 150 418.0 150.0 L500 150" fill="none" stroke="#0072B2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M1095 232 L1245 232" fill="none" stroke="#D4A017" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M585 232 L636.0 232.0 Q650 232 659.9 241.9 L730.1 312.1 Q740 322 754.0 322.0 L1100 322" fill="none" stroke="#8c959f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
-<circle cx="130" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="130" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="130" dy="0">cat</tspan></text>
-<circle cx="204" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="204" y="254" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="204" dy="0">Porechop_ABI</tspan></text>
-<circle cx="278" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="278" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="278" dy="0">nanoq</tspan></text>
-<circle cx="352" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="352" y="254" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="352" dy="0">NanoPlot</tspan></text>
-<circle cx="426" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="426" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="426" dy="0">SeqKit stats</tspan></text>
-<circle cx="500" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="500" y="254" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="500" dy="0">Hostile</tspan></text>
-<text x="500" y="267" text-anchor="middle" font-size="10" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="500" dy="0">LOW_DEPTH flag</tspan></text>
-<text x="100" y="188" text-anchor="start" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="100" dy="0">QC &amp; HOST REMOVAL</tspan></text>
-<circle cx="500" cy="150" r="9" fill="#ffffff" stroke="#0072B2" stroke-width="3"/>
-<circle cx="500" cy="150" r="3.5" fill="#0072B2"/>
-<text x="500" y="130" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="500" dy="0">MultiQC</tspan></text>
-<text x="500" y="178" text-anchor="middle" font-size="10" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="500" dy="0">QC report</tspan></text>
-<circle cx="60" cy="232" r="9" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
-<circle cx="60" cy="232" r="3.5" fill="#1f2328"/>
-<text x="24" y="260" text-anchor="start" font-size="11" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="24" dy="0">samplesheet +</tspan><tspan x="24" dy="13">ONT FASTQ</tspan><tspan x="24" dy="13">(multi-run pooling)</tspan></text>
-<rect x="543" y="220" width="84" height="24" rx="12" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
-<text x="585" y="212" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="585" dy="0">Kraken2 (PlusPF)</tspan></text>
-<text x="585" y="188" text-anchor="middle" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="585" dy="0">TAXONOMY</tspan></text>
-<circle cx="810" cy="118" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="810" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="810" dy="0">Bracken</tspan></text>
-<circle cx="880" cy="118" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="880" y="91" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="880" dy="0">KrakenTools</tspan><tspan x="880" dy="13">combine</tspan></text>
-<circle cx="950" cy="118" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="950" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="950" dy="0">Krona</tspan></text>
-<text x="782" y="138" text-anchor="start" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="782" dy="0">ABUNDANCE</tspan></text>
-<circle cx="810" cy="170" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="810" y="156" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="810" dy="0">Recentrifuge</tspan></text>
-<text x="866" y="158" text-anchor="start" font-size="10" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="866" dy="0">negative-control aware</tspan></text>
-<text x="765" y="190" text-anchor="start" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="765" dy="0">CONTAMINATION</tspan></text>
-<circle cx="770" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="770" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="770" dy="0">Tag reads</tspan></text>
-<circle cx="850" cy="232" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="850" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="850" dy="0">ABRicate</tspan></text>
-<circle cx="975" cy="202" r="5.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="975" y="190" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="975" dy="0">CARD</tspan></text>
-<circle cx="975" cy="232" r="5.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="975" y="220" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="975" dy="0">VFDB</tspan></text>
-<circle cx="975" cy="262" r="5.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="975" y="282" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="975" dy="0">PlasmidFinder</tspan></text>
-<text x="745" y="260" text-anchor="start" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="745" dy="0">FUNCTIONAL</tspan></text>
-<rect x="1095" y="220" width="84" height="24" rx="12" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
-<text x="1137" y="212" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1137" dy="0">MERIDIAN</tspan></text>
-<circle cx="1245" cy="232" r="9" fill="#ffffff" stroke="#D4A017" stroke-width="3"/>
-<circle cx="1245" cy="232" r="3.5" fill="#D4A017"/>
-<text x="1245" y="212" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1245" dy="0">Report</tspan></text>
-<text x="1137" y="264" text-anchor="middle" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1137" dy="0">DOWNSTREAM</tspan></text>
-<circle cx="800" cy="322" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="800" y="295" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="800" dy="0">binning /</tspan><tspan x="800" dy="13">assembly</tspan></text>
-<circle cx="880" cy="322" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="880" y="308" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="880" dy="0">CheckM2</tspan></text>
-<circle cx="950" cy="322" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="950" y="308" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="950" dy="0">Bakta</tspan></text>
-<circle cx="1015" cy="322" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="1015" y="308" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1015" dy="0">MLST</tspan></text>
-<circle cx="1100" cy="322" r="9" fill="#ffffff" stroke="#8c959f" stroke-width="3"/>
-<circle cx="1100" cy="322" r="3.5" fill="#8c959f"/>
-<text x="1100" y="302" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1100" dy="0">Pathogen report</tspan></text>
-<text x="745" y="350" text-anchor="start" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="745" dy="0">METAGENOME RECONSTRUCTION (PLANNED)</tspan></text>
-<text x="30" y="384" text-anchor="start" font-size="9.5" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="30" dy="0">LEGEND</tspan></text>
-<line x1="30" y1="402" x2="64" y2="402" stroke="#0072B2" stroke-width="6" stroke-linecap="round"/>
-<text x="74" y="406" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="74" dy="0">QC &amp; taxonomy</tspan></text>
-<line x1="190" y1="402" x2="224" y2="402" stroke="#009E73" stroke-width="6" stroke-linecap="round"/>
-<text x="234" y="406" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="234" dy="0">Abundance</tspan></text>
-<line x1="320" y1="402" x2="354" y2="402" stroke="#D55E00" stroke-width="6" stroke-linecap="round"/>
-<text x="364" y="406" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="364" dy="0">Contamination</tspan></text>
-<line x1="470" y1="402" x2="504" y2="402" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round"/>
-<text x="514" y="406" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="514" dy="0">Functional (AMR / VF / MGE)</tspan></text>
-<line x1="700" y1="402" x2="734" y2="402" stroke="#D4A017" stroke-width="6" stroke-linecap="round"/>
-<text x="744" y="406" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="744" dy="0">Downstream</tspan></text>
-<line x1="840" y1="402" x2="874" y2="402" stroke="#8c959f" stroke-width="6" stroke-linecap="round" stroke-dasharray="8 6"/>
-<text x="884" y="406" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="884" dy="0">Planned</tspan></text>
-<circle cx="38" cy="434" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
-<text x="54" y="438" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="54" dy="0">Process</tspan></text>
-<circle cx="158" cy="434" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="174" y="438" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="174" dy="0">Optional step</tspan></text>
-<circle cx="308" cy="434" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
-<text x="324" y="438" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="324" dy="0">Planned step</tspan></text>
-<rect x="472" y="422" width="44" height="24" rx="12" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
-<text x="526" y="438" text-anchor="start" font-size="12" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="526" dy="0">Interchange</tspan></text>
+<desc>Tube-map overview of the PNEUMA pipeline in six stage columns. A blue QC and host removal trunk (cat, Porechop_ABI, nanoq, NanoPlot, SeqKit stats, Hostile) reaches the Kraken2 interchange, which branches into Abundance (Bracken, KrakenTools combine, Krona), Contamination (Recentrifuge, negative-control aware) and Functional profiling (Tag reads, ABRicate with CARD, VFDB and PlasmidFinder). The three tracks converge on the MERIDIAN interchange and the Report. A grey dashed planned line (assembly, CheckM2, Bakta, MLST, Pathogen report) also leaves Kraken2. A thin MultiQC bus along the bottom collects QC, Kraken2/Bracken, Recentrifuge and ABRicate outputs into the QC report. Reference databases are built with --build_databases or supplied with --db_dir.</desc>
+<rect x="1" y="1" width="1398" height="608" rx="18" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<text x="30" y="42" text-anchor="start" font-size="20" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="30" dy="0">PNEUMA: ONT metagenomics for low-biomass respiratory samples</tspan></text>
+<rect x="15" y="70" width="545" height="445" fill="#eceff3" opacity="0.55"/>
+<line x1="560" y1="70" x2="560" y2="515" stroke="#d0d7de" stroke-width="1" opacity="0.7"/>
+<rect x="700" y="70" width="265" height="445" fill="#eceff3" opacity="0.55"/>
+<line x1="700" y1="70" x2="700" y2="515" stroke="#d0d7de" stroke-width="1" opacity="0.7"/>
+<line x1="965" y1="70" x2="965" y2="515" stroke="#d0d7de" stroke-width="1" opacity="0.7"/>
+<rect x="1090" y="70" width="165" height="445" fill="#eceff3" opacity="0.55"/>
+<line x1="1090" y1="70" x2="1090" y2="515" stroke="#d0d7de" stroke-width="1" opacity="0.7"/>
+<line x1="1255" y1="70" x2="1255" y2="515" stroke="#d0d7de" stroke-width="1" opacity="0.7"/>
+<text x="287.5" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="287.5" dy="0">QC &amp; HOST REMOVAL</tspan></text>
+<text x="630.0" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="630.0" dy="0">TAXONOMY</tspan></text>
+<text x="832.5" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="832.5" dy="0">ABUNDANCE</tspan></text>
+<text x="1027.5" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1027.5" dy="0">CONTAMINATION</tspan></text>
+<text x="1172.5" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1172.5" dy="0">FUNCTIONAL</tspan></text>
+<text x="1320.0" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="#57606a" letter-spacing="1.2" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1320.0" dy="0">DOWNSTREAM</tspan></text>
+<path d="M45 205 L625 205" fill="none" stroke="#0072B2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M625 205 L1276 205" fill="none" stroke="#009E73" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M625 205 L641.0 205.0 Q655 205 664.9 214.9 L840.1 390.1 Q850 400 864.0 400.0 L1330 400" fill="none" stroke="#8c959f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
+<path d="M625 205 L641.0 205.0 Q655 205 664.9 214.9 L775.1 325.1 Q785 335 799.0 335.0 L1276 335" fill="none" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M625 205 L641.0 205.0 Q655 205 664.9 214.9 L710.1 260.1 Q720 270 734.0 270.0 L1276 270" fill="none" stroke="#D55E00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1290 205 L1362 205" fill="none" stroke="#D4A017" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M280 468 L1290 468" fill="none" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="45" cy="205" r="9" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+<circle cx="45" cy="205" r="3.5" fill="#1f2328"/>
+<text x="20" y="233" text-anchor="start" font-size="12" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="20" dy="0">samplesheet +</tspan><tspan x="20" dy="15">ONT FASTQ</tspan></text>
+<circle cx="125" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="125" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="125" dy="0">cat</tspan></text>
+<circle cx="205" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="205" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="205" dy="0">Porechop_ABI</tspan></text>
+<circle cx="285" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="285" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="285" dy="0">nanoq</tspan></text>
+<line x1="285" y1="213" x2="285" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="285" cy="468" r="3.5" fill="#8c959f"/>
+<circle cx="365" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="365" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="365" dy="0">NanoPlot</tspan></text>
+<line x1="365" y1="213" x2="365" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="365" cy="468" r="3.5" fill="#8c959f"/>
+<circle cx="445" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="445" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="445" dy="0">SeqKit</tspan><tspan x="445" dy="15">stats</tspan></text>
+<line x1="445" y1="213" x2="445" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="445" cy="468" r="3.5" fill="#8c959f"/>
+<circle cx="525" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="525" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="525" dy="0">Hostile</tspan></text>
+<line x1="525" y1="213" x2="525" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="525" cy="468" r="3.5" fill="#8c959f"/>
+<text x="525" y="171" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="525" dy="0">LOW_DEPTH flag</tspan></text>
+<rect x="575" y="193" width="100" height="24" rx="12" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+<text x="625" y="165" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="625" dy="0">Kraken2</tspan><tspan x="625" dy="15">(PlusPF)</tspan></text>
+<line x1="625" y1="213" x2="625" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="625" cy="468" r="3.5" fill="#8c959f"/>
+<circle cx="760" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="760" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="760" dy="0">Bracken</tspan></text>
+<circle cx="850" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="850" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="850" dy="0">KrakenTools</tspan><tspan x="850" dy="15">combine</tspan></text>
+<circle cx="940" cy="205" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="940" y="189" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="940" dy="0">Krona</tspan></text>
+<circle cx="1025" cy="270" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="1025" y="254" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1025" dy="0">Recentrifuge</tspan></text>
+<text x="1025" y="236" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1025" dy="0">negative-control aware</tspan></text>
+<line x1="1025" y1="278" x2="1025" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="1025" cy="468" r="3.5" fill="#8c959f"/>
+<circle cx="1135" cy="335" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="1135" y="319" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1135" dy="0">Tag reads</tspan></text>
+<circle cx="1205" cy="335" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="1205" y="319" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1205" dy="0">ABRicate</tspan></text>
+<text x="1170" y="299" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1170" dy="0">CARD · VFDB · PlasmidFinder</tspan></text>
+<line x1="1205" y1="343" x2="1205" y2="468" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="1205" cy="468" r="3.5" fill="#8c959f"/>
+<rect x="1276" y="191" width="28" height="158" rx="14" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+<text x="1290" y="181" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1290" dy="0">MERIDIAN</tspan></text>
+<circle cx="1362" cy="205" r="9" fill="#ffffff" stroke="#D4A017" stroke-width="3"/>
+<circle cx="1362" cy="205" r="3.5" fill="#D4A017"/>
+<text x="1362" y="181" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1362" dy="0">Report</tspan></text>
+<circle cx="905" cy="400" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="905" y="369" text-anchor="middle" font-size="13" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="905" dy="0">binning /</tspan><tspan x="905" dy="15">assembly</tspan></text>
+<circle cx="975" cy="400" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="975" y="384" text-anchor="middle" font-size="13" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="975" dy="0">CheckM2</tspan></text>
+<circle cx="1085" cy="400" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="1085" y="384" text-anchor="middle" font-size="13" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1085" dy="0">Bakta</tspan></text>
+<circle cx="1150" cy="400" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="1150" y="384" text-anchor="middle" font-size="13" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1150" dy="0">MLST</tspan></text>
+<circle cx="1330" cy="400" r="9" fill="#ffffff" stroke="#8c959f" stroke-width="3"/>
+<circle cx="1330" cy="400" r="3.5" fill="#8c959f"/>
+<text x="1330" y="376" text-anchor="middle" font-size="13" font-weight="400" fill="#57606a" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1330" dy="0">Pathogen report</tspan></text>
+<text x="1085" y="426" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1085" dy="0">planned</tspan></text>
+<circle cx="1290" cy="468" r="9" fill="#ffffff" stroke="#8c959f" stroke-width="3"/>
+<circle cx="1290" cy="468" r="3.5" fill="#8c959f"/>
+<text x="1290" y="496" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1290" dy="0">MultiQC</tspan></text>
+<text x="1290" y="512" text-anchor="middle" font-size="12" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1290" dy="0">QC report (all stages)</tspan></text>
+<line x1="30" y1="552" x2="64" y2="552" stroke="#0072B2" stroke-width="6" stroke-linecap="round"/>
+<text x="74" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="74" dy="0">QC &amp; taxonomy</tspan></text>
+<line x1="198" y1="552" x2="232" y2="552" stroke="#009E73" stroke-width="6" stroke-linecap="round"/>
+<text x="242" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="242" dy="0">Abundance</tspan></text>
+<line x1="337" y1="552" x2="371" y2="552" stroke="#D55E00" stroke-width="6" stroke-linecap="round"/>
+<text x="381" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="381" dy="0">Contamination</tspan></text>
+<line x1="505" y1="552" x2="539" y2="552" stroke="#9B3FA8" stroke-width="6" stroke-linecap="round"/>
+<text x="549" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="549" dy="0">Functional (AMR / VF / MGE)</tspan></text>
+<line x1="776" y1="552" x2="810" y2="552" stroke="#D4A017" stroke-width="6" stroke-linecap="round"/>
+<text x="820" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="820" dy="0">Downstream</tspan></text>
+<line x1="923" y1="552" x2="957" y2="552" stroke="#8c959f" stroke-width="6" stroke-linecap="round" stroke-dasharray="8 6"/>
+<text x="967" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="967" dy="0">Planned</tspan></text>
+<line x1="1048" y1="552" x2="1082" y2="552" stroke="#8c959f" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1092" y="557" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="1092" dy="0">MultiQC bus</tspan></text>
+<circle cx="38" cy="584" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5"/>
+<text x="54" y="589" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="54" dy="0">Process</tspan></text>
+<circle cx="147" cy="584" r="6.5" fill="#ffffff" stroke="#1f2328" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="163" y="589" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="163" dy="0">Optional step</tspan></text>
+<circle cx="299" cy="584" r="6.5" fill="#f6f8fa" stroke="#8c959f" stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>
+<text x="315" y="589" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="315" dy="0">Planned step</tspan></text>
+<rect x="438" y="572" width="44" height="24" rx="12" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+<text x="492" y="589" text-anchor="start" font-size="13" font-weight="400" fill="#1f2328" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="492" dy="0">Interchange</tspan></text>
+<text x="612" y="589" text-anchor="start" font-size="12" font-weight="400" fill="#57606a" font-style="italic" stroke="#f6f8fa" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round"><tspan x="612" dy="0">Databases: --build_databases to download, or --db_dir to reuse</tspan></text>
 </svg>

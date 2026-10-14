@@ -104,6 +104,7 @@ workflow TAXONOMY {
     classified       = KRAKEN2_KRAKEN2.out.classified_reads_fastq
     assignments      = KRAKEN2_KRAKEN2.out.classified_reads_assignment
     reports          = KRAKEN2_KRAKEN2.out.report
+    bracken_reports  = BRACKEN_BRACKEN.out.txt
     kraken_combined  = ARRANGE_REPORTS.out.kraken
     bracken_arranged = ARRANGE_REPORTS.out.bracken
     versions         = ch_versions

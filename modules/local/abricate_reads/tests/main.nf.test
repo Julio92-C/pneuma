@@ -3,7 +3,7 @@ nextflow_process {
     script "../main.nf"
     process "ABRICATE_READS"
 
-    test("empty fasta gives empty csv") {
+    test("empty fasta gives a header-only csv") {
         when {
             params { abricate_dbs = 'card,vfdb,plasmidfinder'; abricate_minid = 80; abricate_mincov = 80 }
             process {
@@ -15,7 +15,9 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert path(process.out.csv[0][1]).text == ''
+            def lines = path(process.out.csv[0][1]).readLines()
+            assert lines.size() == 1
+            assert lines[0].startsWith('#FILE,SEQUENCE')
         }
     }
 

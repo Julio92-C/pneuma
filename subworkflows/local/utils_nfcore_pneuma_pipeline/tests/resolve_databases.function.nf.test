@@ -1,0 +1,96 @@
+nextflow_function {
+    name "Test resolveDatabases (--db_dir resolution)"
+    script "../main.nf"
+    function "resolveDatabases"
+
+    test("fills every database parameter from --db_dir") {
+        when {
+            function {
+                """
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            def r = function.result
+            def root = "${projectDir}/tests/data/db_dir"
+            assert r.kraken2_db == "$root/kraken2_pluspf_20250402"
+            assert r.taxdump == "$root/taxdump_2025-04"
+            assert r.host_index == "$root/hostile/human-t2t-hla.mmi"
+            assert r.abricate_db == "$root/abricate"
+            assert r.database_manifest == "$root/database_manifest.tsv"
+        }
+    }
+
+    test("explicit parameters override --db_dir") {
+        when {
+            function {
+                """
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder',
+                             kraken2_db: '/my/existing/kraken2', host_index: '/my/own_host.fasta' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            def r = function.result
+            assert r.kraken2_db == '/my/existing/kraken2'
+            assert r.host_index == '/my/own_host.fasta'
+            assert r.taxdump == "${projectDir}/tests/data/db_dir/taxdump_2025-04"
+        }
+    }
+
+    test("no --db_dir: explicit parameters are passed through, abricate_db and manifest stay unset") {
+        when {
+            function {
+                """
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fa', abricate_dbs: 'card' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.kraken2_db == '/k'
+            assert function.result.abricate_db == null
+            assert function.result.database_manifest == null
+        }
+    }
+
+    test("kraken2_db and taxdump are required when not resolvable") {
+        when {
+            function {
+                """
+                input[0] = [ host_index: '/h.fa', abricate_dbs: 'card' ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+            assert function.stdout.join('\n').contains('--kraken2_db is required')
+            assert function.stdout.join('\n').contains('--taxdump is required')
+        }
+    }
+
+    test("an incomplete --db_dir gives a clear error naming the missing files") {
+        when {
+            function {
+                """
+                def d = new File("$outputDir/broken_db")
+                new File(d, 'kraken2_pluspf_20250402').mkdirs()
+                new File(d, 'kraken2_pluspf_20250402/hash.k2d').text = 'x'
+                new File(d, 'taxdump_2025-04').mkdirs()
+                new File(d, 'taxdump_2025-04/nodes.dmp').text = 'x'
+                input[0] = [ db_dir: d.toString(), abricate_dbs: 'card,vfdb,plasmidfinder' ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+            def err = function.stdout.join('\n')
+            assert err.contains('opts.k2d, taxo.k2d')
+            assert err.contains('names.dmp')
+            assert err.contains('--host_index')
+        }
+    }
+}
