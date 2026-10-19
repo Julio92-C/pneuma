@@ -24,9 +24,19 @@ process MERIDIAN_RUN {
     # Configure renv to avoid sandbox activation in unwritable HOME (Singularity on HPC clusters)
     export RENV_CONFIG_SANDBOX_ENABLED=FALSE
     export RENV_PATHS_ROOT="\$PWD/.renv_root"
-    export R_PROFILE_USER=/opt/meridian/.Rprofile
     unset R_LIBS R_LIBS_USER R_LIBS_SITE R_ENVIRON_USER
-    ( cd /opt/meridian && Rscript run_pipeline.R "\$OLDPWD/run_config.yaml" )
+    # MERIDIAN renders templates/report.qmd in place and writes Rplots.pdf to the cwd, so it needs a
+    # writable repo root, but /opt/meridian is root-owned (docker runs as the host uid) or read-only
+    # (Singularity). Work in a copy of the code and symlink the ~1 GB renv library read-only.
+    SRC="\$PWD/meridian_src"
+    mkdir -p "\$SRC"
+    for f in /opt/meridian/* /opt/meridian/.[!.]*; do
+        [ "\$(basename "\$f")" = renv ] || cp -a "\$f" "\$SRC/"
+    done
+    ln -s /opt/meridian/renv "\$SRC/renv"
+    export R_PROFILE_USER="\$SRC/.Rprofile"
+    ( cd "\$SRC" && Rscript run_pipeline.R "\$OLDPWD/run_config.yaml" )
+    rm -rf "\$SRC"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
