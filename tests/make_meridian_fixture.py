@@ -489,11 +489,12 @@ def write_abricate(species_counts, rng, path):
 
 
 def write_metadata(path):
-    rows = ["sample,group,ID"]
+    # `batch` is a second, partly crossed grouping column (two comparisons in the integration test)
+    rows = ["sample,group,ID,batch"]
     for i in range(1, 9):
         s = f"S{i:02d}"
-        rows.append(f"{s},{GROUP[s]},P{i:02d}")
-    rows.append("CTRL1,Control,CTRL")
+        rows.append(f"{s},{GROUP[s]},P{i:02d},{'B1' if i % 2 else 'B2'}")
+    rows.append("CTRL1,Control,CTRL,B1")
     _w(path, "\n".join(rows) + "\n")
 
 

@@ -82,8 +82,9 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
 <details markdown="1">
 <summary>Output files</summary>
 
-- `meridian/`
-  - `config.yaml`: the MERIDIAN configuration generated from `assets/meridian_config.template.yaml`.
+- `meridian/inputs/pneuma.rcf.meridian.csv`: the Recentrifuge table trimmed for MERIDIAN (shared by all comparisons).
+- `meridian/<group>/`: one directory per column listed in `--meridian_group` (a single column gives a single directory)
+  - `config.yaml`: the MERIDIAN configuration generated from `assets/meridian_config.template.yaml` (study id `<--meridian_study_id>_<group>`).
   - `Datasets/`: tables produced by MERIDIAN.
   - `Figures/`: figures produced by MERIDIAN.
   - `Reports/`: the MERIDIAN HTML report.

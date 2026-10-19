@@ -92,6 +92,9 @@ workflow PIPELINE_INITIALISATION {
         if (!params.skip_meridian && !(params.meridian_metadata && params.meridian_group)) {
             error("--meridian_metadata and --meridian_group are required unless --skip_meridian is set")
         }
+        if (!params.skip_meridian && !params.meridian_group.toString().split(',').any { it.trim() }) {
+            error("--meridian_group lists no metadata column")
+        }
     }
 
     //

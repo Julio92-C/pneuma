@@ -24,8 +24,10 @@ nextflow_workflow {
             params {
                 outdir            = "$outputDir"
                 meridian_metadata = "${projectDir}/tests/data/meridian_fixture/metadata.csv"
-                meridian_group    = "group"
+                meridian_group    = "group,batch"   // two comparisons, run in parallel
                 meridian_study_id = "fixture"
+                // MERIDIAN_IMAGE=ghcr.io/julio92-c/meridian:v1.0.0 tests another tag than the default
+                if (System.getenv('MERIDIAN_IMAGE')) { meridian_container = System.getenv('MERIDIAN_IMAGE') }
             }
             workflow {
                 """
@@ -41,37 +43,39 @@ nextflow_workflow {
         }
 
         then {
-            // MERIDIAN exits 0 (Rscript failure would fail MERIDIAN_RUN and the workflow)
+            // MERIDIAN exits 0 for both comparisons (an Rscript failure fails MERIDIAN_RUN)
             assert workflow.success
-            assert workflow.trace.succeeded().size() == 3
+            // 2 x MERIDIAN_CONFIG + 2 x MERIDIAN_RUN + 1 x RCF_FOR_MERIDIAN
+            assert workflow.trace.succeeded().size() == 5
 
-            def out = "$outputDir/meridian"
-            def datasets = new File("$out/Datasets")
-            def figures  = new File("$out/Figures")
-            assert datasets.isDirectory() && figures.isDirectory()
+            ['group', 'batch'].each { g ->
+                def out = "$outputDir/meridian/${g}"
+                def datasets = new File("$out/Datasets")
+                def figures  = new File("$out/Figures")
+                assert datasets.isDirectory() && figures.isDirectory() : "no outputs for comparison ${g}"
 
-            // key Datasets from the cleaning, normalisation and statistics stages
-            ['noncontaminants_list.csv', 'abri_kraken2_cleaned.csv', 'abri_kraken2Bracken_merged.csv'].each { f ->
-                assert new File(datasets, f).length() > 0 : "missing or empty Datasets/${f}"
+                ['noncontaminants_list.csv', 'abri_kraken2_cleaned.csv', 'abri_kraken2Bracken_merged.csv'].each { f ->
+                    assert new File(datasets, f).length() > 0 : "${g}: missing or empty Datasets/${f}"
+                }
+                assert datasets.listFiles().findAll { it.name.endsWith('.csv') }.size() >= 8
+                // controls were subtracted: kit taxa must not survive in the cleaned table
+                def cleaned = new File(datasets, 'abri_kraken2_cleaned.csv').text
+                assert !cleaned.contains('Ralstonia') && !cleaned.contains('Bradyrhizobium')
+                assert cleaned.contains('Pseudomonas aeruginosa')
+
+                def pngs = []
+                figures.eachFileRecurse { if (it.name.endsWith('.png')) pngs << it }
+                assert pngs.size() >= 5 : "${g}: expected figures, found ${pngs.size()} PNGs"
+
+                // report stage is on in the PNEUMA template
+                def html = new File("$out/Reports/pipeline_report.html")
+                assert html.exists() && html.length() > 10000 : "${g}: no report HTML"
+                def cfg = new File("$out/config.yaml").text
+                assert cfg.contains('controls: ["CTRL1"]')
+                assert cfg.contains("id: \"fixture_${g}\"")
+                assert cfg.contains("- \"${g}\"")
             }
-            assert datasets.listFiles().findAll { it.name.endsWith('.csv') }.size() >= 8
-            // controls were subtracted: kit taxa must not survive in the cleaned table
-            def cleaned = new File(datasets, 'abri_kraken2_cleaned.csv').text
-            assert !cleaned.contains('Ralstonia') && !cleaned.contains('Bradyrhizobium')
-            assert cleaned.contains('Pseudomonas aeruginosa')
-
-            // figures were produced
-            def pngs = []
-            figures.eachFileRecurse { if (it.name.endsWith('.png')) pngs << it }
-            assert pngs.size() >= 5 : "expected figures, found ${pngs.size()} PNGs"
-
-            // report stage is on in the PNEUMA template
-            def html = new File("$out/Reports/pipeline_report.html")
-            assert html.exists() && html.length() > 10000
-            assert new File("$out/config.yaml").text.contains('controls: ["CTRL1"]')
-
-            // the version recorded is the tag of params.meridian_container
-            assert workflow.out.versions
+            assert new File("$outputDir/meridian/inputs/pneuma.rcf.meridian.csv").exists()
         }
     }
 }

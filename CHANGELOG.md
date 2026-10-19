@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Changed`
 
+- `--meridian_group` accepts a comma-separated list of metadata columns: one MERIDIAN comparison (`MERIDIAN_CONFIG` + `MERIDIAN_RUN`) per column, in parallel, with study id `<study_id>_<column>`, published to `meridian/<column>/` (a single column uses the same layout). Each column is validated (exists, at least 2 distinct non-NA levels among non-control samples) by `MERIDIAN_CONFIG`, which needs only the metadata and runs at the start of the pipeline.
+- The MERIDIAN image is the single parameter `--meridian_container` (default `ghcr.io/julio92-c/meridian:v1.0.1`).
+- `MERIDIAN_RUN` works in a writable copy of `/opt/meridian` (renv library symlinked), so the Quarto report and `Rplots.pdf` no longer fail when the image is read-only or the container runs as a non-root user.
+- Real-container integration test (`tests/meridian_integration.nf.test`, tag `meridian_real`, synthetic fixture from `tests/make_meridian_fixture.py`), run on demand with `nf-test test tests/meridian_integration.nf.test -c nf-test.meridian.config --tag meridian_real --profile docker,test`.
+
 - `--input` and `--outdir` (and `--kraken2_db`, `--taxdump`, `--host_index`) are no longer `required` in `nextflow_schema.json`; nf-schema cannot express conditional requirements, so `PIPELINE_INITIALISATION` enforces them (all required for analysis unless resolvable from `--db_dir`; `--db_outdir` plus the release parameters for `--build_databases`).
 - Docs: `--build_databases` is the primary way to prepare databases; `bin/prepare_databases.sh` stays as a fallback, fetched with `curl` from the release tag (the Nextflow assets path in the old docs was wrong for newer Nextflow).
 

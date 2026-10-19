@@ -94,3 +94,37 @@ def test_cli_strips_control_whitespace(tmp_path):
     out = tmp_path / "config.yaml"
     _cli(out, "CNF0-0001, ")
     assert 'controls: ["CNF0-0001"]' in out.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("body,msg", [
+    ("sample,g
+A,x
+B,x
+C,x
+", "'g'"),
+    ("sample,g
+A,x
+B,NA
+C,
+", "'g'"),
+    ("sample,g
+A,x
+B,y
+CTRL,z
+", "'g'"),   # controls do not count as a level
+])
+def test_check_metadata_needs_two_levels(tmp_path, body, msg):
+    p = tmp_path / "meta.csv"
+    p.write_text(body, encoding="utf-8")
+    with pytest.raises(ValueError, match=msg):
+        mm.check_metadata(p, "g", None, ["CTRL"] if "CTRL" in body else [])
+
+
+def test_check_metadata_two_levels_ok(tmp_path):
+    p = tmp_path / "meta.csv"
+    p.write_text("sample,g
+A,x
+B,y
+CTRL,z
+", encoding="utf-8")
+    mm.check_metadata(p, "g", None, ["CTRL"])

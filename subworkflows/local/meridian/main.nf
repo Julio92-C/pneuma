@@ -13,7 +13,11 @@ workflow MERIDIAN {
 
     main:
     def metadata = file(params.meridian_metadata, checkIfExists: true)
-    MERIDIAN_CONFIG(file("${projectDir}/assets/meridian_config.template.yaml"), metadata, ch_controls)
+    // --meridian_group may list several metadata columns: one MERIDIAN comparison (config + run) each.
+    // MERIDIAN_CONFIG needs only the metadata and the samplesheet, so it also validates every column
+    // (exists, >= 2 non-NA levels among non-controls) at the start of the run, before heavy work.
+    def groups = params.meridian_group.toString().split(',').collect { it.trim() }.findAll { it }.unique()
+    MERIDIAN_CONFIG(file("${projectDir}/assets/meridian_config.template.yaml"), metadata, ch_controls, channel.fromList(groups))
     // MERIDIAN only understands column 1 + one cnt/una/sco triplet per sample; the raw
     // Recentrifuge CSV (published unchanged under contamination/) has derived columns too.
     RCF_FOR_MERIDIAN(rcf_csv, ch_samples)

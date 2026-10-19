@@ -158,6 +158,12 @@ combine `singularity` with another profile (for example `-profile test,singulari
 "Singularity cache directory has not been defined"; export `NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache`
 before running to avoid repeated image pulls.
 
+To compare more than one metadata column, give `--meridian_group` a comma-separated list, for
+example `--meridian_group sample_type,Macrolide_prophylaxis`. MERIDIAN then runs once per column, in
+parallel, with study id `<--meridian_study_id>_<column>` and results in `results/meridian/<column>/`.
+Every listed column must exist in the metadata and have at least 2 distinct non-NA levels among the
+non-control samples; otherwise the run stops at the start with an error naming the column.
+
 `--input` and `--outdir` are required for an analysis run; always pin `-r <tag>` for reproducibility. From a development
 clone use `nextflow run . -profile ...`.
 

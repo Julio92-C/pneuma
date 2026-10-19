@@ -11,6 +11,9 @@ import csv
 from pathlib import Path
 
 
+NA_VALUES = {"", "na", "n/a", "nan", "null", "none"}
+
+
 def yaml_str(value):
     escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
@@ -37,7 +40,8 @@ def check_metadata(path, group, random_effect, controls):
     with open(path, newline="", encoding="utf-8-sig") as fh:
         reader = csv.DictReader(fh)
         columns = reader.fieldnames or []
-        samples = {row["sample"] for row in reader} if "sample" in columns else set()
+        rows = list(reader) if "sample" in columns else []
+        samples = {row["sample"] for row in rows}
     if "sample" not in columns:
         raise ValueError(f"metadata {path} has no 'sample' column")
     if group not in columns:
@@ -47,6 +51,12 @@ def check_metadata(path, group, random_effect, controls):
     missing = [c for c in controls if c not in samples]
     if missing:
         raise ValueError(f"control sample(s) not in metadata: {missing}")
+    levels = {(row[group] or "").strip() for row in rows if row["sample"] not in controls}
+    levels = {v for v in levels if v.lower() not in NA_VALUES}
+    if len(levels) < 2:
+        raise ValueError(
+            f"group column '{group}' needs at least 2 distinct non-NA levels among the non-control "
+            f"samples, found {len(levels)} ({sorted(levels)})")
 
 
 def main(argv=None):

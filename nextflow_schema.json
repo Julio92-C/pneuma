@@ -253,7 +253,7 @@
                 },
                 "meridian_group": {
                     "type": "string",
-                    "description": "Metadata column holding the comparison groups (required unless --skip_meridian)."
+                    "description": "Metadata column holding the comparison groups (required unless --skip_meridian). Comma-separated list (e.g. `sample_type,treatment`) runs one MERIDIAN comparison per column, in parallel, each published to `meridian/<column>/`. Every column must exist in the metadata and have at least 2 distinct non-NA levels among the non-control samples."
                 },
                 "meridian_random_effect": {
                     "type": "string",

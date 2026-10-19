@@ -1,10 +1,11 @@
 process MERIDIAN_RUN {
+    tag "$group"
     label 'process_high'
     container { params.meridian_container }
     containerOptions { workflow.containerEngine == 'docker' ? '--entrypoint ""' : '' }
 
     input:
-    path config
+    tuple val(group), path(config)
     path metadata,         stageAs: 'inputs/*'
     path abricate_summary, stageAs: 'inputs/*'
     path kraken_combined,  stageAs: 'inputs/*'
