@@ -56,7 +56,7 @@ def test_check_metadata_ok():
 
 def test_check_metadata_bom(tmp_path):
     p = tmp_path / "meta.csv"
-    p.write_bytes("﻿sample,sample_type\nA,x\nB,y\n".encode("utf-8"))
+    p.write_bytes("﻿sample,sample_type\nA,x\nB,y\nC,z\n".encode("utf-8"))
     mm.check_metadata(p, "sample_type", None, ["A"])
 
 
