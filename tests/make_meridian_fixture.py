@@ -187,6 +187,20 @@ GENES = {
     190721: [(CARD, "OXA-22", "NG_049950.1", "class D beta-lactamase OXA-22", "penam")],
     1747: [(CARD, "erm(X)", "NG_047840.1", "23S rRNA methyltransferase Erm(X)", "macrolide;lincosamide;streptogramin")],
 }
+# VFDB function classes (ABRicate PRODUCT carries "- <Function> (VFCxxxx)")
+VF_FUNC = {
+    "ply": ("Exotoxin", "VFC0235"), "nanA": ("Immune modulation", "VFC0258"),
+    "pspA": ("Immune modulation", "VFC0258"), "hla": ("Exotoxin", "VFC0235"),
+    "hlgB": ("Exotoxin", "VFC0235"), "sak": ("Immune modulation", "VFC0258"),
+    "scn": ("Immune modulation", "VFC0258"), "icaA": ("Biofilm", "VFC0271"),
+    "fadA": ("Adherence", "VFC0001"), "fap2": ("Adherence", "VFC0001"),
+    "iga": ("Immune modulation", "VFC0258"), "hxuA": ("Nutritional/Metabolic factor", "VFC0272"),
+    "lasB": ("Exoenzyme", "VFC0301"), "plcH": ("Exoenzyme", "VFC0301"),
+    "toxA": ("Exotoxin", "VFC0235"), "exoS": ("Effector delivery system", "VFC0086"),
+    "uspA1": ("Adherence", "VFC0001"), "fimH": ("Adherence", "VFC0001"),
+    "mrkD": ("Adherence", "VFC0001"), "ybtS": ("Nutritional/Metabolic factor", "VFC0272"),
+    "pilT": ("Adherence", "VFC0001"), "pilE": ("Adherence", "VFC0001"),
+}
 HIT_RATE = 0.0006  # expected hits per read per gene
 
 
@@ -435,6 +449,11 @@ def write_rcf(root, order, rng, path):
     _w(path, "".join(",".join(f'"{c}"' if "," in c else c for c in r) + "\n" for r in rows))
 
 
+def hash_gene(gene):
+    """Stable small hash (python's hash() is salted per process)."""
+    return sum((i + 1) * ord(c) for i, c in enumerate(gene))
+
+
 def write_abricate(species_counts, rng, path):
     header = ("#FILE,SEQUENCE,START,END,STRAND,GENE,COVERAGE,COVERAGE_MAP,GAPS,"
               "%COVERAGE,%IDENTITY,DATABASE,ACCESSION,PRODUCT,RESISTANCE")
@@ -447,6 +466,12 @@ def write_abricate(species_counts, rng, path):
             for db, gene, acc, product, resist in genes:
                 mean = reads * HIT_RATE
                 n = max(0, int(round(rng.gauss(mean, math.sqrt(mean))))) if mean > 0 else 0
+                if db == VFDB:
+                    fn, vfc = VF_FUNC[gene]
+                    prod = (f"({gene}) {product} [{gene} (VF{abs(hash_gene(gene)) % 9000 + 1000})] - "
+                            f"{fn} ({vfc}) [{SPECIES_PROFILE[taxid][2]}]")
+                else:
+                    prod = product
                 for _ in range(n):
                     rid = uuid.UUID(int=rng.getrandbits(128), version=4)
                     length = rng.randint(180, 1800)
@@ -458,7 +483,7 @@ def write_abricate(species_counts, rng, path):
                     lines.append(",".join([
                         f"{s}_kraken2ID_PFP.fasta", f"{rid}_kraken:taxid|{taxid}",
                         str(start), str(end), strand, gene, f"1-{length}/{length}",
-                        "=" * 12, "0/0", f"{cov:.2f}", f"{ident:.2f}", db, acc, product, resist]))
+                        "=" * 12, "0/0", f"{cov:.2f}", f"{ident:.2f}", db, acc, prod, resist]))
     _w(path, "\n".join(lines) + "\n")
     return len(lines) - 1
 
