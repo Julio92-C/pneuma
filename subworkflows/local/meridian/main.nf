@@ -24,6 +24,6 @@ workflow MERIDIAN {
     MERIDIAN_RUN(MERIDIAN_CONFIG.out.config, metadata, abricate_summary, kraken_combined, bracken_arranged, RCF_FOR_MERIDIAN.out.csv)
 
     emit:
-    reports  = MERIDIAN_RUN.out.reports
+    reports  = MERIDIAN_RUN.out.reports.collect()
     versions = MERIDIAN_CONFIG.out.versions.mix(RCF_FOR_MERIDIAN.out.versions, MERIDIAN_RUN.out.versions)
 }
