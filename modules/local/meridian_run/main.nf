@@ -1,6 +1,6 @@
 process MERIDIAN_RUN {
     label 'process_high'
-    container 'ghcr.io/julio92-c/meridian:v1.0.0'
+    container { params.meridian_container }
     containerOptions { workflow.containerEngine == 'docker' ? '--entrypoint ""' : '' }
 
     input:
@@ -30,7 +30,7 @@ process MERIDIAN_RUN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        meridian: v1.0.0
+        meridian: ${params.meridian_container.tokenize(":").last()}
     END_VERSIONS
     """
 
@@ -38,6 +38,6 @@ process MERIDIAN_RUN {
     """
     mkdir -p Datasets Figures Reports
     touch Reports/pipeline_report.html
-    echo '"${task.process}": {meridian: v1.0.0}' > versions.yml
+    echo "\"${task.process}\": {meridian: ${params.meridian_container.tokenize(":").last()}}" > versions.yml
     """
 }

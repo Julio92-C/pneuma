@@ -281,7 +281,7 @@ subworkflow rearranges the combined Kraken2/Bracken reports, the Recentrifuge ta
 ABRicate summary into MERIDIAN's input layout, renders a `config.yaml` from
 [`assets/meridian_config.template.yaml`](assets/meridian_config.template.yaml) (checking the
 metadata against the samples), and runs MERIDIAN in the container
-`ghcr.io/julio92-c/meridian:v1.0.0`.
+`ghcr.io/julio92-c/meridian:v1.0.0` (the tag is the single parameter `--meridian_container`, so a MERIDIAN bump is a one-line change).
 
 | Parameter | Purpose |
 | --- | --- |
@@ -289,6 +289,7 @@ metadata against the samples), and runs MERIDIAN in the container
 | `--meridian_group` | metadata column holding the comparison groups |
 | `--meridian_random_effect` | metadata column holding the repeated-measure / patient identifier |
 | `--meridian_study_id` | study label (default `pneuma`) |
+| `--meridian_container` | MERIDIAN image (default `ghcr.io/julio92-c/meridian:v1.0.0`); the only place the tag lives |
 | `--skip_meridian` | stop after the PNEUMA stages |
 
 ---

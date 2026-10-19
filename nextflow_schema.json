@@ -263,6 +263,11 @@
                     "type": "string",
                     "description": "Study identifier written into the MERIDIAN config.",
                     "default": "pneuma"
+                },
+                "meridian_container": {
+                    "type": "string",
+                    "default": "ghcr.io/julio92-c/meridian:v1.0.0",
+                    "description": "MERIDIAN container image (single place to bump the MERIDIAN version)."
                 }
             }
         },

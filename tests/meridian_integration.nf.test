@@ -1,0 +1,75 @@
+// REAL MERIDIAN integration test: runs the actual MERIDIAN container (params.meridian_container)
+// through PNEUMA's MERIDIAN subworkflow (MERIDIAN_CONFIG + RCF_FOR_MERIDIAN + MERIDIAN_RUN) on the
+// synthetic fixture in tests/data/meridian_fixture/ (made by tests/make_meridian_fixture.py).
+// The other tests stub MERIDIAN; this one catches hand-off bugs (Recentrifuge columns, header
+// labels, renv activation) before they reach the HPC.
+//
+// Slow (pulls the image, runs the full R pipeline), so it is tagged and excluded from the default
+// suite. Run it with:
+//     nf-test test tests/meridian_integration.nf.test --tag meridian_real --profile docker,test
+// (a bare `nf-test test` also runs it unless you pass --exclude-tag meridian_real, see README).
+nextflow_workflow {
+
+    name "MERIDIAN subworkflow with the real MERIDIAN container"
+    script "subworkflows/local/meridian/main.nf"
+    workflow "MERIDIAN"
+    tag "meridian_real"
+    tag "docker"
+
+    test("real MERIDIAN runs end-to-end on the synthetic fixture") {
+
+        when {
+            params {
+                outdir            = "$outputDir"
+                meridian_metadata = "${projectDir}/tests/data/meridian_fixture/metadata.csv"
+                meridian_group    = "group"
+                meridian_study_id = "fixture"
+            }
+            workflow {
+                """
+                def fx = "${projectDir}/tests/data/meridian_fixture"
+                input[0] = channel.value(['CTRL1'])
+                input[1] = channel.value(['CTRL1', 'S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08'])
+                input[2] = file("\$fx/summary_reportClean.csv")
+                input[3] = file("\$fx/kraken2_combined_reports.txt")
+                input[4] = file("\$fx/bracken_arranged.csv")
+                input[5] = file("\$fx/pneuma.rcf.data.csv")
+                """
+            }
+        }
+
+        then {
+            // MERIDIAN exits 0 (Rscript failure would fail MERIDIAN_RUN and the workflow)
+            assert workflow.success
+            assert workflow.trace.succeeded().size() == 3
+
+            def out = "$outputDir/meridian"
+            def datasets = new File("$out/Datasets")
+            def figures  = new File("$out/Figures")
+            assert datasets.isDirectory() && figures.isDirectory()
+
+            // key Datasets from the cleaning, normalisation and statistics stages
+            ['noncontaminants_list.csv', 'abri_kraken2_cleaned.csv', 'abri_kraken2Bracken_merged.csv'].each { f ->
+                assert new File(datasets, f).length() > 0 : "missing or empty Datasets/${f}"
+            }
+            assert datasets.listFiles().findAll { it.name.endsWith('.csv') }.size() >= 8
+            // controls were subtracted: kit taxa must not survive in the cleaned table
+            def cleaned = new File(datasets, 'abri_kraken2_cleaned.csv').text
+            assert !cleaned.contains('Ralstonia') && !cleaned.contains('Bradyrhizobium')
+            assert cleaned.contains('Pseudomonas aeruginosa')
+
+            // figures were produced
+            def pngs = []
+            figures.eachFileRecurse { if (it.name.endsWith('.png')) pngs << it }
+            assert pngs.size() >= 5 : "expected figures, found ${pngs.size()} PNGs"
+
+            // report stage is on in the PNEUMA template
+            def html = new File("$out/Reports/pipeline_report.html")
+            assert html.exists() && html.length() > 10000
+            assert new File("$out/config.yaml").text.contains('controls: ["CTRL1"]')
+
+            // the version recorded is the tag of params.meridian_container
+            assert workflow.out.versions
+        }
+    }
+}
