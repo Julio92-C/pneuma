@@ -29,6 +29,21 @@ lint:
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
+    - .github/workflows/branch.yml
+    - .github/workflows/download_pipeline.yml
+    - .github/workflows/fix_linting.yml
+    - .github/workflows/template-version-comment.yml
+    - .github/workflows/pr-comment.yml
+    - .github/workflows/clean-up.yml
+    - tests/default.nf.test
+  # {{PLACEHOLDER}} tokens are PNEUMA's own MERIDIAN config template, filled by bin/make_meridian_config.py
+  template_strings:
+    - assets/meridian_config.template.yaml
+    - bin/make_meridian_config.py
+  # PNEUMA tests assert on files and content; the template's versions.yml snapshot is not used
+  nf_test_content:
+    - tests/main.nf.test
+    - tests/meridian_integration.nf.test
 
 template:
   org: Julio92-C
