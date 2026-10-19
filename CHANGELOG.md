@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- MERIDIAN renv activation under Singularity: on HPC clusters with unwritable HOME, `$HOME/.cache/R/renv/sandbox` activation failed, falling back to an empty library. `MERIDIAN_RUN` now exports `RENV_CONFIG_SANDBOX_ENABLED=FALSE` and pins the sandbox directory to `$PWD/.renv_root`.
 - KrakenTools `kreport2krona` outputs were published to a stray top-level `krakentools/` folder. They are now intermediate (not published); every process in `conf/modules.config` was checked, and the same fix applies to `CAT_FASTQ` (`cat/`) and `UNTAR` (`untar/`, the unpacked Kraken2 database). `PORECHOP_ABI` now publishes only its log, to `preprocess/porechop_abi/`. An nf-test asserts the published top-level folders.
 - Per-sample `functional/<sample>_abricate.csv` repeated the header once per database; it now has a single header (`summary_reportClean.csv` is unchanged).
 - NanoPlot wrote an identically named `NanoStats.txt` for every sample, so MultiQC saw only one sample; the files are now named `<sample>.NanoStats.txt`. nanoq runs with `-vv` so that its report is parseable by MultiQC.
