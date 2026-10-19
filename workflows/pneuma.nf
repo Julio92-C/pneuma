@@ -66,7 +66,8 @@ workflow PNEUMA {
             .map { meta, _fastqs -> meta.id }
             .collect()
             .ifEmpty([])
-        MERIDIAN(ch_controls, FUNCTIONAL_READS.out.summary, TAXONOMY.out.kraken_combined,
+        def ch_samples = ch_samplesheet.map { meta, _fastqs -> meta.id }.collect().map { it.sort() }
+        MERIDIAN(ch_controls, ch_samples, FUNCTIONAL_READS.out.summary, TAXONOMY.out.kraken_combined,
                  TAXONOMY.out.bracken_arranged, CONTAMINATION.out.rcf_csv)
         ch_versions = ch_versions.mix(MERIDIAN.out.versions)
     }
