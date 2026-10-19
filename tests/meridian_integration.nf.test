@@ -5,9 +5,9 @@
 // labels, renv activation) before they reach the HPC.
 //
 // Slow (~6 min on 4 CPUs; needs the 2.4 GB image and Docker), so it is tagged `meridian_real` and
-// listed in `ignore` in nf-test.config, which keeps it out of the default `nf-test test` suite.
+// listed in `ignore` in nf-test.config (nf-test.meridian.config is the same without it), which keeps it out of the default `nf-test test` suite.
 // Run it explicitly:
-//     nf-test test tests/meridian_integration.nf.test --tag meridian_real --profile docker,test
+//     nf-test test tests/meridian_integration.nf.test -c nf-test.meridian.config --tag meridian_real --profile docker,test
 // The image is params.meridian_container (nextflow.config): bump that one line to test a new
 // release (e.g. ghcr.io/julio92-c/meridian:v1.0.1).
 nextflow_workflow {
