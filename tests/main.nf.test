@@ -11,6 +11,10 @@ nextflow_pipeline {
                    '#perc,tot_all,CNF0-0001,EBF0-0001,SPF0-0001,taxid,name'
             assert path("$outputDir/taxonomy/kraken2_combined_reports.txt").exists()
             assert path("$outputDir/contamination/pneuma.rcf.data.csv").exists()
+            // Recentrifuge data CSV headers (Samples/Stats) must be normalized for MERIDIAN v1.0.0 compatibility
+            def rcfLines = new File("$outputDir/contamination/pneuma.rcf.data.csv").readLines()
+            assert rcfLines[0].startsWith('Samples,') : "Recentrifuge CSV row 1 must start with 'Samples,'"
+            assert rcfLines[1].startsWith('Stats,') : "Recentrifuge CSV row 2 must start with 'Stats,'"
             // Recentrifuge sample names must be bare ids (no kraken/ prefix, no .kraken2.classifiedreads suffix)
             def rcfTable = new File("$outputDir/multiqc/multiqc_data/multiqc_recentrifuge_table.txt").readLines()
             assert rcfTable.drop(1).collect { it.split('\t')[0] }.toSet() == ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].toSet()
