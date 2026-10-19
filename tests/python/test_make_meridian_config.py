@@ -96,35 +96,19 @@ def test_cli_strips_control_whitespace(tmp_path):
     assert 'controls: ["CNF0-0001"]' in out.read_text(encoding="utf-8")
 
 
-@pytest.mark.parametrize("body,msg", [
-    ("sample,g
-A,x
-B,x
-C,x
-", "'g'"),
-    ("sample,g
-A,x
-B,NA
-C,
-", "'g'"),
-    ("sample,g
-A,x
-B,y
-CTRL,z
-", "'g'"),   # controls do not count as a level
+@pytest.mark.parametrize("body,controls", [
+    ("sample,g\nA,x\nB,x\nC,x\n", []),
+    ("sample,g\nA,x\nB,NA\nC,\n", []),
+    ("sample,g\nA,x\nB,x\nCTRL,z\n", ["CTRL"]),   # controls do not count as a level
 ])
-def test_check_metadata_needs_two_levels(tmp_path, body, msg):
+def test_check_metadata_needs_two_levels(tmp_path, body, controls):
     p = tmp_path / "meta.csv"
     p.write_text(body, encoding="utf-8")
-    with pytest.raises(ValueError, match=msg):
-        mm.check_metadata(p, "g", None, ["CTRL"] if "CTRL" in body else [])
+    with pytest.raises(ValueError, match="'g'"):
+        mm.check_metadata(p, "g", None, controls)
 
 
 def test_check_metadata_two_levels_ok(tmp_path):
     p = tmp_path / "meta.csv"
-    p.write_text("sample,g
-A,x
-B,y
-CTRL,z
-", encoding="utf-8")
+    p.write_text("sample,g\nA,x\nB,y\nCTRL,z\n", encoding="utf-8")
     mm.check_metadata(p, "g", None, ["CTRL"])
