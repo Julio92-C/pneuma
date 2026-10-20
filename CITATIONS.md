@@ -90,7 +90,7 @@ If you use PNEUMA, please also cite the tools that produced your results. The li
 
 ## Downstream analysis
 
-- [MERIDIAN](https://github.com/Julio92-C/meridian) (container `ghcr.io/julio92-c/meridian:v1.0.1`)
+- [MERIDIAN](https://github.com/Julio92-C/meridian) (container `ghcr.io/julio92-c/meridian:v1.0.2`)
 
   > Ortega Cambara JC. MERIDIAN: Metagenomic Evaluation of Resistance, Identity & Diversity through Integrated Analysis of Nanopore sequencing. GitHub: <https://github.com/Julio92-C/meridian>. Manuscript in preparation.
 

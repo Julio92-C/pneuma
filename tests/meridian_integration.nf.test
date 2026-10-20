@@ -9,7 +9,7 @@
 // Run it explicitly:
 //     nf-test test tests/meridian_integration.nf.test -c nf-test.meridian.config --tag meridian_real --profile docker,test
 // The image is params.meridian_container (nextflow.config): bump that one line to test a new
-// release (e.g. ghcr.io/julio92-c/meridian:v1.0.1).
+// release (e.g. ghcr.io/julio92-c/meridian:v1.0.2).
 nextflow_workflow {
 
     name "MERIDIAN subworkflow with the real MERIDIAN container"
