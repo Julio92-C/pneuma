@@ -73,6 +73,11 @@ nextflow_pipeline {
             // only inputs/ and the per-group folders live under meridian/
             def top = new File("$outputDir/meridian").list().toList().sort()
             assert top == ['inputs', 'sample_type', 'site'] : "stray entries under meridian/: ${top}"
+            // caught MERIDIAN stage failures are surfaced as a Nextflow warning, for that comparison only
+            // (log.warn goes to nextflow.log, not workflow.stdout, under nf-test)
+            def nflog = new File("$outputDir/../meta/nextflow.log").text
+            assert nflog.contains('MERIDIAN (site): 1 stage(s) failed and were skipped: network')
+            assert !nflog.contains('MERIDIAN (sample_type):')
         }
     }
 

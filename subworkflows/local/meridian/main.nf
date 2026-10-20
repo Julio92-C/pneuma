@@ -26,6 +26,14 @@ workflow MERIDIAN {
     MERIDIAN_RUN(MERIDIAN_CONFIG.out.config, metadata, abricate_summary.first(), kraken_combined.first(),
                  bracken_arranged.first(), RCF_FOR_MERIDIAN.out.csv.first())
 
+    // MERIDIAN's stage safety net keeps the run (and the report) alive when one analysis stage fails;
+    // surface those failures in the Nextflow log so they are not only visible inside the HTML report.
+    MERIDIAN_RUN.out.stage_errors.subscribe { group, csv ->
+        def failed = csv.readLines().drop(1).collect { line -> line.tokenize(',')[0].replace('"', '') }
+        log.warn "MERIDIAN (${group}): ${failed.size()} stage(s) failed and were skipped: ${failed.join(', ')}. " +
+                 "See ${params.outdir}/meridian/${group}/Reports/stage_errors.csv and the red box in that report."
+    }
+
     emit:
     reports  = MERIDIAN_RUN.out.reports.collect()
     versions = MERIDIAN_CONFIG.out.versions.mix(RCF_FOR_MERIDIAN.out.versions, MERIDIAN_RUN.out.versions)

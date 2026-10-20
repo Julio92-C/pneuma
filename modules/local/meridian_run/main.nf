@@ -16,6 +16,8 @@ process MERIDIAN_RUN {
     path "Datasets"     , emit: datasets
     path "Figures"      , emit: figures
     path "Reports"      , emit: reports
+    // MERIDIAN >= 1.1.0 stage safety net: stages that failed but did not abort the run
+    tuple val(group), path("Reports/stage_errors.csv"), optional: true, emit: stage_errors
     path "versions.yml" , emit: versions
 
     script:
@@ -25,6 +27,7 @@ process MERIDIAN_RUN {
         mkdir -p Datasets Figures Reports
         touch Reports/pipeline_report.html
         echo "${group} ${config}" > Reports/group.txt
+        ${task.ext.test_stage_error == group ? "printf 'stage,error\nnetwork,forced test failure\n' > Reports/stage_errors.csv" : ''}
         echo "\"${task.process}\": {meridian: noop}" > versions.yml
         """
     }
