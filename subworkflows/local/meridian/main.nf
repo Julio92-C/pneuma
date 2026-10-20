@@ -21,7 +21,10 @@ workflow MERIDIAN {
     // MERIDIAN only understands column 1 + one cnt/una/sco triplet per sample; the raw
     // Recentrifuge CSV (published unchanged under contamination/) has derived columns too.
     RCF_FOR_MERIDIAN(rcf_csv, ch_samples)
-    MERIDIAN_RUN(MERIDIAN_CONFIG.out.config, metadata, abricate_summary, kraken_combined, bracken_arranged, RCF_FOR_MERIDIAN.out.csv)
+    // Shared inputs must be VALUE channels: a queue channel with one item is consumed by the first
+    // (group, config) tuple and MERIDIAN_RUN would run for one comparison only.
+    MERIDIAN_RUN(MERIDIAN_CONFIG.out.config, metadata, abricate_summary.first(), kraken_combined.first(),
+                 bracken_arranged.first(), RCF_FOR_MERIDIAN.out.csv.first())
 
     emit:
     reports  = MERIDIAN_RUN.out.reports.collect()

@@ -20,6 +20,8 @@ nextflow_workflow {
 
     test("real MERIDIAN runs end-to-end on the synthetic fixture") {
 
+        config "./meridian_readonly.config"   // read-only image, like Singularity
+
         when {
             params {
                 outdir            = "$outputDir"
@@ -34,10 +36,10 @@ nextflow_workflow {
                 def fx = "${projectDir}/tests/data/meridian_fixture"
                 input[0] = channel.value(['CTRL1'])
                 input[1] = channel.value(['CTRL1', 'S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08'])
-                input[2] = file("\$fx/summary_reportClean.csv")
-                input[3] = file("\$fx/kraken2_combined_reports.txt")
-                input[4] = file("\$fx/bracken_arranged.csv")
-                input[5] = file("\$fx/pneuma.rcf.data.csv")
+                input[2] = channel.value(file("\$fx/summary_reportClean.csv"))
+                input[3] = channel.value(file("\$fx/kraken2_combined_reports.txt"))
+                input[4] = channel.value(file("\$fx/bracken_arranged.csv"))
+                input[5] = channel.value(file("\$fx/pneuma.rcf.data.csv"))
                 """
             }
         }

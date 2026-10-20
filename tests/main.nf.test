@@ -51,6 +51,31 @@ nextflow_pipeline {
         }
     }
 
+    test("MERIDIAN runs once per --meridian_group comparison (real workflow wiring)") {
+        config "./meridian_noop_ok.config"
+        when {
+            params {
+                outdir            = "$outputDir"
+                skip_meridian     = false
+                meridian_metadata = "${projectDir}/tests/data/metadata_two_groups.csv"
+                meridian_group    = "sample_type,site"
+            }
+        }
+        then {
+            assert workflow.success
+            def runs = workflow.trace.succeeded().findAll { it.name.startsWith('PNEUMA:MERIDIAN:MERIDIAN_RUN') || it.name.contains('MERIDIAN_RUN') }
+            assert runs.size() == 2 : "expected 2 MERIDIAN_RUN tasks (one per group), got ${runs.collect { it.name }}"
+            assert runs.collect { it.name }.toSet().size() == 2
+            ['sample_type', 'site'].each { g ->
+                assert new File("$outputDir/meridian/$g/config.yaml").exists()
+                assert new File("$outputDir/meridian/$g/Reports/pipeline_report.html").exists() : "no MERIDIAN_RUN output for ${g}"
+            }
+            // only inputs/ and the per-group folders live under meridian/
+            def top = new File("$outputDir/meridian").list().toList().sort()
+            assert top == ['inputs', 'sample_type', 'site'] : "stray entries under meridian/: ${top}"
+        }
+    }
+
     test("MultiQC summarises the whole pipeline") {
         when { params { outdir = "$outputDir" } }
         then {
