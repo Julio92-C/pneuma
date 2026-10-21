@@ -107,9 +107,10 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "Kraken2 interchange which branches into Abundance (Bracken, KrakenTools "
     "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
     "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome "
-    "reconstruction line. The first three merge at MERIDIAN for downstream "
-    "analysis and the Report. A short spur just before MERIDIAN ends at MultiQC (report of all steps); "
-    "filled stops mark the stations whose output it reports.</desc>")
+    "reconstruction line. The first three end at a vertical junction interchange, "
+    "from which the downstream line (MERIDIAN, then the Report) and a grey exit to "
+    "MultiQC (report of all steps) leave; filled stops mark the stations whose "
+    "output MultiQC reports.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
 text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
@@ -122,30 +123,31 @@ M0 = MX - 42                          # its left edge
 RX = 1340                             # Report terminus
 TX = 60                               # input terminus
 MQD = 36                              # MultiQC spur drop
-MQX, MQY = 1310, Y0 + MQD             # MultiQC terminus
+JX = 1150                             # junction interchange centre
+MQX, MQY = 1310, Y0 + 30              # MultiQC terminus
 
 # lines (drawn first, stations on top)
 line([(TX, Y0), (KX - 20, Y0)], C_QC)
 # abundance (green): fan out, run, merge
 xa = 570
+YJA, YJC = Y0 - 54, Y0 - 27           # arrival heights at the junction
 line([(KX, Y0), (xa, Y0), (xa + Y0 - YA, YA), (1010, YA),
-      (1010 + Y0 - YA, Y0), (M0, Y0)], C_AB)
+      (1010 + YJA - YA, YJA), (JX, YJA)], C_AB)
 # contamination (orange)
 xc = 610
 line([(KX, Y0), (xc, Y0), (xc + Y0 - YC, YC), (1044, YC),
-      (1044 + Y0 - YC, Y0), (M0, Y0)], C_CO)
+      (1044 + YJC - YC, YJC), (JX, YJC)], C_CO)
 # functional (purple): straight lane with three spurs
 FX0, FX1 = 830, 990                  # fork / merge start
 SP = 44
 line([(KX, Y0), (FX0, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
-line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
-# MultiQC spur (neutral grey): leaves the merged bundle after every line has joined
-MQS = 1170
-line([(MQS, Y0), (MQS + MQD, Y0 + MQD), (MQX, Y0 + MQD)], C_MQ)
+line([(FX0, Y0), (FX1 + SP, Y0), (JX, Y0)], C_FN)
+# MultiQC exit (neutral grey): straight out of the junction, below the main axis
+line([(JX, MQY), (MQX, MQY)], C_MQ)
 # downstream (gold)
-line([(M0, Y0), (RX, Y0)], C_DS)
+line([(JX, Y0), (RX, Y0)], C_DS)
 # reconstruction (grey, dashed)
 xr = 570
 line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1060, YR)], GREY, dashed=True)
@@ -169,6 +171,10 @@ text(MQX, MQY + 42, ["report of all steps"], size=10, fill=MUTED, style="italic"
 terminus(TX, Y0)
 text(24, Y0 + 28, ["samplesheet +", "ONT FASTQ", "(multi-run pooling)"],
      anchor="start", size=11, fill=MUTED)
+
+# junction interchange (vertical pill): three lines in, two out
+add(f'<rect x="{JX - 11}" y="{Y0 - 66}" width="22" height="108" rx="11" '
+    f'fill="#ffffff" stroke="{INK}" stroke-width="3"/>')
 
 # Kraken2 interchange
 interchange(KX, Y0, fill="#bfdcec")
