@@ -74,7 +74,7 @@ def stage(x, y, label, anchor="start"):
     text(x, y, [label], anchor=anchor, size=9.5, weight="700", fill=MUTED, spacing="1.2")
 
 
-def station(x, y, kind="", r=6.5):
+def station(x, y, kind="", r=6.5, fill="#ffffff"):
     """kind: '' process | 'opt' optional (dotted) | 'plan' planned (hollow dotted)."""
     if kind == "opt":
         add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#ffffff" stroke="{INK}" '
@@ -83,20 +83,13 @@ def station(x, y, kind="", r=6.5):
         add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{BG}" stroke="{GREY}" '
             f'stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>')
     else:
-        add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#ffffff" stroke="{INK}" '
+        add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{fill}" stroke="{INK}" '
             f'stroke-width="2.5"/>')
 
 
-def mqc(x, y, dx=11, dy=-10, h=4.8):
-    """Small grey diamond: station output is reported in MultiQC."""
-    cx, cy = x + dx, y + dy
-    add(f'<path d="M{cx} {cy - h} L{cx + h} {cy} L{cx} {cy + h} L{cx - h} {cy} Z" '
-        f'fill="{GREY}"/>')
-
-
-def interchange(cx, y, w=84):
+def interchange(cx, y, w=84, fill="#ffffff"):
     add(f'<rect x="{cx - w / 2:.0f}" y="{y - 12}" width="{w}" height="24" rx="12" '
-        f'fill="#ffffff" stroke="{INK}" stroke-width="3"/>')
+        f'fill="{fill}" stroke="{INK}" stroke-width="3"/>')
 
 
 def terminus(x, y, col=INK):
@@ -114,8 +107,8 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
     "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome "
     "reconstruction line. The first three merge at MERIDIAN for downstream "
-    "analysis and the Report. A second, grey terminus, MultiQC (report of all steps), "
-    "hangs off MERIDIAN; grey diamonds mark the stations whose output it reports.</desc>")
+    "analysis and the Report. A short spur just before MERIDIAN ends at MultiQC (report of all steps); "
+    "filled stops mark the stations whose output it reports.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
 text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
@@ -127,7 +120,8 @@ MX = 1137                             # MERIDIAN interchange centre
 M0 = MX - 42                          # its left edge
 RX = 1245                             # Report terminus
 TX = 60                               # input terminus
-MQX, MQY = RX, 322                    # MultiQC terminus (second output)
+MQD = 42                              # MultiQC spur drop
+MQX, MQY = 1215, Y0 + MQD             # MultiQC terminus
 
 # lines (drawn first, stations on top)
 line([(TX, Y0), (KX - 20, Y0)], C_QC)
@@ -146,9 +140,8 @@ line([(KX, Y0), (FX0, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
-# MultiQC (thin grey): drops from just before MERIDIAN to the second terminus
-add(f'<path d="{rpath([(1180, Y0), (1200, Y0), (MQX, MQY - 25), (MQX, MQY)])}" fill="none" '
-    f'stroke="{GREY}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>')
+# MultiQC spur (blue): leaves just before MERIDIAN, curves down to its terminus
+line([(1080, Y0), (1080 + MQD, Y0 + MQD), (MQX, Y0 + MQD)], C_QC)
 # downstream (gold)
 line([(M0, Y0), (RX, Y0)], C_DS)
 # reconstruction (grey, dashed)
@@ -159,18 +152,16 @@ line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1100, YR)], GREY, dashed=True)
 qc = [("cat", 130, "", 1), ("Porechop_ABI", 204, "opt", -1), ("nanoq", 278, "", 1),
       ("NanoPlot", 352, "", -1), ("SeqKit stats", 426, "", 1), ("Hostile", 500, "", -1)]
 for name, x, kind, side in qc:
-    station(x, Y0, kind)
+    station(x, Y0, kind, fill=C_QC if name in ("nanoq", "NanoPlot", "SeqKit stats", "Hostile") else "#ffffff")
     ly = Y0 - 14 if side > 0 else Y0 + 22
     text(x, ly, [name], size=12, weight="700")
-for _x, _below in ((278, 1), (352, -1), (426, 1), (500, -1)):
-    mqc(_x, Y0, dy=9 * _below)   # opposite side to the station label
 text(500, Y0 + 35, ["LOW_DEPTH flag"], size=10, fill=MUTED, style="italic")
 stage(100, Y0 - 44, "QC &amp; HOST REMOVAL")
 
 # MultiQC terminus (second output, grey)
-terminus(MQX, MQY, GREY)
-text(MQX, MQY + 27, ["MultiQC"], size=12, weight="700")
-text(MQX, MQY + 41, ["report of all steps"], size=10, fill=MUTED, style="italic")
+terminus(MQX, MQY, C_QC)
+text(MQX, MQY + 28, ["MultiQC"], size=12, weight="700")
+text(MQX, MQY + 42, ["report of all steps"], size=10, fill=MUTED, style="italic")
 
 # input terminus
 terminus(TX, Y0)
@@ -178,33 +169,27 @@ text(24, Y0 + 28, ["samplesheet +", "ONT FASTQ", "(multi-run pooling)"],
      anchor="start", size=11, fill=MUTED)
 
 # Kraken2 interchange
-interchange(KX, Y0)
+interchange(KX, Y0, fill="#bfdcec")
 text(KX, Y0 - 20, ["Kraken2 (PlusPF)"], size=12, weight="700")
-mqc(KX, Y0, dx=32, dy=20)
 stage(KX, Y0 - 44, "TAXONOMY", anchor="middle")
 
 # ---------------------------------------------------------------- abundance
 for name, x in [("Bracken", 810), ("KrakenTools|combine", 880), ("Krona", 950)]:
-    station(x, YA)
+    station(x, YA, fill=C_AB if name == "Bracken" else "#ffffff")
     text(x, YA - 14 - (13 if "|" in name else 0), name.split("|"), size=12, weight="700")
-    if name == "Bracken":
-        mqc(x, YA, dy=9)
-stage(840, YA + 20, "ABUNDANCE")
+stage(782, YA + 20, "ABUNDANCE")
 
 # ---------------------------------------------------------------- contamination
-station(810, YC)
+station(810, YC, fill=C_CO)
 text(810, YC - 14, ["Recentrifuge"], size=12, weight="700")
-mqc(810, YC, dy=9)
 text(866, YC - 12, ["negative-control aware"], anchor="start", size=10, fill=MUTED,
      style="italic")
-stage(840, YC + 20, "CONTAMINATION")
+stage(765, YC + 20, "CONTAMINATION")
 
 # ---------------------------------------------------------------- functional
 for name, x in [("Tag reads", 770), ("ABRicate", 850)]:
-    station(x, Y0)
+    station(x, Y0, fill=C_FN if name == "ABRicate" else "#ffffff")
     text(x, Y0 - 14, [name], size=12, weight="700")
-    if name == "ABRicate":
-        mqc(x, Y0, dy=9)
 SX = (FX0 + SP + FX1) // 2
 for name, y, dy in [("CARD", Y0 - SP, -12), ("VFDB", Y0, -12), ("PlasmidFinder", Y0 + SP, 20)]:
     station(SX, y, r=5.5)
@@ -216,7 +201,7 @@ interchange(MX, Y0)
 text(MX, Y0 - 20, ["MERIDIAN"], size=12, weight="700")
 terminus(RX, Y0, C_DS)
 text(RX, Y0 - 20, ["Report"], size=12, weight="700")
-stage(MX, Y0 + 32, "DOWNSTREAM", anchor="middle")
+stage(MX, Y0 - 44, "DOWNSTREAM", anchor="middle")
 
 # ---------------------------------------------------------------- reconstruction (planned)
 for name, x in [("binning /|assembly", 800), ("CheckM2", 880), ("Bakta", 950),
@@ -247,7 +232,7 @@ for lab, kind, x in sym:
     text(x + 24, SY + 4, [lab], anchor="start", size=12)
 interchange(470 + 24, SY, w=44)
 text(470 + 56, SY + 4, ["Interchange"], anchor="start", size=12)
-mqc(640, SY, dx=0, dy=0, h=5.5)
+station(640, SY, fill=C_QC)
 text(654, SY + 4, ["Reported in MultiQC"], anchor="start", size=12)
 text(830, SY + 4, ["Databases: --build_databases to download, or --db_dir to reuse"],
      anchor="start", size=10.5, fill=MUTED, style="italic")
