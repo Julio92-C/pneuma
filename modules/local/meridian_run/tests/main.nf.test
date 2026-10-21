@@ -8,7 +8,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("${projectDir}/assets/meridian_config.template.yaml")
+                input[0] = tuple("sample_type", file("${projectDir}/assets/meridian_config.template.yaml"))
                 input[1] = file("${projectDir}/tests/data/metadata_test.csv")
                 input[2] = file("${projectDir}/tests/data/abricate_S1.csv")
                 input[3] = file("${projectDir}/tests/data/kraken_combined.txt")

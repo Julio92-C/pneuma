@@ -56,7 +56,7 @@ def test_check_metadata_ok():
 
 def test_check_metadata_bom(tmp_path):
     p = tmp_path / "meta.csv"
-    p.write_bytes("﻿sample,sample_type\nA,x\nB,y\n".encode("utf-8"))
+    p.write_bytes("﻿sample,sample_type\nA,x\nB,y\nC,z\n".encode("utf-8"))
     mm.check_metadata(p, "sample_type", None, ["A"])
 
 
@@ -94,3 +94,21 @@ def test_cli_strips_control_whitespace(tmp_path):
     out = tmp_path / "config.yaml"
     _cli(out, "CNF0-0001, ")
     assert 'controls: ["CNF0-0001"]' in out.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("body,controls", [
+    ("sample,g\nA,x\nB,x\nC,x\n", []),
+    ("sample,g\nA,x\nB,NA\nC,\n", []),
+    ("sample,g\nA,x\nB,x\nCTRL,z\n", ["CTRL"]),   # controls do not count as a level
+])
+def test_check_metadata_needs_two_levels(tmp_path, body, controls):
+    p = tmp_path / "meta.csv"
+    p.write_text(body, encoding="utf-8")
+    with pytest.raises(ValueError, match="'g'"):
+        mm.check_metadata(p, "g", None, controls)
+
+
+def test_check_metadata_two_levels_ok(tmp_path):
+    p = tmp_path / "meta.csv"
+    p.write_text("sample,g\nA,x\nB,y\nCTRL,z\n", encoding="utf-8")
+    mm.check_metadata(p, "g", None, ["CTRL"])

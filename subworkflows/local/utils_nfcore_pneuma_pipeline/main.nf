@@ -76,15 +76,25 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
-    // Required PNEUMA parameters
+    // Parameter guards that the JSON schema cannot express (nf-schema has no conditional "required")
     //
-    ['host_index', 'kraken2_db', 'taxdump'].each { p ->
-        if (!params[p]) {
-            error("--${p} is required")
+    if (params.build_databases) {
+        checkBuildDatabasesParams(params)
+    } else {
+        if (!input || !params.outdir) {
+            error("--input and --outdir are required (or use --build_databases with --db_outdir to only download the databases)")
         }
-    }
-    if (!params.skip_meridian && !(params.meridian_metadata && params.meridian_group)) {
-        error("--meridian_metadata and --meridian_group are required unless --skip_meridian is set")
+        def dbs = resolveDatabases(params)
+        ['kraken2_db', 'taxdump', 'host_index', 'abricate_db', 'database_manifest'].each { k ->
+            def source = params[k] ? 'explicit parameter' : (dbs[k] ? "--db_dir (${params.db_dir})" : 'not set')
+            log.info "database ${k.padRight(17)} <- ${source}${dbs[k] ? ': ' + dbs[k] : ''}"
+        }
+        if (!params.skip_meridian && !(params.meridian_metadata && params.meridian_group)) {
+            error("--meridian_metadata and --meridian_group are required unless --skip_meridian is set")
+        }
+        if (!params.skip_meridian && !params.meridian_group.toString().split(',').any { it.trim() }) {
+            error("--meridian_group lists no metadata column")
+        }
     }
 
     //
@@ -95,18 +105,19 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
-    // Create channel from input file provided through params.input
+    // Create channel from input file provided through params.input (analysis mode only)
     //
+    def ch_samplesheet = channel.empty()
+    if (!params.build_databases) {
+        def rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        warnRunsWithoutControls(rows)
 
-    def rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
-    warnRunsWithoutControls(rows)
-
-    channel
-        .fromList(rows)
-        .map { meta, fastq -> [ meta.id, meta, fastq ] }
-        .groupTuple()
-        .map { id, metas, fastqs -> groupRuns(id, metas, fastqs) }
-        .set { ch_samplesheet }
+        ch_samplesheet = channel
+            .fromList(rows)
+            .map { meta, fastq -> [ meta.id, meta, fastq ] }
+            .groupTuple()
+            .map { id, metas, fastqs -> groupRuns(id, metas, fastqs) }
+    }
 
     emit:
     samplesheet = ch_samplesheet
@@ -163,6 +174,174 @@ workflow PIPELINE_COMPLETION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// Guards for --build_databases mode (no samplesheet, no analysis).
+//
+def checkBuildDatabasesParams(p) {
+    def problems = []
+    if (!p.db_outdir) {
+        problems.add("--db_outdir is required with --build_databases")
+    }
+    if (!p.skip_kraken_download && !(p.kraken_release ==~ /\d{8}/)) {
+        problems.add("--kraken_release YYYYMMDD is required (see https://benlangmead.github.io/aws-indexes/k2), or pass --skip_kraken_download")
+    }
+    if (!p.skip_taxdump_download && !(p.taxdump_month ==~ /\d{4}-(0[1-9]|1[0-2])/)) {
+        problems.add("--taxdump_month YYYY-MM is required (match the Kraken2 release month), or pass --skip_taxdump_download")
+    }
+    if (p.skip_kraken_download && p.skip_taxdump_download && p.skip_hostile_download && p.skip_abricate_download) {
+        problems.add("every download is skipped; nothing to build")
+    }
+    if (problems) {
+        error("Invalid --build_databases options:\n  - " + problems.join("\n  - "))
+    }
+    if (p.input) {
+        log.warn "--input is ignored with --build_databases (no analysis is run)"
+    }
+}
+
+//
+// Read database_manifest.tsv (name, version, path, sha256) into [name: [version:, path:, sha256:]].
+//
+def readDatabaseManifest(manifest) {
+    def rows = [:]
+    manifest.readLines().drop(1).findAll { it.trim() }.each { line ->
+        def c = line.split('\t', -1)
+        if (c.size() >= 4) {
+            rows[c[0]] = [version: c[1], path: c[2], sha256: c[3]]
+        } else {
+            log.warn "Ignoring malformed row in ${manifest} (expected 4 tab-separated columns, found ${c.size()}): '${line}'"
+        }
+    }
+    return rows
+}
+
+//
+// Sub-directories of root named <prefix>*, narrowed to <prefix><version> when that exists.
+//
+def findVersionedDirs(root, prefix, version) {
+    def all = (root.listFiles() ?: []).findAll { it.isDirectory() && it.name.startsWith(prefix) }.sort { it.name }
+    def exact = version ? all.findAll { it.name == prefix + version } : []
+    return exact ?: all
+}
+
+//
+// Hostile minimap2 indexes (human-t2t-hla*.mmi) anywhere below dir.
+//
+def findHostileIndexes(dir) {
+    def entries = dir.listFiles() ?: []
+    def here = entries.findAll { it.isFile() && it.name.startsWith('human-t2t-hla') && it.name.endsWith('.mmi') }
+    return (here + entries.findAll { it.isDirectory() }.collectMany { findHostileIndexes(it) }).sort { it.toString() }
+}
+
+//
+// Pick the only candidate; add a problem when there are none or several.
+//
+def pickOne(candidates, what, problems, hint) {
+    if (candidates.size() == 1) {
+        return candidates[0]
+    }
+    if (candidates.isEmpty()) {
+        problems.add("${what}: nothing found. ${hint}")
+    } else {
+        problems.add("${what}: several candidates (${candidates.collect { it.name }.join(', ')}). ${hint}")
+    }
+    return null
+}
+
+def missingFiles(dir, names) {
+    return names.findAll { !dir.resolve(it).exists() }
+}
+
+//
+// Resolve the database parameters for analysis mode. Explicit parameters always win; the rest
+// is filled from --db_dir (database_manifest.tsv + the layout written by --build_databases).
+// Returns [kraken2_db:, taxdump:, host_index:, abricate_db:, database_manifest:] as strings or null.
+// Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory.
+//
+def resolveDatabases(p) {
+    def res = [
+        kraken2_db        : p.kraken2_db ?: null,
+        taxdump           : p.taxdump ?: null,
+        host_index        : p.host_index ?: null,
+        abricate_db       : p.abricate_db ?: null,
+        database_manifest : p.database_manifest ?: null,
+    ]
+    def problems = []
+
+    if (p.db_dir) {
+        def root = file(p.db_dir)
+        if (!root.isDirectory()) {
+            error("--db_dir '${p.db_dir}' is not a directory")
+        }
+        def manifestFile = root.resolve('database_manifest.tsv')
+        def manifest = manifestFile.exists() ? readDatabaseManifest(manifestFile) : [:]
+        if (!manifestFile.exists()) {
+            log.warn "No database_manifest.tsv in --db_dir '${p.db_dir}': database versions cannot be recorded and the newest matching directories are picked by name"
+        }
+        def hint = "Pass the parameter explicitly or rebuild with --build_databases."
+
+        if (!res.database_manifest && manifestFile.exists()) {
+            res.database_manifest = manifestFile.toString()
+        }
+
+        if (!res.kraken2_db) {
+            def found = pickOne(findVersionedDirs(root, 'kraken2_pluspf_', manifest.kraken2_pluspf?.version),
+                                "--kraken2_db (kraken2_pluspf_* in ${p.db_dir})", problems, hint)
+            if (found) {
+                def missing = missingFiles(found, ['hash.k2d', 'opts.k2d', 'taxo.k2d'])
+                if (missing) {
+                    problems.add("--kraken2_db: ${found} is missing ${missing.join(', ')}")
+                } else {
+                    res.kraken2_db = found.toString()
+                }
+            }
+        }
+        if (!res.taxdump) {
+            def found = pickOne(findVersionedDirs(root, 'taxdump_', manifest.ncbi_taxdump?.version),
+                                "--taxdump (taxdump_* in ${p.db_dir})", problems, hint)
+            if (found) {
+                def missing = missingFiles(found, ['nodes.dmp', 'names.dmp'])
+                if (missing) {
+                    problems.add("--taxdump: ${found} is missing ${missing.join(', ')}")
+                } else {
+                    res.taxdump = found.toString()
+                }
+            }
+        }
+        if (!res.host_index) {
+            def indexes = root.resolve('hostile').isDirectory() ? findHostileIndexes(root.resolve('hostile')) : []
+            def wanted = manifest.hostile_index ? file(manifest.hostile_index.path).name : null
+            def named = wanted ? indexes.findAll { it.name == wanted } : []
+            def found = pickOne(named ?: indexes, "--host_index (hostile/human-t2t-hla*.mmi in ${p.db_dir})", problems, hint)
+            if (found) {
+                res.host_index = found.toString()
+            }
+        }
+        if (!res.abricate_db && root.resolve('abricate').isDirectory()) {
+            def adir = root.resolve('abricate')
+            def missing = p.abricate_dbs.tokenize(',').findAll { !adir.resolve("${it}/sequences").exists() }
+            if (missing) {
+                problems.add("--abricate_db: ${adir} has no sequences file for ABRicate database(s) ${missing.join(', ')} (see --abricate_dbs)")
+            } else {
+                res.abricate_db = adir.toString()
+            }
+        }
+        if (!res.abricate_db && !root.resolve('abricate').isDirectory()) {
+            log.warn "No abricate/ folder in --db_dir '${p.db_dir}' and no --abricate_db: ABRicate will use the databases bundled in the container (2021-Mar-27)"
+        }
+    }
+
+    ['host_index', 'kraken2_db', 'taxdump'].each { k ->
+        if (!res[k] && !problems.any { it.contains("--${k}") }) {
+            problems.add("--${k} is required: pass it or provide --db_dir containing it")
+        }
+    }
+    if (problems) {
+        error("Cannot resolve the databases:\n  - " + problems.join("\n  - "))
+    }
+    return res
+}
 
 //
 // Merge all runs of one sample into a single meta + ordered fastq list.

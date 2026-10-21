@@ -13,6 +13,7 @@ nextflow_workflow {
                     [ [id:'EBF0-0001'], fq ],
                     [ [id:'SPF0-0001'], fq ]
                 )
+                input[1] = null   // ABRicate databases bundled in the container
                 """
             }
         }
@@ -21,6 +22,23 @@ nextflow_workflow {
             assert workflow.out.per_sample.size() == 2
             def lines = path(workflow.out.summary[0]).readLines()
             assert lines.count { it.startsWith('#FILE') } == 1
+        }
+    }
+
+    test("--abricate_db directory is staged and used as --datadir") {
+        when {
+            params { abricate_dbs = 'card'; abricate_minid = 80; abricate_mincov = 80 }
+            workflow {
+                """
+                def fq = file("${projectDir}/tests/data/EBF0-0001.classified.fastq.gz", checkIfExists: true)
+                input[0] = channel.of( [ [id:'EBF0-0001'], fq ] )
+                input[1] = "${projectDir}/tests/data/abricate_db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.per_sample.size() == 1
         }
     }
 }

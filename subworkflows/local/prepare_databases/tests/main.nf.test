@@ -1,0 +1,71 @@
+nextflow_workflow {
+    name "Test PREPARE_DATABASES"
+    script "../main.nf"
+    workflow "PREPARE_DATABASES"
+    tag "stub"
+
+    // Real downloads are 100+ GB; the processes' stub blocks create tiny stand-ins with the same layout.
+    test("stub: all databases, manifest and published layout") {
+        options "-stub"
+        when {
+            params { db_outdir = "$outputDir/db" }
+            workflow {
+                """
+                input[0] = '20250402'
+                input[1] = '2025-04'
+                input[2] = "$outputDir/db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def lines = path(workflow.out.manifest[0]).readLines()
+            assert lines[0] == 'name\tversion\tpath\tsha256'
+            assert lines.drop(1).collect { it.split('\t')[0] } ==
+                ['kraken2_pluspf', 'ncbi_taxdump', 'hostile_index', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
+            lines.drop(1).each { line ->
+                def c = line.split('\t', -1)
+                assert c.size() == 4 && c.every { it }
+                assert c[3] ==~ /[0-9a-f]{64}/
+                assert c[2].startsWith("$outputDir/db/")
+            }
+            assert lines[1].split('\t')[1] == '20250402'
+            assert lines[2].split('\t')[1] == '2025-04'
+            assert lines[4].split('\t')[1] == '2026-Jan-01'
+            // published into db_outdir
+            assert path("$outputDir/db/database_manifest.tsv").exists()
+            ['hash.k2d', 'opts.k2d', 'taxo.k2d'].each { assert path("$outputDir/db/kraken2_pluspf_20250402/$it").exists() }
+            assert path("$outputDir/db/taxdump_2025-04/nodes.dmp").exists()
+            assert path("$outputDir/db/taxdump_2025-04/names.dmp").exists()
+            assert path("$outputDir/db/hostile/human-t2t-hla.mmi").exists()
+            ['card', 'vfdb', 'plasmidfinder'].each { assert path("$outputDir/db/abricate/$it/sequences").exists() }
+            assert !path("$outputDir/db/versions.yml").exists()
+            assert !path("$outputDir/db/01_kraken2.row.tsv").exists()
+        }
+    }
+
+    test("stub: skip flags leave databases out of the manifest") {
+        options "-stub"
+        when {
+            params {
+                db_outdir = "$outputDir/db"
+                skip_kraken_download = true
+                skip_hostile_download = true
+            }
+            workflow {
+                """
+                input[0] = null
+                input[1] = '2025-04'
+                input[2] = "$outputDir/db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('\t')[0] }
+            assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
+            assert !path("$outputDir/db/hostile").exists()
+            assert !path("$outputDir/db/kraken2_pluspf_20250402").exists()
+        }
+    }
+}

@@ -40,6 +40,9 @@ nextflow_process {
             def header = path(process.out.csv[0]).readLines()[0]
             assert header.contains('EBF0-0001')
             assert process.out.controls_html.size() > 0
+            assert process.out.controls_html.flatten().every { it.toString().endsWith('.html') }
+            def statHeader = path(process.out.stat[0]).readLines()[0].split(',').toList()
+            assert statHeader.size() > 1
         }
     }
 }

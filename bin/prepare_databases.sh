@@ -87,7 +87,7 @@ if [[ $SKIP_T -eq 0 ]]; then
 fi
 if [[ $SKIP_H -eq 0 ]]; then
   run "mkdir -p '$OUTDIR/hostile'"
-  run "$(ctr "$HOSTILE_IMAGE" hostile fetch --aligner minimap2 --name human-t2t-hla)"
+  run "$(ctr "$HOSTILE_IMAGE" hostile index fetch --name human-t2t-hla --minimap2)"
 fi
 if [[ $SKIP_A -eq 0 ]]; then
   run "mkdir -p '$OUTDIR/abricate'"
@@ -124,7 +124,7 @@ if [[ $DRY -eq 0 ]]; then
   fi
   if [[ $SKIP_H -eq 0 ]]; then
     HOSTILE_MMI=$(find "$OUTDIR/hostile" -name 'human-t2t-hla*.mmi' | head -1)
-    [[ -n "$HOSTILE_MMI" ]] || { echo "ERROR: no human-t2t-hla*.mmi found under $OUTDIR/hostile (hostile fetch failed?)" >&2; exit 1; }
+    [[ -n "$HOSTILE_MMI" ]] || { echo "ERROR: no human-t2t-hla*.mmi found under $OUTDIR/hostile (hostile index fetch failed?)" >&2; exit 1; }
     ROWS+=$(printf 'hostile_index	human-t2t-hla	%s	%s' "$HOSTILE_MMI" "$(sha_or_die "$HOSTILE_MMI")")$'
 '
     PARAMS+="--host_index $HOSTILE_MMI"$'

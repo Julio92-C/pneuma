@@ -13,6 +13,7 @@ include { TAXONOMY               } from '../subworkflows/local/taxonomy/main'
 include { CONTAMINATION          } from '../subworkflows/local/contamination/main'
 include { FUNCTIONAL_READS       } from '../subworkflows/local/functional_reads/main'
 include { MERIDIAN               } from '../subworkflows/local/meridian/main'
+include { MULTIQC_TABLES         } from '../modules/local/multiqc_tables/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,20 +29,36 @@ workflow PNEUMA {
     multiqc_logo
     multiqc_methods_description
     outdir
+    databases // map: kraken2_db, taxdump, host_index, abricate_db, database_manifest (see resolveDatabases)
 
     main:
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
 
-    PREPROCESS(ch_samplesheet, file(params.host_index, checkIfExists: true))
-    TAXONOMY(PREPROCESS.out.reads, params.kraken2_db)
-    CONTAMINATION(TAXONOMY.out.assignments, params.taxdump)
-    FUNCTIONAL_READS(TAXONOMY.out.classified)
+    PREPROCESS(ch_samplesheet, file(databases.host_index, checkIfExists: true))
+    TAXONOMY(PREPROCESS.out.reads, databases.kraken2_db)
+    CONTAMINATION(TAXONOMY.out.assignments, databases.taxdump)
+    FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
 
     ch_versions = ch_versions.mix(PREPROCESS.out.versions, TAXONOMY.out.versions,
                                   CONTAMINATION.out.versions, FUNCTIONAL_READS.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS.out.multiqc)
+
+    // Hostile, Kraken2 classification, ABRicate and Recentrifuge have no (usable) MultiQC module:
+    // summarise them as custom-content tables. Kraken2/Bracken reports go to MultiQC's kraken module as is.
+    MULTIQC_TABLES(
+        PREPROCESS.out.hostile_log.collect(),
+        TAXONOMY.out.reports.map { _meta, f -> f }.collect(),
+        FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect(),
+        CONTAMINATION.out.rcf_stat
+    )
+    ch_versions = ch_versions.mix(MULTIQC_TABLES.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(
+        TAXONOMY.out.reports.map { _meta, f -> f },
+        TAXONOMY.out.bracken_reports.map { _meta, f -> f },
+        MULTIQC_TABLES.out.tables
+    )
 
     if (!params.skip_meridian) {
         def ch_controls = ch_samplesheet
@@ -49,13 +66,14 @@ workflow PNEUMA {
             .map { meta, _fastqs -> meta.id }
             .collect()
             .ifEmpty([])
-        MERIDIAN(ch_controls, FUNCTIONAL_READS.out.summary, TAXONOMY.out.kraken_combined,
+        def ch_samples = ch_samplesheet.map { meta, _fastqs -> meta.id }.collect().map { it.sort() }
+        MERIDIAN(ch_controls, ch_samples, FUNCTIONAL_READS.out.summary, TAXONOMY.out.kraken_combined,
                  TAXONOMY.out.bracken_arranged, CONTAMINATION.out.rcf_csv)
         ch_versions = ch_versions.mix(MERIDIAN.out.versions)
     }
 
-    if (params.database_manifest) {
-        channel.fromPath(params.database_manifest, checkIfExists: true)
+    if (databases.database_manifest) {
+        channel.fromPath(databases.database_manifest, checkIfExists: true)
             .collectFile(name: 'database_manifest.tsv', storeDir: "${outdir}/pipeline_info")
     }
 

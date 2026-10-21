@@ -1,0 +1,123 @@
+// REAL MERIDIAN integration test: runs the actual MERIDIAN container (params.meridian_container)
+// through PNEUMA's MERIDIAN subworkflow (MERIDIAN_CONFIG + RCF_FOR_MERIDIAN + MERIDIAN_RUN) on the
+// synthetic fixture in tests/data/meridian_fixture/ (made by tests/make_meridian_fixture.py).
+// The other tests stub MERIDIAN; this one catches hand-off bugs (Recentrifuge columns, header
+// labels, renv activation) before they reach the HPC.
+//
+// Slow (~6 min on 4 CPUs; needs the 2.4 GB image and Docker), so it is tagged `meridian_real` and
+// listed in `ignore` in nf-test.config (nf-test.meridian.config is the same without it), which keeps it out of the default `nf-test test` suite.
+// Run it explicitly:
+//     nf-test test tests/meridian_integration.nf.test -c nf-test.meridian.config --tag meridian_real --profile docker,test
+// The image is params.meridian_container (nextflow.config): bump that one line to test a new
+// release (e.g. ghcr.io/julio92-c/meridian:v1.1.0).
+nextflow_workflow {
+
+    name "MERIDIAN subworkflow with the real MERIDIAN container"
+    script "subworkflows/local/meridian/main.nf"
+    workflow "MERIDIAN"
+    tag "meridian_real"
+    tag "docker"
+
+    test("real MERIDIAN runs end-to-end on the synthetic fixture") {
+
+        config "./meridian_readonly.config"   // read-only image, like Singularity
+
+        when {
+            params {
+                outdir            = "$outputDir"
+                meridian_metadata = "${projectDir}/tests/data/meridian_fixture/metadata.csv"
+                meridian_group    = "group,batch"   // two comparisons, run in parallel
+                meridian_study_id = "fixture"
+                // MERIDIAN_IMAGE=ghcr.io/julio92-c/meridian:v1.0.0 tests another tag than the default
+                if (System.getenv('MERIDIAN_IMAGE')) { meridian_container = System.getenv('MERIDIAN_IMAGE') }
+            }
+            workflow {
+                """
+                def fx = "${projectDir}/tests/data/meridian_fixture"
+                input[0] = channel.value(['CTRL1'])
+                input[1] = channel.value(['CTRL1', 'S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08'])
+                input[2] = channel.value(file("\$fx/summary_reportClean.csv"))
+                input[3] = channel.value(file("\$fx/kraken2_combined_reports.txt"))
+                input[4] = channel.value(file("\$fx/bracken_arranged.csv"))
+                input[5] = channel.value(file("\$fx/pneuma.rcf.data.csv"))
+                """
+            }
+        }
+
+        then {
+            // MERIDIAN exits 0 for both comparisons (an Rscript failure fails MERIDIAN_RUN)
+            assert workflow.success
+            // 2 x MERIDIAN_CONFIG + 2 x MERIDIAN_RUN + 1 x RCF_FOR_MERIDIAN
+            assert workflow.trace.succeeded().size() == 5
+
+            ['group', 'batch'].each { g ->
+                def out = "$outputDir/meridian/${g}"
+                def datasets = new File("$out/Datasets")
+                def figures  = new File("$out/Figures")
+                assert datasets.isDirectory() && figures.isDirectory() : "no outputs for comparison ${g}"
+
+                ['noncontaminants_list.csv', 'abri_kraken2_cleaned.csv', 'abri_kraken2Bracken_merged.csv'].each { f ->
+                    assert new File(datasets, f).length() > 0 : "${g}: missing or empty Datasets/${f}"
+                }
+                assert datasets.listFiles().findAll { it.name.endsWith('.csv') }.size() >= 8
+                // controls were subtracted: kit taxa must not survive in the cleaned table
+                def cleaned = new File(datasets, 'abri_kraken2_cleaned.csv').text
+                assert !cleaned.contains('Ralstonia') && !cleaned.contains('Bradyrhizobium')
+                assert cleaned.contains('Pseudomonas aeruginosa')
+
+                def pngs = []
+                figures.eachFileRecurse { if (it.name.endsWith('.png')) pngs << it }
+                assert pngs.size() >= 5 : "${g}: expected figures, found ${pngs.size()} PNGs"
+
+                // report stage is on in the PNEUMA template
+                def html = new File("$out/Reports/pipeline_report.html")
+                assert html.exists() && html.length() > 10000 : "${g}: no report HTML"
+                def cfg = new File("$out/config.yaml").text
+                assert cfg.contains('controls: ["CTRL1"]')
+                assert cfg.contains("id: \"fixture_${g}\"")
+                assert cfg.contains("- \"${g}\"")
+            }
+            assert new File("$outputDir/meridian/inputs/pneuma.rcf.meridian.csv").exists()
+        }
+    }
+
+    test("real MERIDIAN completes on low-biomass sparse hits (ARG-positive samples share one group)") {
+
+        config "./meridian_readonly.config"
+
+        when {
+            params {
+                outdir            = "$outputDir"
+                meridian_metadata = "${projectDir}/tests/data/meridian_fixture/metadata.csv"
+                // S01-S03 carry every ARG hit and are all prophylaxis = Yes; one VF gene; no plasmids.
+                // Real-data regression: MERIDIAN 1.0.1 crashed here (adonis2 on a single group).
+                meridian_group    = "prophylaxis,group"
+                meridian_study_id = "sparse"
+                if (System.getenv('MERIDIAN_IMAGE')) { meridian_container = System.getenv('MERIDIAN_IMAGE') }
+            }
+            workflow {
+                """
+                def fx = "${projectDir}/tests/data/meridian_fixture"
+                input[0] = channel.value(['CTRL1'])
+                input[1] = channel.value(['CTRL1', 'S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08'])
+                input[2] = channel.value(file("\$fx/sparse/summary_reportClean.csv"))
+                input[3] = channel.value(file("\$fx/kraken2_combined_reports.txt"))
+                input[4] = channel.value(file("\$fx/bracken_arranged.csv"))
+                input[5] = channel.value(file("\$fx/pneuma.rcf.data.csv"))
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            ['prophylaxis', 'group'].each { g ->
+                def out = "$outputDir/meridian/${g}"
+                def html = new File("$out/Reports/pipeline_report.html")
+                assert html.exists() && html.length() > 10000 : "${g}: no report HTML"
+                // sparse data must be handled by skips, not by MERIDIAN's stage safety net (>= 1.1.0)
+                def errs = new File("$out/Reports/stage_errors.csv")
+                assert !errs.exists() : "${g}: MERIDIAN stages failed: ${errs.exists() ? errs.text : ''}"
+            }
+        }
+    }
+}

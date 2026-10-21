@@ -1,4 +1,5 @@
 process MERIDIAN_CONFIG {
+    tag "$group"
     label 'process_single'
     container 'quay.io/biocontainers/python:3.9--1'
 
@@ -6,19 +7,21 @@ process MERIDIAN_CONFIG {
     path template
     path metadata
     val  controls   // List<String>
+    val  group      // one metadata column per MERIDIAN comparison
 
     output:
-    path "config.yaml" , emit: config
+    tuple val(group), path("config.yaml"), emit: config
     path "versions.yml", emit: versions
 
     script:
+    def safe = group.replaceAll(/[^A-Za-z0-9_.-]/, '_')
     def re = params.meridian_random_effect ? "--random-effect ${params.meridian_random_effect}" : ''
     """
     make_meridian_config.py \
         --template ${template} --out config.yaml \
-        --study-id ${params.meridian_study_id} \
+        --study-id ${params.meridian_study_id}_${safe} \
         --metadata ${metadata} \
-        --group ${params.meridian_group} ${re} \
+        --group "${group}" ${re} \
         --controls "${controls.join(',')}"
 
     cat <<-END_VERSIONS > versions.yml

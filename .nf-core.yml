@@ -13,6 +13,7 @@ lint:
     - assets/email_template.txt
     - docs/README.md
     - .prettierignore
+    - .github/workflows/linting.yml
     - docs/CONTRIBUTING.md
   nextflow_config:
     - manifest.name
@@ -29,6 +30,25 @@ lint:
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
+    - .github/workflows/branch.yml
+    - .github/workflows/download_pipeline.yml
+    - .github/workflows/fix_linting.yml
+    - .github/workflows/template-version-comment.yml
+    - .github/workflows/pr-comment.yml
+    - .github/workflows/clean-up.yml
+    - tests/default.nf.test
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+  # double-brace placeholder tokens are PNEUMA's own MERIDIAN config template, filled by bin/make_meridian_config.py
+  template_strings:
+    - assets/meridian_config.template.yaml
+    - bin/make_meridian_config.py
+  # PNEUMA tests assert on files and content; the template's versions.yml snapshot is not used
+  # nf-test.yml is PNEUMA's own single-job docker workflow, not the nf-core sharded one
+  actions_nf_test: false
+  nf_test_content:
+    - tests/main.nf.test
+    - tests/meridian_integration.nf.test
 
 template:
   org: Julio92-C
@@ -37,7 +57,7 @@ template:
     \ taxonomy, contamination, AMR/VF/MGE, priority-pathogen reconstruction and MERIDIAN\
     \ cohort analysis"
   author: Julio Cesar Ortega Cambara
-  version: 0.1.1
+  version: 0.2.0
   force: true
   outdir: .
   skip_features:

@@ -9,7 +9,7 @@ inputs:
   abricate_summary: "inputs/summary_reportClean.csv"
   kraken2_report:   "inputs/kraken2_combined_reports.txt"
   bracken_report:   "inputs/bracken_arranged.csv"
-  recentrifuge_csv: "inputs/pneuma.rcf.data.csv"
+  recentrifuge_csv: "inputs/pneuma.rcf.meridian.csv"
 metadata:
   file: {{METADATA_FILE}}
   sample_id_col: "sample"
