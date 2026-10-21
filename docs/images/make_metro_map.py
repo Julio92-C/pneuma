@@ -22,7 +22,7 @@ C_QC, C_AB, C_CO = "#0072B2", "#009E73", "#D55E00"
 C_FN, C_DS = "#9B3FA8", "#D4A017"
 C_MQ = "#57606a"
 
-W, H = 1330, 486
+W, H = 1380, 486
 LW = 6                      # line width
 
 # lane geometry
@@ -117,32 +117,32 @@ text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
 
 # ---------------------------------------------------------------- geometry
 KX = 505                              # Kraken2 interchange centre
-MX = 1195                             # MERIDIAN interchange centre
+MX = 1245                             # MERIDIAN interchange centre
 M0 = MX - 42                          # its left edge
-RX = 1296                             # Report terminus
+RX = 1340                             # Report terminus
 TX = 60                               # input terminus
 MQD = 36                              # MultiQC spur drop
-MQX, MQY = 1268, Y0 + MQD             # MultiQC terminus
+MQX, MQY = 1310, Y0 + MQD             # MultiQC terminus
 
 # lines (drawn first, stations on top)
 line([(TX, Y0), (KX - 20, Y0)], C_QC)
 # abundance (green): fan out, run, merge
 xa = 570
-line([(KX, Y0), (xa, Y0), (xa + Y0 - YA, YA), (916, YA),
-      (916 + Y0 - YA, Y0), (M0, Y0)], C_AB)
+line([(KX, Y0), (xa, Y0), (xa + Y0 - YA, YA), (1010, YA),
+      (1010 + Y0 - YA, Y0), (M0, Y0)], C_AB)
 # contamination (orange)
 xc = 610
-line([(KX, Y0), (xc, Y0), (xc + Y0 - YC, YC), (985, YC),
-      (985 + Y0 - YC, Y0), (M0, Y0)], C_CO)
+line([(KX, Y0), (xc, Y0), (xc + Y0 - YC, YC), (1044, YC),
+      (1044 + Y0 - YC, Y0), (M0, Y0)], C_CO)
 # functional (purple): straight lane with three spurs
-FX0, FX1 = 860, 1040                  # fork / merge start
+FX0, FX1 = 830, 990                  # fork / merge start
 SP = 44
 line([(KX, Y0), (FX0, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
 # MultiQC spur (neutral grey): leaves the merged bundle after every line has joined
-MQS = 1124
+MQS = 1170
 line([(MQS, Y0), (MQS + MQD, Y0 + MQD), (MQX, Y0 + MQD)], C_MQ)
 # downstream (gold)
 line([(M0, Y0), (RX, Y0)], C_DS)
@@ -189,7 +189,7 @@ text(826, YC - 12, ["negative-control aware"], anchor="start", size=10, fill=MUT
 stage(725, YC + 20, "CONTAMINATION")
 
 # ---------------------------------------------------------------- functional
-for name, x in [("Tag reads", 690), ("ABRicate", 775)]:
+for name, x in [("Tag reads", 690), ("ABRicate", 760)]:
     station(x, Y0, fill=C_FN if name == "ABRicate" else "#ffffff")
     text(x, Y0 - 14, [name], size=12, weight="700")
 SX = (FX0 + SP + FX1) // 2
