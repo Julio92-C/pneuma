@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.2.0 - 2026-10-13
+## v0.2.0 - 2026-10-21
 
 ### `Added`
 
@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `--meridian_group` accepts a comma-separated list of metadata columns: one MERIDIAN comparison (`MERIDIAN_CONFIG` + `MERIDIAN_RUN`) per column, in parallel, with study id `<study_id>_<column>`, published to `meridian/<column>/` (a single column uses the same layout). Each column is validated (exists, at least 2 distinct non-NA levels among non-control samples) by `MERIDIAN_CONFIG`, which needs only the metadata and runs at the start of the pipeline.
 - The MERIDIAN image is the single parameter `--meridian_container` (default `ghcr.io/julio92-c/meridian:v1.1.0`).
+- MERIDIAN v1.1.0 stage safety net: a MERIDIAN analysis stage that fails no longer aborts the run; it is listed in `meridian/<column>/Reports/stage_errors.csv` and the report, and PNEUMA logs a Nextflow warning naming the comparison and the failed stages.
+- Real-container integration test for a sparse low-biomass case (`tests/data/meridian_fixture/sparse/`): ARG hits only in samples of one group and a single VF gene; both comparisons must produce a report with no failed stages.
+- Tube map redrawn: branching lines from the Kraken2 interchange, a three-in/two-out junction before MERIDIAN, MultiQC as its own branch, and filled stops marking the steps reported in MultiQC.
 - `MERIDIAN_RUN` works in a writable copy of `/opt/meridian` (renv library symlinked), so the Quarto report and `Rplots.pdf` no longer fail when the image is read-only or the container runs as a non-root user.
 - Real-container integration test (`tests/meridian_integration.nf.test`, tag `meridian_real`, synthetic fixture from `tests/make_meridian_fixture.py`), run on demand with `nf-test test tests/meridian_integration.nf.test -c nf-test.meridian.config --tag meridian_real --profile docker,test`.
 
