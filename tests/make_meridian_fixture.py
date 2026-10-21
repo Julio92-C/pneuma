@@ -11,7 +11,10 @@ exact layouts PNEUMA produces (no real or patient data; IDs are anonymised):
                                  sed (row1 'Samples', row2 'Stats'); derived EXCLUSIVE/SHARED
                                  triplets and Details/Details/Name/Rank columns included
   summary_reportClean.csv        merged ABRicate (CARD / VFDB / PlasmidFinder) hits
-  metadata.csv                   sample,group,ID
+  sparse/summary_reportClean.csv the same hits cut down to a low-biomass shape: CARD and
+                                 PlasmidFinder hits in S01-S03 only (all `prophylaxis` = Yes)
+                                 and a single VFDB gene
+  metadata.csv                   sample,group,ID,batch,prophylaxis
   raw/kraken_combined_raw.txt    combine_kreports output with preamble (input of ARRANGE_REPORTS)
   raw/bracken_combined_raw.txt   same for Bracken (totals-only unclassified row)
 
@@ -488,13 +491,37 @@ def write_abricate(species_counts, rng, path):
     return len(lines) - 1
 
 
+SPARSE_SAMPLES = ("S01", "S02", "S03")
+
+
+def write_sparse_abricate(full_path, path):
+    # Low-biomass shape seen on real data: ARG hits in a few samples that all share one level of the
+    # comparison (`prophylaxis` = Yes) and a single VF gene. Derived from the full table (no rng).
+    lines = full_path.read_text().splitlines()
+    keep, vf_gene = [lines[0]], None
+    for line in lines[1:]:
+        f = line.split(",")
+        sample, gene, db = f[0].split("_kraken2ID")[0], f[5], f[11]
+        if sample not in SPARSE_SAMPLES:
+            continue
+        if db == VFDB:
+            vf_gene = vf_gene or gene
+            if gene != vf_gene:
+                continue
+        keep.append(line)
+    _w(path, "\n".join(keep) + "\n")
+    return len(keep) - 1
+
+
 def write_metadata(path):
-    # `batch` is a second, partly crossed grouping column (two comparisons in the integration test)
-    rows = ["sample,group,ID,batch"]
+    # `batch` is a second, partly crossed grouping column (two comparisons in the integration test);
+    # `prophylaxis` puts every ARG-positive sample of the sparse table (S01-S03) in one level.
+    rows = ["sample,group,ID,batch,prophylaxis"]
     for i in range(1, 9):
         s = f"S{i:02d}"
-        rows.append(f"{s},{GROUP[s]},P{i:02d},{'B1' if i % 2 else 'B2'}")
-    rows.append("CTRL1,Control,CTRL,B1")
+        proph = "Yes" if s in SPARSE_SAMPLES + ("S06",) else "No"
+        rows.append(f"{s},{GROUP[s]},P{i:02d},{'B1' if i % 2 else 'B2'},{proph}")
+    rows.append("CTRL1,Control,CTRL,B1,Control")
     _w(path, "\n".join(rows) + "\n")
 
 
@@ -502,6 +529,7 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     out = Path(argv[0]) if argv else Path(__file__).resolve().parent / "data" / "meridian_fixture"
     (out / "raw").mkdir(parents=True, exist_ok=True)
+    (out / "sparse").mkdir(exist_ok=True)
     rng = random.Random(SEED)
     counts, _depth = sample_counts(rng)
     root = build_tree()
@@ -515,8 +543,9 @@ def main(argv=None):
                   out / "bracken_arranged.csv")
     write_rcf(root, order, rng, out / "pneuma.rcf.data.csv")
     n_hits = write_abricate(counts, rng, out / "summary_reportClean.csv")
+    n_sparse = write_sparse_abricate(out / "summary_reportClean.csv", out / "sparse" / "summary_reportClean.csv")
     write_metadata(out / "metadata.csv")
-    print(f"wrote fixture to {out} ({n_hits} ABRicate hits)")
+    print(f"wrote fixture to {out} ({n_hits} ABRicate hits, {n_sparse} in the sparse table)")
 
 
 if __name__ == "__main__":

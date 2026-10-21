@@ -80,4 +80,44 @@ nextflow_workflow {
             assert new File("$outputDir/meridian/inputs/pneuma.rcf.meridian.csv").exists()
         }
     }
+
+    test("real MERIDIAN completes on low-biomass sparse hits (ARG-positive samples share one group)") {
+
+        config "./meridian_readonly.config"
+
+        when {
+            params {
+                outdir            = "$outputDir"
+                meridian_metadata = "${projectDir}/tests/data/meridian_fixture/metadata.csv"
+                // S01-S03 carry every ARG hit and are all prophylaxis = Yes; one VF gene; no plasmids.
+                // Real-data regression: MERIDIAN 1.0.1 crashed here (adonis2 on a single group).
+                meridian_group    = "prophylaxis,group"
+                meridian_study_id = "sparse"
+                if (System.getenv('MERIDIAN_IMAGE')) { meridian_container = System.getenv('MERIDIAN_IMAGE') }
+            }
+            workflow {
+                """
+                def fx = "${projectDir}/tests/data/meridian_fixture"
+                input[0] = channel.value(['CTRL1'])
+                input[1] = channel.value(['CTRL1', 'S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08'])
+                input[2] = channel.value(file("\$fx/sparse/summary_reportClean.csv"))
+                input[3] = channel.value(file("\$fx/kraken2_combined_reports.txt"))
+                input[4] = channel.value(file("\$fx/bracken_arranged.csv"))
+                input[5] = channel.value(file("\$fx/pneuma.rcf.data.csv"))
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            ['prophylaxis', 'group'].each { g ->
+                def out = "$outputDir/meridian/${g}"
+                def html = new File("$out/Reports/pipeline_report.html")
+                assert html.exists() && html.length() > 10000 : "${g}: no report HTML"
+                // sparse data must be handled by skips, not by MERIDIAN's stage safety net (>= 1.1.0)
+                def errs = new File("$out/Reports/stage_errors.csv")
+                assert !errs.exists() : "${g}: MERIDIAN stages failed: ${errs.exists() ? errs.text : ''}"
+            }
+        }
+    }
 }
