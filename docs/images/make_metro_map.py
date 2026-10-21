@@ -20,13 +20,14 @@ FONT = "Helvetica, Arial, sans-serif"
 
 C_QC, C_AB, C_CO = "#0072B2", "#009E73", "#D55E00"
 C_FN, C_DS = "#9B3FA8", "#D4A017"
+C_MQ = "#57606a"
 
-W, H = 1300, 460
+W, H = 1330, 486
 LW = 6                      # line width
 
 # lane geometry
-Y0 = 232                    # trunk / functional / downstream line
-YA, YC, YR = 118, 170, 322  # abundance, contamination, reconstruction lanes
+Y0 = 240                    # trunk / functional / downstream line
+YA, YC, YR = 96, 150, 350  # abundance, contamination, reconstruction lanes
 
 out = []
 
@@ -115,51 +116,52 @@ text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
      anchor="start", size=18, weight="700")
 
 # ---------------------------------------------------------------- geometry
-KX = 585                              # Kraken2 interchange centre
-MX = 1137                             # MERIDIAN interchange centre
+KX = 505                              # Kraken2 interchange centre
+MX = 1195                             # MERIDIAN interchange centre
 M0 = MX - 42                          # its left edge
-RX = 1245                             # Report terminus
+RX = 1296                             # Report terminus
 TX = 60                               # input terminus
-MQD = 42                              # MultiQC spur drop
-MQX, MQY = 1215, Y0 + MQD             # MultiQC terminus
+MQD = 36                              # MultiQC spur drop
+MQX, MQY = 1268, Y0 + MQD             # MultiQC terminus
 
 # lines (drawn first, stations on top)
 line([(TX, Y0), (KX - 20, Y0)], C_QC)
 # abundance (green): fan out, run, merge
-xa = 650
-line([(KX, Y0), (xa, Y0), (xa + Y0 - YA, YA), (975, YA),
-      (975 + Y0 - YA, Y0), (M0, Y0)], C_AB)
+xa = 570
+line([(KX, Y0), (xa, Y0), (xa + Y0 - YA, YA), (916, YA),
+      (916 + Y0 - YA, Y0), (M0, Y0)], C_AB)
 # contamination (orange)
-xc = 690
-line([(KX, Y0), (xc, Y0), (xc + Y0 - YC, YC), (995, YC),
-      (995 + Y0 - YC, Y0), (M0, Y0)], C_CO)
+xc = 610
+line([(KX, Y0), (xc, Y0), (xc + Y0 - YC, YC), (985, YC),
+      (985 + Y0 - YC, Y0), (M0, Y0)], C_CO)
 # functional (purple): straight lane with three spurs
-FX0, FX1 = 880, 1040                  # fork / merge start
-SP = 30
+FX0, FX1 = 860, 1040                  # fork / merge start
+SP = 44
 line([(KX, Y0), (FX0, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX1 + SP, Y0), (M0, Y0)], C_FN)
-# MultiQC spur (blue): leaves just before MERIDIAN, curves down to its terminus
-line([(1080, Y0), (1080 + MQD, Y0 + MQD), (MQX, Y0 + MQD)], C_QC)
+# MultiQC spur (neutral grey): leaves the merged bundle after every line has joined
+MQS = 1124
+line([(MQS, Y0), (MQS + MQD, Y0 + MQD), (MQX, Y0 + MQD)], C_MQ)
 # downstream (gold)
 line([(M0, Y0), (RX, Y0)], C_DS)
 # reconstruction (grey, dashed)
-xr = 650
-line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1100, YR)], GREY, dashed=True)
+xr = 570
+line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1060, YR)], GREY, dashed=True)
 
 # ---------------------------------------------------------------- trunk stations
-qc = [("cat", 130, "", 1), ("Porechop_ABI", 204, "opt", -1), ("nanoq", 278, "", 1),
-      ("NanoPlot", 352, "", -1), ("SeqKit stats", 426, "", 1), ("Hostile", 500, "", -1)]
+qc = [("cat", 116, "", 1), ("Porechop_ABI", 178, "opt", -1), ("nanoq", 240, "", 1),
+      ("NanoPlot", 302, "", -1), ("SeqKit stats", 364, "", 1), ("Hostile", 426, "", -1)]
 for name, x, kind, side in qc:
     station(x, Y0, kind, fill=C_QC if name in ("nanoq", "NanoPlot", "SeqKit stats", "Hostile") else "#ffffff")
     ly = Y0 - 14 if side > 0 else Y0 + 22
     text(x, ly, [name], size=12, weight="700")
-text(500, Y0 + 35, ["LOW_DEPTH flag"], size=10, fill=MUTED, style="italic")
+text(426, Y0 + 35, ["LOW_DEPTH flag"], size=10, fill=MUTED, style="italic")
 stage(100, Y0 - 44, "QC &amp; HOST REMOVAL")
 
 # MultiQC terminus (second output, grey)
-terminus(MQX, MQY, C_QC)
+terminus(MQX, MQY, C_MQ)
 text(MQX, MQY + 28, ["MultiQC"], size=12, weight="700")
 text(MQX, MQY + 42, ["report of all steps"], size=10, fill=MUTED, style="italic")
 
@@ -174,27 +176,27 @@ text(KX, Y0 - 20, ["Kraken2 (PlusPF)"], size=12, weight="700")
 stage(KX, Y0 - 44, "TAXONOMY", anchor="middle")
 
 # ---------------------------------------------------------------- abundance
-for name, x in [("Bracken", 810), ("KrakenTools|combine", 880), ("Krona", 950)]:
+for name, x in [("Bracken", 750), ("KrakenTools|combine", 820), ("Krona", 890)]:
     station(x, YA, fill=C_AB if name == "Bracken" else "#ffffff")
     text(x, YA - 14 - (13 if "|" in name else 0), name.split("|"), size=12, weight="700")
-stage(782, YA + 20, "ABUNDANCE")
+stage(722, YA + 20, "ABUNDANCE")
 
 # ---------------------------------------------------------------- contamination
-station(810, YC, fill=C_CO)
-text(810, YC - 14, ["Recentrifuge"], size=12, weight="700")
-text(866, YC - 12, ["negative-control aware"], anchor="start", size=10, fill=MUTED,
+station(770, YC, fill=C_CO)
+text(770, YC - 14, ["Recentrifuge"], size=12, weight="700")
+text(826, YC - 12, ["negative-control aware"], anchor="start", size=10, fill=MUTED,
      style="italic")
-stage(765, YC + 20, "CONTAMINATION")
+stage(725, YC + 20, "CONTAMINATION")
 
 # ---------------------------------------------------------------- functional
-for name, x in [("Tag reads", 770), ("ABRicate", 850)]:
+for name, x in [("Tag reads", 690), ("ABRicate", 775)]:
     station(x, Y0, fill=C_FN if name == "ABRicate" else "#ffffff")
     text(x, Y0 - 14, [name], size=12, weight="700")
 SX = (FX0 + SP + FX1) // 2
 for name, y, dy in [("CARD", Y0 - SP, -12), ("VFDB", Y0, -12), ("PlasmidFinder", Y0 + SP, 20)]:
     station(SX, y, r=5.5)
     text(SX, y + dy, [name], size=12, weight="700")
-stage(745, Y0 + 28, "FUNCTIONAL")
+stage(660, Y0 + 28, "FUNCTIONAL")
 
 # ---------------------------------------------------------------- downstream
 interchange(MX, Y0)
@@ -204,17 +206,17 @@ text(RX, Y0 - 20, ["Report"], size=12, weight="700")
 stage(MX, Y0 - 44, "DOWNSTREAM", anchor="middle")
 
 # ---------------------------------------------------------------- reconstruction (planned)
-for name, x in [("binning /|assembly", 800), ("CheckM2", 880), ("Bakta", 950),
-                ("MLST", 1015)]:
+for name, x in [("binning /|assembly", 770), ("CheckM2", 850), ("Bakta", 920),
+                ("MLST", 985)]:
     station(x, YR, "plan")
     parts = name.split("|")
     text(x, YR - 14 - 13 * (len(parts) - 1), parts, size=12, weight="400", fill=MUTED)
-terminus(1100, YR, GREY)
-text(1100, YR - 20, ["Pathogen report"], size=12, weight="400", fill=MUTED)
-stage(745, YR + 28, "METAGENOME RECONSTRUCTION (PLANNED)")
+terminus(1060, YR, GREY)
+text(1060, YR - 20, ["Pathogen report"], size=12, weight="400", fill=MUTED)
+stage(725, YR + 28, "METAGENOME RECONSTRUCTION (PLANNED)")
 
 # ---------------------------------------------------------------- legend
-LY = 402
+LY = 424
 stage(30, LY - 18, "LEGEND")
 lines_leg = [("QC &amp; taxonomy", C_QC, False), ("Abundance", C_AB, False),
              ("Contamination", C_CO, False), ("Functional (AMR / VF / MGE)", C_FN, False),
