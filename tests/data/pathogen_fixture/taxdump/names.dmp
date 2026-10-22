@@ -1,0 +1,137 @@
+1	|	root	|		|	scientific name	|
+2	|	Bacteria	|		|	scientific name	|
+286	|	Pseudomonas	|		|	scientific name	|
+287	|	Pseudomonas aeruginosa	|		|	scientific name	|
+287	|	"Bacterium aeruginosum"	|		|	synonym	|
+468	|	Moraxellaceae	|		|	scientific name	|
+469	|	Acinetobacter	|		|	scientific name	|
+470	|	Acinetobacter baumannii	|		|	scientific name	|
+475	|	Moraxella	|		|	scientific name	|
+480	|	Moraxella catarrhalis	|		|	scientific name	|
+481	|	Neisseriaceae	|		|	scientific name	|
+482	|	Neisseria	|		|	scientific name	|
+487	|	Neisseria meningitidis	|		|	scientific name	|
+543	|	Enterobacteriaceae	|		|	scientific name	|
+561	|	Escherichia	|		|	scientific name	|
+562	|	Escherichia coli	|		|	scientific name	|
+570	|	Klebsiella	|		|	scientific name	|
+573	|	Klebsiella pneumoniae	|		|	scientific name	|
+620	|	Shigella	|		|	scientific name	|
+623	|	Shigella flexneri	|		|	scientific name	|
+624	|	Shigella sonnei	|		|	scientific name	|
+712	|	Pasteurellaceae	|		|	scientific name	|
+724	|	Haemophilus	|		|	scientific name	|
+726	|	Haemophilus haemolyticus	|		|	scientific name	|
+727	|	Haemophilus influenzae	|		|	scientific name	|
+729	|	Parahaemophilus parainfluenzae	|		|	scientific name	|
+729	|	Haemophilus parainfluenzae	|		|	synonym	|
+838	|	Prevotella	|		|	scientific name	|
+976	|	Bacteroidota	|		|	scientific name	|
+1224	|	Pseudomonadota	|		|	scientific name	|
+1236	|	Gammaproteobacteria	|		|	scientific name	|
+1239	|	Bacillota	|		|	scientific name	|
+1268	|	Micrococcaceae	|		|	scientific name	|
+1279	|	Staphylococcus	|		|	scientific name	|
+1280	|	Staphylococcus aureus	|		|	scientific name	|
+1282	|	Staphylococcus epidermidis	|		|	scientific name	|
+1282	|	"Albococcus epidermidis"	|		|	synonym	|
+1300	|	Streptococcaceae	|		|	scientific name	|
+1301	|	Streptococcus	|		|	scientific name	|
+1303	|	Streptococcus oralis	|		|	scientific name	|
+1313	|	Streptococcus pneumoniae	|		|	scientific name	|
+1313	|	"Micrococcus pneumoniae"	|		|	synonym	|
+1385	|	Caryophanales	|		|	scientific name	|
+1760	|	Actinomycetes	|		|	scientific name	|
+1762	|	Mycobacteriaceae	|		|	scientific name	|
+1763	|	Mycobacterium	|		|	scientific name	|
+1773	|	Mycobacterium tuberculosis	|		|	scientific name	|
+1773	|	"Bacterium tuberculosis"	|		|	synonym	|
+2759	|	Eukaryota	|		|	scientific name	|
+4751	|	Fungi	|		|	scientific name	|
+4753	|	Pneumocystis	|		|	scientific name	|
+4890	|	Ascomycota	|		|	scientific name	|
+5042	|	Eurotiales	|		|	scientific name	|
+5052	|	Aspergillus	|		|	scientific name	|
+5204	|	Basidiomycota	|		|	scientific name	|
+5206	|	Cryptococcus	|		|	scientific name	|
+5207	|	Cryptococcus neoformans	|		|	scientific name	|
+5207	|	Saccharomyces neoformans	|		|	synonym	|
+5234	|	Tremellales	|		|	scientific name	|
+5475	|	Candida	|		|	scientific name	|
+5476	|	Candida albicans	|		|	scientific name	|
+5476	|	Oidium albicans	|		|	synonym	|
+9606	|	Homo sapiens	|		|	scientific name	|
+10239	|	Viruses	|		|	scientific name	|
+11118	|	Coronaviridae	|		|	scientific name	|
+28037	|	Streptococcus mitis	|		|	scientific name	|
+28132	|	Prevotella melaninogenica	|		|	scientific name	|
+28216	|	Betaproteobacteria	|		|	scientific name	|
+28449	|	Neisseria subflava	|		|	scientific name	|
+28449	|	"Micrococcus subflavus"	|		|	synonym	|
+29465	|	Veillonella	|		|	scientific name	|
+29466	|	Veillonella parvula	|		|	scientific name	|
+29466	|	"Staphylococcus parvulus"	|		|	synonym	|
+31977	|	Veillonellaceae	|		|	scientific name	|
+32008	|	Burkholderia	|		|	scientific name	|
+32033	|	Lysobacteraceae	|		|	scientific name	|
+32207	|	Rothia	|		|	scientific name	|
+36809	|	Mycobacteroides abscessus	|		|	scientific name	|
+37987	|	Pneumocystales	|		|	scientific name	|
+40323	|	Stenotrophomonas	|		|	scientific name	|
+40324	|	Stenotrophomonas maltophilia	|		|	scientific name	|
+40324	|	Pseudomonas maltophilia (ex Hugh and Ryschenkow 1961)	|		|	synonym	|
+42068	|	Pneumocystis jirovecii	|		|	scientific name	|
+43675	|	Rothia mucilaginosa	|		|	scientific name	|
+44281	|	Pneumocystaceae	|		|	scientific name	|
+72274	|	Pseudomonadales	|		|	scientific name	|
+76804	|	Nidovirales	|		|	scientific name	|
+80840	|	Burkholderiales	|		|	scientific name	|
+85006	|	Micrococcales	|		|	scientific name	|
+85007	|	Mycobacteriales	|		|	scientific name	|
+87883	|	Burkholderia multivorans	|		|	scientific name	|
+90964	|	Staphylococcaceae	|		|	scientific name	|
+91061	|	Bacilli	|		|	scientific name	|
+91347	|	Enterobacterales	|		|	scientific name	|
+95486	|	Burkholderia cenocepacia	|		|	scientific name	|
+119060	|	Burkholderiaceae	|		|	scientific name	|
+131567	|	cellular organisms	|		|	scientific name	|
+135614	|	Lysobacterales	|		|	scientific name	|
+135621	|	Pseudomonadaceae	|		|	scientific name	|
+135625	|	Pasteurellales	|		|	scientific name	|
+147545	|	Eurotiomycetes	|		|	scientific name	|
+147553	|	Pneumocystomycetes	|		|	scientific name	|
+155616	|	Tremellomycetes	|		|	scientific name	|
+170187	|	Streptococcus pneumoniae TIGR4	|		|	scientific name	|
+171549	|	Bacteroidales	|		|	scientific name	|
+171552	|	Prevotellaceae	|		|	scientific name	|
+186826	|	Lactobacillales	|		|	scientific name	|
+200643	|	Bacteroidia	|		|	scientific name	|
+201174	|	Actinomycetota	|		|	scientific name	|
+206351	|	Neisseriales	|		|	scientific name	|
+244366	|	Klebsiella variicola	|		|	scientific name	|
+257758	|	Streptococcus pseudopneumoniae	|		|	scientific name	|
+670516	|	Mycobacteroides	|		|	scientific name	|
+694002	|	Betacoronavirus	|		|	scientific name	|
+694009	|	Severe acute respiratory syndrome-related coronavirus	|		|	scientific name	|
+746128	|	Aspergillus fumigatus	|		|	scientific name	|
+766764	|	Debaryomycetaceae	|		|	scientific name	|
+909932	|	Negativicutes	|		|	scientific name	|
+985002	|	Staphylococcus argenteus	|		|	scientific name	|
+1131492	|	Aspergillaceae	|		|	scientific name	|
+1463165	|	Klebsiella quasipneumoniae	|		|	scientific name	|
+1783272	|	Bacillati	|		|	scientific name	|
+1843489	|	Veillonellales	|		|	scientific name	|
+1884633	|	Cryptococcaceae	|		|	scientific name	|
+2499399	|	Cornidovirineae	|		|	scientific name	|
+2501931	|	Orthocoronavirinae	|		|	scientific name	|
+2509511	|	Sarbecovirus	|		|	scientific name	|
+2559587	|	Riboviria	|		|	scientific name	|
+2697049	|	Severe acute respiratory syndrome coronavirus 2	|		|	scientific name	|
+2732396	|	Orthornavirae	|		|	scientific name	|
+2732408	|	Pisuviricota	|		|	scientific name	|
+2732506	|	Pisoniviricetes	|		|	scientific name	|
+2887326	|	Moraxellales	|		|	scientific name	|
+2916678	|	Serinales	|		|	scientific name	|
+3239874	|	Pichiomycetes	|		|	scientific name	|
+3379134	|	Pseudomonadati	|		|	scientific name	|
+3705180	|	Parahaemophilus	|		|	scientific name	|

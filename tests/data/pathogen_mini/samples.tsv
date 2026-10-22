@@ -1,0 +1,4 @@
+sample	patient	is_control	low_depth	n_reads
+MINI-S1	MA	false	false	252
+MINI-S2	MB	false	false	83
+MINI-S3	MB	false	false	92

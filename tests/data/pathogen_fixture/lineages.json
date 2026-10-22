@@ -1,0 +1,1634 @@
+[
+ {
+  "basionym": "\"Bacterium aeruginosum\"",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "72274",
+    "Pseudomonadales"
+   ],
+   [
+    "family",
+    "135621",
+    "Pseudomonadaceae"
+   ],
+   [
+    "genus",
+    "286",
+    "Pseudomonas"
+   ],
+   [
+    "species",
+    "287",
+    "Pseudomonas aeruginosa"
+   ]
+  ],
+  "name": "Pseudomonas aeruginosa",
+  "rank": "species",
+  "taxid": "287"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "2887326",
+    "Moraxellales"
+   ],
+   [
+    "family",
+    "468",
+    "Moraxellaceae"
+   ],
+   [
+    "genus",
+    "469",
+    "Acinetobacter"
+   ],
+   [
+    "species",
+    "470",
+    "Acinetobacter baumannii"
+   ]
+  ],
+  "name": "Acinetobacter baumannii",
+  "rank": "species",
+  "taxid": "470"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "2887326",
+    "Moraxellales"
+   ],
+   [
+    "family",
+    "468",
+    "Moraxellaceae"
+   ],
+   [
+    "genus",
+    "475",
+    "Moraxella"
+   ],
+   [
+    "species",
+    "480",
+    "Moraxella catarrhalis"
+   ]
+  ],
+  "name": "Moraxella catarrhalis",
+  "rank": "species",
+  "taxid": "480"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "28216",
+    "Betaproteobacteria"
+   ],
+   [
+    "order",
+    "206351",
+    "Neisseriales"
+   ],
+   [
+    "family",
+    "481",
+    "Neisseriaceae"
+   ],
+   [
+    "genus",
+    "482",
+    "Neisseria"
+   ],
+   [
+    "species",
+    "487",
+    "Neisseria meningitidis"
+   ]
+  ],
+  "name": "Neisseria meningitidis",
+  "rank": "species",
+  "taxid": "487"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "91347",
+    "Enterobacterales"
+   ],
+   [
+    "family",
+    "543",
+    "Enterobacteriaceae"
+   ],
+   [
+    "genus",
+    "561",
+    "Escherichia"
+   ],
+   [
+    "species",
+    "562",
+    "Escherichia coli"
+   ]
+  ],
+  "name": "Escherichia coli",
+  "rank": "species",
+  "taxid": "562"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "91347",
+    "Enterobacterales"
+   ],
+   [
+    "family",
+    "543",
+    "Enterobacteriaceae"
+   ],
+   [
+    "genus",
+    "570",
+    "Klebsiella"
+   ],
+   [
+    "species",
+    "573",
+    "Klebsiella pneumoniae"
+   ]
+  ],
+  "name": "Klebsiella pneumoniae",
+  "rank": "species",
+  "taxid": "573"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "91347",
+    "Enterobacterales"
+   ],
+   [
+    "family",
+    "543",
+    "Enterobacteriaceae"
+   ],
+   [
+    "genus",
+    "620",
+    "Shigella"
+   ],
+   [
+    "species",
+    "623",
+    "Shigella flexneri"
+   ]
+  ],
+  "name": "Shigella flexneri",
+  "rank": "species",
+  "taxid": "623"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "91347",
+    "Enterobacterales"
+   ],
+   [
+    "family",
+    "543",
+    "Enterobacteriaceae"
+   ],
+   [
+    "genus",
+    "620",
+    "Shigella"
+   ],
+   [
+    "species",
+    "624",
+    "Shigella sonnei"
+   ]
+  ],
+  "name": "Shigella sonnei",
+  "rank": "species",
+  "taxid": "624"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "135625",
+    "Pasteurellales"
+   ],
+   [
+    "family",
+    "712",
+    "Pasteurellaceae"
+   ],
+   [
+    "genus",
+    "724",
+    "Haemophilus"
+   ],
+   [
+    "species",
+    "726",
+    "Haemophilus haemolyticus"
+   ]
+  ],
+  "name": "Haemophilus haemolyticus",
+  "rank": "species",
+  "taxid": "726"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "135625",
+    "Pasteurellales"
+   ],
+   [
+    "family",
+    "712",
+    "Pasteurellaceae"
+   ],
+   [
+    "genus",
+    "724",
+    "Haemophilus"
+   ],
+   [
+    "species",
+    "727",
+    "Haemophilus influenzae"
+   ]
+  ],
+  "name": "Haemophilus influenzae",
+  "rank": "species",
+  "taxid": "727"
+ },
+ {
+  "basionym": "Haemophilus parainfluenzae",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "135625",
+    "Pasteurellales"
+   ],
+   [
+    "family",
+    "712",
+    "Pasteurellaceae"
+   ],
+   [
+    "genus",
+    "3705180",
+    "Parahaemophilus"
+   ],
+   [
+    "species",
+    "729",
+    "Parahaemophilus parainfluenzae"
+   ]
+  ],
+  "name": "Parahaemophilus parainfluenzae",
+  "rank": "species",
+  "taxid": "729"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "1385",
+    "Caryophanales"
+   ],
+   [
+    "family",
+    "90964",
+    "Staphylococcaceae"
+   ],
+   [
+    "genus",
+    "1279",
+    "Staphylococcus"
+   ],
+   [
+    "species",
+    "1280",
+    "Staphylococcus aureus"
+   ]
+  ],
+  "name": "Staphylococcus aureus",
+  "rank": "species",
+  "taxid": "1280"
+ },
+ {
+  "basionym": "\"Albococcus epidermidis\"",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "1385",
+    "Caryophanales"
+   ],
+   [
+    "family",
+    "90964",
+    "Staphylococcaceae"
+   ],
+   [
+    "genus",
+    "1279",
+    "Staphylococcus"
+   ],
+   [
+    "species",
+    "1282",
+    "Staphylococcus epidermidis"
+   ]
+  ],
+  "name": "Staphylococcus epidermidis",
+  "rank": "species",
+  "taxid": "1282"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "186826",
+    "Lactobacillales"
+   ],
+   [
+    "family",
+    "1300",
+    "Streptococcaceae"
+   ],
+   [
+    "genus",
+    "1301",
+    "Streptococcus"
+   ],
+   [
+    "species",
+    "1303",
+    "Streptococcus oralis"
+   ]
+  ],
+  "name": "Streptococcus oralis",
+  "rank": "species",
+  "taxid": "1303"
+ },
+ {
+  "basionym": "\"Micrococcus pneumoniae\"",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "186826",
+    "Lactobacillales"
+   ],
+   [
+    "family",
+    "1300",
+    "Streptococcaceae"
+   ],
+   [
+    "genus",
+    "1301",
+    "Streptococcus"
+   ],
+   [
+    "species",
+    "1313",
+    "Streptococcus pneumoniae"
+   ]
+  ],
+  "name": "Streptococcus pneumoniae",
+  "rank": "species",
+  "taxid": "1313"
+ },
+ {
+  "basionym": "\"Bacterium tuberculosis\"",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "201174",
+    "Actinomycetota"
+   ],
+   [
+    "class",
+    "1760",
+    "Actinomycetes"
+   ],
+   [
+    "order",
+    "85007",
+    "Mycobacteriales"
+   ],
+   [
+    "family",
+    "1762",
+    "Mycobacteriaceae"
+   ],
+   [
+    "genus",
+    "1763",
+    "Mycobacterium"
+   ],
+   [
+    "species",
+    "1773",
+    "Mycobacterium tuberculosis"
+   ]
+  ],
+  "name": "Mycobacterium tuberculosis",
+  "rank": "species",
+  "taxid": "1773"
+ },
+ {
+  "basionym": "Saccharomyces neoformans",
+  "lineage": [
+   [
+    "domain",
+    "2759",
+    "Eukaryota"
+   ],
+   [
+    "kingdom",
+    "4751",
+    "Fungi"
+   ],
+   [
+    "phylum",
+    "5204",
+    "Basidiomycota"
+   ],
+   [
+    "class",
+    "155616",
+    "Tremellomycetes"
+   ],
+   [
+    "order",
+    "5234",
+    "Tremellales"
+   ],
+   [
+    "family",
+    "1884633",
+    "Cryptococcaceae"
+   ],
+   [
+    "genus",
+    "5206",
+    "Cryptococcus"
+   ],
+   [
+    "species",
+    "5207",
+    "Cryptococcus neoformans"
+   ]
+  ],
+  "name": "Cryptococcus neoformans",
+  "rank": "species",
+  "taxid": "5207"
+ },
+ {
+  "basionym": "Oidium albicans",
+  "lineage": [
+   [
+    "domain",
+    "2759",
+    "Eukaryota"
+   ],
+   [
+    "kingdom",
+    "4751",
+    "Fungi"
+   ],
+   [
+    "phylum",
+    "4890",
+    "Ascomycota"
+   ],
+   [
+    "class",
+    "3239874",
+    "Pichiomycetes"
+   ],
+   [
+    "order",
+    "2916678",
+    "Serinales"
+   ],
+   [
+    "family",
+    "766764",
+    "Debaryomycetaceae"
+   ],
+   [
+    "genus",
+    "5475",
+    "Candida"
+   ],
+   [
+    "species",
+    "5476",
+    "Candida albicans"
+   ]
+  ],
+  "name": "Candida albicans",
+  "rank": "species",
+  "taxid": "5476"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "186826",
+    "Lactobacillales"
+   ],
+   [
+    "family",
+    "1300",
+    "Streptococcaceae"
+   ],
+   [
+    "genus",
+    "1301",
+    "Streptococcus"
+   ],
+   [
+    "species",
+    "28037",
+    "Streptococcus mitis"
+   ]
+  ],
+  "name": "Streptococcus mitis",
+  "rank": "species",
+  "taxid": "28037"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "976",
+    "Bacteroidota"
+   ],
+   [
+    "class",
+    "200643",
+    "Bacteroidia"
+   ],
+   [
+    "order",
+    "171549",
+    "Bacteroidales"
+   ],
+   [
+    "family",
+    "171552",
+    "Prevotellaceae"
+   ],
+   [
+    "genus",
+    "838",
+    "Prevotella"
+   ],
+   [
+    "species",
+    "28132",
+    "Prevotella melaninogenica"
+   ]
+  ],
+  "name": "Prevotella melaninogenica",
+  "rank": "species",
+  "taxid": "28132"
+ },
+ {
+  "basionym": "\"Micrococcus subflavus\"",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "28216",
+    "Betaproteobacteria"
+   ],
+   [
+    "order",
+    "206351",
+    "Neisseriales"
+   ],
+   [
+    "family",
+    "481",
+    "Neisseriaceae"
+   ],
+   [
+    "genus",
+    "482",
+    "Neisseria"
+   ],
+   [
+    "species",
+    "28449",
+    "Neisseria subflava"
+   ]
+  ],
+  "name": "Neisseria subflava",
+  "rank": "species",
+  "taxid": "28449"
+ },
+ {
+  "basionym": "\"Staphylococcus parvulus\"",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "909932",
+    "Negativicutes"
+   ],
+   [
+    "order",
+    "1843489",
+    "Veillonellales"
+   ],
+   [
+    "family",
+    "31977",
+    "Veillonellaceae"
+   ],
+   [
+    "genus",
+    "29465",
+    "Veillonella"
+   ],
+   [
+    "species",
+    "29466",
+    "Veillonella parvula"
+   ]
+  ],
+  "name": "Veillonella parvula",
+  "rank": "species",
+  "taxid": "29466"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "201174",
+    "Actinomycetota"
+   ],
+   [
+    "class",
+    "1760",
+    "Actinomycetes"
+   ],
+   [
+    "order",
+    "85007",
+    "Mycobacteriales"
+   ],
+   [
+    "family",
+    "1762",
+    "Mycobacteriaceae"
+   ],
+   [
+    "genus",
+    "670516",
+    "Mycobacteroides"
+   ],
+   [
+    "species",
+    "36809",
+    "Mycobacteroides abscessus"
+   ]
+  ],
+  "name": "Mycobacteroides abscessus",
+  "rank": "species",
+  "taxid": "36809"
+ },
+ {
+  "basionym": "Pseudomonas maltophilia (ex Hugh and Ryschenkow 1961)",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "135614",
+    "Lysobacterales"
+   ],
+   [
+    "family",
+    "32033",
+    "Lysobacteraceae"
+   ],
+   [
+    "genus",
+    "40323",
+    "Stenotrophomonas"
+   ],
+   [
+    "species",
+    "40324",
+    "Stenotrophomonas maltophilia"
+   ]
+  ],
+  "name": "Stenotrophomonas maltophilia",
+  "rank": "species",
+  "taxid": "40324"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2759",
+    "Eukaryota"
+   ],
+   [
+    "kingdom",
+    "4751",
+    "Fungi"
+   ],
+   [
+    "phylum",
+    "4890",
+    "Ascomycota"
+   ],
+   [
+    "class",
+    "147553",
+    "Pneumocystomycetes"
+   ],
+   [
+    "order",
+    "37987",
+    "Pneumocystales"
+   ],
+   [
+    "family",
+    "44281",
+    "Pneumocystaceae"
+   ],
+   [
+    "genus",
+    "4753",
+    "Pneumocystis"
+   ],
+   [
+    "species",
+    "42068",
+    "Pneumocystis jirovecii"
+   ]
+  ],
+  "name": "Pneumocystis jirovecii",
+  "rank": "species",
+  "taxid": "42068"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "201174",
+    "Actinomycetota"
+   ],
+   [
+    "class",
+    "1760",
+    "Actinomycetes"
+   ],
+   [
+    "order",
+    "85006",
+    "Micrococcales"
+   ],
+   [
+    "family",
+    "1268",
+    "Micrococcaceae"
+   ],
+   [
+    "genus",
+    "32207",
+    "Rothia"
+   ],
+   [
+    "species",
+    "43675",
+    "Rothia mucilaginosa"
+   ]
+  ],
+  "name": "Rothia mucilaginosa",
+  "rank": "species",
+  "taxid": "43675"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "28216",
+    "Betaproteobacteria"
+   ],
+   [
+    "order",
+    "80840",
+    "Burkholderiales"
+   ],
+   [
+    "family",
+    "119060",
+    "Burkholderiaceae"
+   ],
+   [
+    "genus",
+    "32008",
+    "Burkholderia"
+   ],
+   [
+    "species",
+    "87883",
+    "Burkholderia multivorans"
+   ]
+  ],
+  "name": "Burkholderia multivorans",
+  "rank": "species",
+  "taxid": "87883"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "28216",
+    "Betaproteobacteria"
+   ],
+   [
+    "order",
+    "80840",
+    "Burkholderiales"
+   ],
+   [
+    "family",
+    "119060",
+    "Burkholderiaceae"
+   ],
+   [
+    "genus",
+    "32008",
+    "Burkholderia"
+   ],
+   [
+    "species",
+    "95486",
+    "Burkholderia cenocepacia"
+   ]
+  ],
+  "name": "Burkholderia cenocepacia",
+  "rank": "species",
+  "taxid": "95486"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "186826",
+    "Lactobacillales"
+   ],
+   [
+    "family",
+    "1300",
+    "Streptococcaceae"
+   ],
+   [
+    "genus",
+    "1301",
+    "Streptococcus"
+   ],
+   [
+    "species",
+    "1313",
+    "Streptococcus pneumoniae"
+   ]
+  ],
+  "name": "Streptococcus pneumoniae TIGR4",
+  "rank": "strain",
+  "taxid": "170187"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "91347",
+    "Enterobacterales"
+   ],
+   [
+    "family",
+    "543",
+    "Enterobacteriaceae"
+   ],
+   [
+    "genus",
+    "570",
+    "Klebsiella"
+   ],
+   [
+    "species",
+    "244366",
+    "Klebsiella variicola"
+   ]
+  ],
+  "name": "Klebsiella variicola",
+  "rank": "species",
+  "taxid": "244366"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "186826",
+    "Lactobacillales"
+   ],
+   [
+    "family",
+    "1300",
+    "Streptococcaceae"
+   ],
+   [
+    "genus",
+    "1301",
+    "Streptococcus"
+   ],
+   [
+    "species",
+    "257758",
+    "Streptococcus pseudopneumoniae"
+   ]
+  ],
+  "name": "Streptococcus pseudopneumoniae",
+  "rank": "species",
+  "taxid": "257758"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2759",
+    "Eukaryota"
+   ],
+   [
+    "kingdom",
+    "4751",
+    "Fungi"
+   ],
+   [
+    "phylum",
+    "4890",
+    "Ascomycota"
+   ],
+   [
+    "class",
+    "147545",
+    "Eurotiomycetes"
+   ],
+   [
+    "order",
+    "5042",
+    "Eurotiales"
+   ],
+   [
+    "family",
+    "1131492",
+    "Aspergillaceae"
+   ],
+   [
+    "genus",
+    "5052",
+    "Aspergillus"
+   ],
+   [
+    "species",
+    "746128",
+    "Aspergillus fumigatus"
+   ]
+  ],
+  "name": "Aspergillus fumigatus",
+  "rank": "species",
+  "taxid": "746128"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "1783272",
+    "Bacillati"
+   ],
+   [
+    "phylum",
+    "1239",
+    "Bacillota"
+   ],
+   [
+    "class",
+    "91061",
+    "Bacilli"
+   ],
+   [
+    "order",
+    "1385",
+    "Caryophanales"
+   ],
+   [
+    "family",
+    "90964",
+    "Staphylococcaceae"
+   ],
+   [
+    "genus",
+    "1279",
+    "Staphylococcus"
+   ],
+   [
+    "species",
+    "985002",
+    "Staphylococcus argenteus"
+   ]
+  ],
+  "name": "Staphylococcus argenteus",
+  "rank": "species",
+  "taxid": "985002"
+ },
+ {
+  "basionym": "",
+  "lineage": [
+   [
+    "domain",
+    "2",
+    "Bacteria"
+   ],
+   [
+    "kingdom",
+    "3379134",
+    "Pseudomonadati"
+   ],
+   [
+    "phylum",
+    "1224",
+    "Pseudomonadota"
+   ],
+   [
+    "class",
+    "1236",
+    "Gammaproteobacteria"
+   ],
+   [
+    "order",
+    "91347",
+    "Enterobacterales"
+   ],
+   [
+    "family",
+    "543",
+    "Enterobacteriaceae"
+   ],
+   [
+    "genus",
+    "570",
+    "Klebsiella"
+   ],
+   [
+    "species",
+    "1463165",
+    "Klebsiella quasipneumoniae"
+   ]
+  ],
+  "name": "Klebsiella quasipneumoniae",
+  "rank": "species",
+  "taxid": "1463165"
+ }
+]
