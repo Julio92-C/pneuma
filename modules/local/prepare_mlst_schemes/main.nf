@@ -9,6 +9,9 @@ process PREPARE_MLST_SCHEMES {
     path "12_mlst_schemes.row.tsv" , emit: row
     tuple val("${task.process}"), val('mlst'), eval('mlst --version 2>&1 | sed "s/mlst //"'), topic: versions, emit: versions_mlst
 
+    when:
+    task.ext.when == null || task.ext.when
+
     script:
     // The PubMLST schemes are bundled in the container (not downloaded): record which ones.
     """

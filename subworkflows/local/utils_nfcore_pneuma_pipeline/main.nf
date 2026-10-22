@@ -260,10 +260,25 @@ def missingFiles(dir, names) {
 }
 
 //
+// The panel files default to the ones bundled in assets/ (params are null so that the schema
+// carries no machine-specific default). Every consumer goes through these two helpers.
+//
+def pathogenPanelPath(p) {
+    return p.pathogen_panel ?: "${workflow.projectDir}/assets/pathogen_panel.csv"
+}
+
+def panelReferencesPath(p) {
+    return p.panel_references ?: "${workflow.projectDir}/assets/panel_references.tsv"
+}
+
+//
 // Resolve the database parameters for analysis mode. Explicit parameters always win; the rest
 // is filled from --db_dir (database_manifest.tsv + the layout written by --build_databases).
-// Returns [kraken2_db:, taxdump:, host_index:, abricate_db:, database_manifest:] as strings or null.
-// Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory.
+// Returns [kraken2_db:, taxdump:, host_index:, abricate_db:, database_manifest:, checkm2_db:, bakta_db:,
+// amrfinderplus_db:, mobsuite_db:, medaka_model_path:, panel_references_dir:] as strings or null.
+// Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory; unless
+// --skip_pathogens, so are checkm2_db, bakta_db, amrfinderplus_db, medaka_model_path and
+// panel_references_dir (mobsuite_db only with --run_mobsuite).
 //
 def resolveDatabases(p) {
     def res = [
@@ -361,7 +376,7 @@ def resolveDatabases(p) {
             }
         }
         if (res.panel_references_dir) {
-            checkPanelReferences(file(res.panel_references_dir), file(p.panel_references), problems)
+            checkPanelReferences(file(res.panel_references_dir), file(panelReferencesPath(p)), problems)
         }
     }
     if (problems) {

@@ -11,6 +11,7 @@ include { PREPARE_MEDAKA_MODEL      } from '../../../modules/local/prepare_medak
 include { PREPARE_MLST_SCHEMES      } from '../../../modules/local/prepare_mlst_schemes/main'
 include { PREPARE_PANEL_REFERENCES  } from '../../../modules/local/prepare_panel_references/main'
 include { DATABASE_MANIFEST         } from '../../../modules/local/database_manifest/main'
+include { panelReferencesPath       } from '../utils_nfcore_pneuma_pipeline/main'
 
 //
 // Download and prepare the reference databases (--build_databases). Each database is published to
@@ -59,7 +60,7 @@ workflow PREPARE_DATABASES {
         DATABASE_ROW(ch_downloaded)
         PREPARE_MEDAKA_MODEL(channel.value(params.medaka_model))
         PREPARE_MLST_SCHEMES()
-        PREPARE_PANEL_REFERENCES(file(params.panel_references, checkIfExists: true))
+        PREPARE_PANEL_REFERENCES(file(panelReferencesPath(params), checkIfExists: true))
         ch_rows = ch_rows.mix(DATABASE_ROW.out.row, PREPARE_MEDAKA_MODEL.out.row,
                               PREPARE_MLST_SCHEMES.out.row, PREPARE_PANEL_REFERENCES.out.row)
         if (!params.skip_mobsuite_download) {

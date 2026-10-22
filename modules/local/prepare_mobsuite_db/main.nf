@@ -10,6 +10,9 @@ process PREPARE_MOBSUITE_DB {
     path "10_mobsuite_db.row.tsv" , emit: row
     tuple val("${task.process}"), val('mobsuite'), eval("mob_init --version 2>&1 | sed 's/.*mob_init //; s/ .*//'"), topic: versions, emit: versions_mobsuite
 
+    when:
+    task.ext.when == null || task.ext.when
+
     script:
     """
     export HOME=\$PWD

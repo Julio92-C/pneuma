@@ -13,6 +13,9 @@ process PREPARE_MEDAKA_MODEL {
     path "11_medaka_model.row.tsv" , emit: row
     tuple val("${task.process}"), val('wget'), eval("wget --help 2>&1 | sed -n 's/^BusyBox v\\([0-9.]*\\).*/busybox-\\1/p; s/^GNU Wget \\([0-9.]*\\).*/\\1/p' | head -1"), topic: versions, emit: versions_wget
 
+    when:
+    task.ext.when == null || task.ext.when
+
     script:
     // Models are versioned with medaka: keep v2.2.2 in sync with the MEDAKA_CONSENSUS container.
     def url = "https://media.githubusercontent.com/media/nanoporetech/medaka/v2.2.2/medaka/data/${model}_model_pt.tar.gz"

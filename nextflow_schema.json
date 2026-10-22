@@ -474,21 +474,20 @@
             "properties": {
                 "skip_pathogens": {
                     "type": "boolean",
-                    "description": "Skip pathogen reconstruction and the pathogen report."
+                    "default": true,
+                    "description": "Skip pathogen reconstruction and the pathogen report. Reconstruction is opt-in: pass --skip_pathogens false (this needs the pathogen databases, see docs/usage.md)."
                 },
                 "pathogen_panel": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "default": "${projectDir}/assets/pathogen_panel.csv",
-                    "description": "Pathogen panel CSV (species,tier,who_category,action,reference_accession,confusable_with,ani_min[,amrfinder_organism]). Species are names, resolved against --taxdump."
+                    "description": "Pathogen panel CSV (species,tier,who_category,action,reference_accession,confusable_with,ani_min[,amrfinder_organism]). Species are names, resolved against --taxdump. Default: the bundled assets/pathogen_panel.csv file."
                 },
                 "panel_references": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "default": "${projectDir}/assets/panel_references.tsv",
-                    "description": "Reference accession per panel species and confusable (species, accession, role)."
+                    "description": "Reference accession per panel species and confusable (species, accession, role). Default: the bundled assets/panel_references.tsv file."
                 },
                 "pathogen_min_reads": {
                     "type": "integer",

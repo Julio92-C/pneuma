@@ -7,9 +7,8 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder',
-                             medaka_model: 'r1041_e82_400bps_bacterial_methylation',
-                             panel_references: "${projectDir}/assets/panel_references.tsv" ]
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', skip_pathogens: false,
+                             medaka_model: 'r1041_e82_400bps_bacterial_methylation' ]   // panel_references unset: bundled default
                 """
             }
         }
@@ -35,7 +34,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder',
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', skip_pathogens: false,
                              kraken2_db: '/my/existing/kraken2', host_index: '/my/own_host.fasta',
                              checkm2_db: '/my/checkm2.dmnd',
                              medaka_model: 'r1041_e82_400bps_bacterial_methylation',

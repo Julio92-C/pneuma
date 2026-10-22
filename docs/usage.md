@@ -55,6 +55,18 @@ or `--host_index my_host.fasta`. The required files are checked at start-up (`ha
 `--abricate_dbs`) and a clear error lists what is missing. `--kraken2_db`, `--taxdump` and
 `--host_index` are required only when they cannot be resolved from `--db_dir`.
 
+### Pathogen databases and `--skip_pathogens`
+
+Pathogen reconstruction is opt-in: `--skip_pathogens` defaults to `true`, and a run without it needs no
+pathogen database and behaves as in v0.2.0. With `--skip_pathogens false` the analysis run needs the
+Phase 2 databases: `--checkm2_db`, `--bakta_db`, `--amrfinderplus_db`, `--medaka_model_path` and
+`--panel_references_dir` (plus `--mobsuite_db` with `--run_mobsuite`). `--build_databases` builds them (CheckM2, Bakta
+`--bakta_db_type light|full`, AMRFinderPlus, the Medaka model, an MLST scheme record, the panel
+reference genomes and, unless `--skip_mobsuite_download`, MOB-suite) and `--db_dir` fills them. Use
+`--skip_pathogen_download` to leave them out of a database build. With `--skip_pathogens false` and a
+missing database the run stops with "--checkm2_db is required for pathogen reconstruction ...". `--pathogen_panel` and
+`--panel_references` default to the files bundled in `assets/`.
+
 ### Fallback: `bin/prepare_databases.sh`
 
 The same download as a stand-alone script, for systems where you would rather not run Nextflow for

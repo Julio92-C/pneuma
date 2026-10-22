@@ -44,3 +44,16 @@ def test_cli_writes_one_row_and_rejects_empty_version(tmp_path):
     assert (name, version, rel) == ("checkm2_db", "3", "checkm2/m.dmnd") and len(sha) == 64
     with pytest.raises(SystemExit):
         dr.main(["--name", "x", "--version", "", "--rel", "r", "--target", str(f), "--out", str(out)])
+
+
+def test_amrfinderplus_version_ignores_database_format_version(tmp_path):
+    """The real archive holds ./database_format_version.txt (e.g. 4.2.0) next to ./version.txt."""
+    fmt = tmp_path / "database_format_version.txt"
+    fmt.write_text("4.2.0\n")
+    ver = tmp_path / "version.txt"
+    ver.write_text("2026-08-07.1\n")
+    tgz = tmp_path / "amrfinderdb.tar.gz"
+    with tarfile.open(tgz, "w:gz") as t:
+        t.add(fmt, arcname="./database_format_version.txt")
+        t.add(ver, arcname="./version.txt")
+    assert dr.version_from("amrfinderplus", tgz) == "2026-08-07.1"

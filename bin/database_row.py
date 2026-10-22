@@ -42,7 +42,7 @@ def version_from(kind, target):
         return "%s.%s-%s (%s)" % (v["major"], v["minor"], v["type"], v["date"])
     if kind == "amrfinderplus":
         with tarfile.open(str(target), "r:gz") as t:
-            member = next(m for m in t.getmembers() if m.name.rstrip("/").endswith("version.txt"))
+            member = next(m for m in t.getmembers() if os.path.basename(m.name.rstrip("/")) == "version.txt")
             return t.extractfile(member).read().decode().strip()
     raise ValueError("unknown --version-from %s" % kind)
 
