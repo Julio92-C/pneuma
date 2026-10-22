@@ -105,6 +105,7 @@ workflow TAXONOMY {
     assignments      = KRAKEN2_KRAKEN2.out.classified_reads_assignment
     reports          = KRAKEN2_KRAKEN2.out.report
     bracken_reports  = BRACKEN_BRACKEN.out.txt
+    bracken_tsv      = BRACKEN_BRACKEN.out.reports   // [ meta, <id>.tsv ]: per-sample Bracken table (pathogen report)
     kraken_combined  = ARRANGE_REPORTS.out.kraken
     bracken_arranged = ARRANGE_REPORTS.out.bracken
     versions         = ch_versions
