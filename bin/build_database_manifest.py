@@ -1,26 +1,38 @@
 #!/usr/bin/env python3
 """Merge per-database row files into database_manifest.tsv.
 
-Each input file holds tab-separated rows: name, version, path (relative to the database
-output directory), sha256. The output has the header `name version path sha256`, one row per
-database in a fixed order (Kraken2, taxdump, Hostile, ABRicate), with `--root` prepended to
-every path. Fails (exit 1) on a row with a missing field or an empty sha256/version, and when
-there are no rows at all.
+Each input file holds tab-separated rows: name, version, path (relative to the database output
+directory), sha256. The output has the header `name version path sha256`, one row per database
+in a fixed order (Phase 1 databases, then the pathogen databases), with `--root` prepended to every
+new path. `--existing` (a previous database_manifest.tsv in the same directory) keeps its rows for
+databases that were not rebuilt in this run (their paths are already absolute). Fails (exit 1) on a
+row with a missing field or an empty sha256/version, and when there are no rows at all.
 """
 import argparse
 import sys
 
 ORDER = ["kraken2_pluspf", "ncbi_taxdump", "hostile_index",
-         "abricate_card", "abricate_vfdb", "abricate_plasmidfinder"]
+         "abricate_card", "abricate_vfdb", "abricate_plasmidfinder",
+         "checkm2_db", "bakta_db", "amrfinderplus_db", "mobsuite_db",
+         "medaka_model", "mlst_schemes", "panel_references"]
 
 
 def rank(name):
     return (ORDER.index(name), "") if name in ORDER else (len(ORDER), name)
 
 
-def build(row_files, root):
+def read_existing(path):
     rows = []
-    problems = []
+    with open(path) as fh:
+        for line in fh.read().splitlines()[1:]:
+            cols = line.split("\t")
+            if len(cols) == 4 and all(c.strip() for c in cols):
+                rows.append(tuple(cols))
+    return rows
+
+
+def build(row_files, root, existing=None):
+    rows, problems = [], []
     for fname in row_files:
         with open(fname) as fh:
             for lineno, line in enumerate(fh, 1):
@@ -38,6 +50,9 @@ def build(row_files, root):
         problems.append("no database rows to write")
     if problems:
         raise ValueError("\n".join(problems))
+    if existing:
+        rebuilt = {r[0] for r in rows}
+        rows += [r for r in read_existing(existing) if r[0] not in rebuilt]
     rows.sort(key=lambda r: rank(r[0]))
     return rows
 
@@ -47,10 +62,11 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", required=True, help="database output directory prepended to every path")
     ap.add_argument("--out", default="database_manifest.tsv")
+    ap.add_argument("--existing", help="previous database_manifest.tsv whose other rows are kept")
     ap.add_argument("rows", nargs="+", help="row files")
     args = ap.parse_args(argv)
     try:
-        rows = build(args.rows, args.root)
+        rows = build(args.rows, args.root, args.existing)
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

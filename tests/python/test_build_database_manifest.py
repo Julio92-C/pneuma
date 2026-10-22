@@ -58,3 +58,21 @@ def test_empty_input_fails(tmp_path):
     f.write_text("")
     with pytest.raises(ValueError, match="no database rows"):
         mod.build([str(f)], "/r")
+
+
+def test_new_pathogen_rows_are_ordered_after_phase1(tmp_path):
+    a = write(tmp_path, "07.tsv", ("checkm2_db", "3", "checkm2/x.dmnd", SHA))
+    b = write(tmp_path, "13.tsv", ("panel_references", "tsv-abc", "panel_references", SHA))
+    k = write(tmp_path, "01.tsv", ("kraken2_pluspf", "20250402", "k", SHA))
+    assert [r[0] for r in mod.build([b, a, k], "/r")] == ["kraken2_pluspf", "checkm2_db", "panel_references"]
+
+
+def test_existing_manifest_rows_are_kept_unless_rebuilt(tmp_path):
+    old = tmp_path / "old.tsv"
+    old.write_text("name\tversion\tpath\tsha256\n"
+                   "kraken2_pluspf\t20250402\t/db/kraken2_pluspf_20250402\t%s\n"
+                   "checkm2_db\t2\t/db/checkm2/checkm2_db_v2.dmnd\t%s\n" % (SHA, SHA))
+    new = write(tmp_path, "07.tsv", ("checkm2_db", "3", "checkm2/checkm2_db_v3.dmnd", SHA))
+    rows = mod.build([new], "/db", existing=str(old))
+    assert rows == [("kraken2_pluspf", "20250402", "/db/kraken2_pluspf_20250402", SHA),
+                    ("checkm2_db", "3", "/db/checkm2/checkm2_db_v3.dmnd", SHA)]

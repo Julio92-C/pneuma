@@ -22,7 +22,8 @@ nextflow_workflow {
             def lines = path(workflow.out.manifest[0]).readLines()
             assert lines[0] == 'name\tversion\tpath\tsha256'
             assert lines.drop(1).collect { it.split('\t')[0] } ==
-                ['kraken2_pluspf', 'ncbi_taxdump', 'hostile_index', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
+                ['kraken2_pluspf', 'ncbi_taxdump', 'hostile_index', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder',
+                 'checkm2_db', 'bakta_db', 'amrfinderplus_db', 'mobsuite_db', 'medaka_model', 'mlst_schemes', 'panel_references']
             lines.drop(1).each { line ->
                 def c = line.split('\t', -1)
                 assert c.size() == 4 && c.every { it }
@@ -39,6 +40,13 @@ nextflow_workflow {
             assert path("$outputDir/db/taxdump_2025-04/names.dmp").exists()
             assert path("$outputDir/db/hostile/human-t2t-hla.mmi").exists()
             ['card', 'vfdb', 'plasmidfinder'].each { assert path("$outputDir/db/abricate/$it/sequences").exists() }
+            assert path("$outputDir/db/checkm2/checkm2_db_v0.dmnd").exists()        // stub Zenodo version 0
+            assert path("$outputDir/db/bakta").list().any { f -> f.fileName.toString().startsWith('db') }
+            assert path("$outputDir/db/amrfinderplus/amrfinderdb.tar.gz").exists()
+            assert path("$outputDir/db/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz").exists()
+            assert path("$outputDir/db/mlst/mlst_schemes.txt").exists()
+            assert path("$outputDir/db/panel_references/panel_references_index.tsv").exists()
+            assert path("$outputDir/db/mobsuite").exists()
             assert !path("$outputDir/db/versions.yml").exists()
             assert !path("$outputDir/db/01_kraken2.row.tsv").exists()
         }
@@ -51,6 +59,7 @@ nextflow_workflow {
                 db_outdir = "$outputDir/db"
                 skip_kraken_download = true
                 skip_hostile_download = true
+                skip_pathogen_download = true
             }
             workflow {
                 """
@@ -66,6 +75,34 @@ nextflow_workflow {
             assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
             assert !path("$outputDir/db/hostile").exists()
             assert !path("$outputDir/db/kraken2_pluspf_20250402").exists()
+        }
+    }
+
+    test("stub: rebuilding only the pathogen databases keeps the existing manifest rows") {
+        options "-stub"
+        when {
+            params {
+                db_outdir = "$outputDir/db"
+                skip_kraken_download = true
+                skip_taxdump_download = true
+                skip_hostile_download = true
+                skip_abricate_download = true
+                skip_mobsuite_download = true
+            }
+            workflow {
+                """
+                def db = file("$outputDir/db"); db.mkdirs()
+                file("$outputDir/db/database_manifest.tsv").text = 'name\\tversion\\tpath\\tsha256\\nkraken2_pluspf\\t20250402\\t/x/k\\t' + 'a' * 64 + '\\n'
+                input[0] = null
+                input[1] = null
+                input[2] = "$outputDir/db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def names = path("$outputDir/db/database_manifest.tsv").readLines().drop(1).collect { it.split('\t')[0] }
+            assert names == ['kraken2_pluspf', 'checkm2_db', 'bakta_db', 'amrfinderplus_db', 'medaka_model', 'mlst_schemes', 'panel_references']
         }
     }
 }

@@ -7,7 +7,9 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder' ]
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder',
+                             medaka_model: 'r1041_e82_400bps_bacterial_methylation',
+                             panel_references: "${projectDir}/assets/panel_references.tsv" ]
                 """
             }
         }
@@ -15,6 +17,12 @@ nextflow_function {
             assert function.success
             def r = function.result
             def root = "${projectDir}/tests/data/db_dir"
+            assert r.checkm2_db == "$root/checkm2/checkm2_db_v3.dmnd"
+            assert r.bakta_db == "$root/bakta/db-light"
+            assert r.amrfinderplus_db == "$root/amrfinderplus/amrfinderdb.tar.gz"
+            assert r.mobsuite_db == "$root/mobsuite"
+            assert r.medaka_model_path == "$root/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+            assert r.panel_references_dir == "$root/panel_references"
             assert r.kraken2_db == "$root/kraken2_pluspf_20250402"
             assert r.taxdump == "$root/taxdump_2025-04"
             assert r.host_index == "$root/hostile/human-t2t-hla.mmi"
@@ -28,7 +36,10 @@ nextflow_function {
             function {
                 """
                 input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder',
-                             kraken2_db: '/my/existing/kraken2', host_index: '/my/own_host.fasta' ]
+                             kraken2_db: '/my/existing/kraken2', host_index: '/my/own_host.fasta',
+                             checkm2_db: '/my/checkm2.dmnd',
+                             medaka_model: 'r1041_e82_400bps_bacterial_methylation',
+                             panel_references: "${projectDir}/assets/panel_references.tsv" ]
                 """
             }
         }
@@ -37,6 +48,8 @@ nextflow_function {
             def r = function.result
             assert r.kraken2_db == '/my/existing/kraken2'
             assert r.host_index == '/my/own_host.fasta'
+            assert r.checkm2_db == '/my/checkm2.dmnd'
+            assert r.bakta_db == "${projectDir}/tests/data/db_dir/bakta/db-light"
             assert r.taxdump == "${projectDir}/tests/data/db_dir/taxdump_2025-04"
         }
     }
@@ -45,7 +58,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fa', abricate_dbs: 'card' ]
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fa', abricate_dbs: 'card', skip_pathogens: true ]
                 """
             }
         }
@@ -61,7 +74,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ host_index: '/h.fa', abricate_dbs: 'card' ]
+                input[0] = [ host_index: '/h.fa', abricate_dbs: 'card', skip_pathogens: true ]
                 """
             }
         }
@@ -81,7 +94,7 @@ nextflow_function {
                 new File(d, 'kraken2_pluspf_20250402/hash.k2d').text = 'x'
                 new File(d, 'taxdump_2025-04').mkdirs()
                 new File(d, 'taxdump_2025-04/nodes.dmp').text = 'x'
-                input[0] = [ db_dir: d.toString(), abricate_dbs: 'card,vfdb,plasmidfinder' ]
+                input[0] = [ db_dir: d.toString(), abricate_dbs: 'card,vfdb,plasmidfinder', skip_pathogens: true ]
                 """
             }
         }

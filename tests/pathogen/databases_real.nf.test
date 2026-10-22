@@ -1,0 +1,49 @@
+// Real pathogen databases built by --build_databases (see nf-test.pathogen.config): resolution
+// from --db_dir, and manifest rows with real versions and checksums (not stand-ins).
+nextflow_workflow {
+    name "Real pathogen databases resolve from --db_dir"
+    script "subworkflows/local/utils_nfcore_pneuma_pipeline/main.nf"
+    workflow "PIPELINE_INITIALISATION"
+    tag "pathogen_real"
+
+    test("PNEUMA_TEST_DB_DIR resolves and its manifest is real") {
+        when {
+            params {
+                outdir = "$outputDir"
+                db_dir = System.getenv('PNEUMA_TEST_DB_DIR')
+                checkm2_db = null
+                bakta_db = null
+                amrfinderplus_db = null
+                medaka_model_path = null
+                panel_references_dir = null
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = false
+                input[2] = false
+                input[3] = []
+                input[4] = "$outputDir"
+                input[5] = "${projectDir}/assets/samplesheet_test.csv"
+                input[6] = false
+                input[7] = false
+                input[8] = false
+                """
+            }
+        }
+        then {
+            assert System.getenv('PNEUMA_TEST_DB_DIR') : "set PNEUMA_TEST_DB_DIR"
+            assert workflow.success
+            def db = System.getenv('PNEUMA_TEST_DB_DIR')
+            def rows = new File("$db/database_manifest.tsv").readLines().drop(1).collect { l -> l.split('\t') }
+            def byName = rows.collectEntries { r -> [ (r[0]): r ] }
+            ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'mobsuite_db', 'medaka_model', 'mlst_schemes', 'panel_references'].each { n ->
+                assert byName[n] : "manifest lacks ${n}"
+                assert byName[n][1] != 'stub' && byName[n][3] ==~ /[0-9a-f]{64}/
+            }
+            assert byName.bakta_db[1].contains('-light')
+            assert new File(byName.checkm2_db[2]).length() > 1_000_000_000L
+            assert new File("$db/panel_references").list().findAll { f -> f.endsWith('.fna.gz') }.size() == 27
+        }
+    }
+}

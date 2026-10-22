@@ -85,9 +85,11 @@ workflow PIPELINE_INITIALISATION {
             error("--input and --outdir are required (or use --build_databases with --db_outdir to only download the databases)")
         }
         def dbs = resolveDatabases(params)
-        ['kraken2_db', 'taxdump', 'host_index', 'abricate_db', 'database_manifest'].each { k ->
+        def keys = ['kraken2_db', 'taxdump', 'host_index', 'abricate_db', 'database_manifest'] +
+                   (params.skip_pathogens ? [] : ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'mobsuite_db', 'medaka_model_path', 'panel_references_dir'])
+        keys.each { k ->
             def source = params[k] ? 'explicit parameter' : (dbs[k] ? "--db_dir (${params.db_dir})" : 'not set')
-            log.info "database ${k.padRight(17)} <- ${source}${dbs[k] ? ': ' + dbs[k] : ''}"
+            log.info "database ${k.padRight(20)} <- ${source}${dbs[k] ? ': ' + dbs[k] : ''}"
         }
         if (!params.skip_meridian && !(params.meridian_metadata && params.meridian_group)) {
             error("--meridian_metadata and --meridian_group are required unless --skip_meridian is set")
@@ -190,8 +192,11 @@ def checkBuildDatabasesParams(p) {
     if (!p.skip_taxdump_download && !(p.taxdump_month ==~ /\d{4}-(0[1-9]|1[0-2])/)) {
         problems.add("--taxdump_month YYYY-MM is required (match the Kraken2 release month), or pass --skip_taxdump_download")
     }
-    if (p.skip_kraken_download && p.skip_taxdump_download && p.skip_hostile_download && p.skip_abricate_download) {
+    if (p.skip_kraken_download && p.skip_taxdump_download && p.skip_hostile_download && p.skip_abricate_download && p.skip_pathogen_download) {
         problems.add("every download is skipped; nothing to build")
+    }
+    if (!p.skip_pathogen_download && !(p.bakta_db_type in ['light', 'full'])) {
+        problems.add("--bakta_db_type must be 'light' or 'full'")
     }
     if (problems) {
         error("Invalid --build_databases options:\n  - " + problems.join("\n  - "))
@@ -267,6 +272,12 @@ def resolveDatabases(p) {
         host_index        : p.host_index ?: null,
         abricate_db       : p.abricate_db ?: null,
         database_manifest : p.database_manifest ?: null,
+        checkm2_db           : p.checkm2_db ?: null,
+        bakta_db             : p.bakta_db ?: null,
+        amrfinderplus_db     : p.amrfinderplus_db ?: null,
+        mobsuite_db          : p.mobsuite_db ?: null,
+        medaka_model_path    : p.medaka_model_path ?: null,
+        panel_references_dir : p.panel_references_dir ?: null,
     ]
     def problems = []
 
@@ -331,6 +342,9 @@ def resolveDatabases(p) {
         if (!res.abricate_db && !root.resolve('abricate').isDirectory()) {
             log.warn "No abricate/ folder in --db_dir '${p.db_dir}' and no --abricate_db: ABRicate will use the databases bundled in the container (2021-Mar-27)"
         }
+        if (!p.skip_pathogens) {
+            resolvePathogenDatabases(p, root, res, problems, hint)
+        }
     }
 
     ['host_index', 'kraken2_db', 'taxdump'].each { k ->
@@ -338,10 +352,63 @@ def resolveDatabases(p) {
             problems.add("--${k} is required: pass it or provide --db_dir containing it")
         }
     }
+    if (!p.skip_pathogens) {
+        def needed = ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'medaka_model_path', 'panel_references_dir'] +
+                     (p.run_mobsuite ? ['mobsuite_db'] : [])
+        needed.each { k ->
+            if (!res[k] && !problems.any { pr -> pr.contains("--${k}") }) {
+                problems.add("--${k} is required for pathogen reconstruction: pass it, provide --db_dir containing it, or use --skip_pathogens")
+            }
+        }
+        if (res.panel_references_dir) {
+            checkPanelReferences(file(res.panel_references_dir), file(p.panel_references), problems)
+        }
+    }
     if (problems) {
         error("Cannot resolve the databases:\n  - " + problems.join("\n  - "))
     }
     return res
+}
+
+//
+// Fill the pathogen database paths from a --db_dir built by --build_databases.
+//
+def resolvePathogenDatabases(p, root, res, problems, hint) {
+    if (!res.checkm2_db && root.resolve('checkm2').isDirectory()) {
+        def dmnd = (root.resolve('checkm2').listFiles() ?: []).findAll { f -> f.name.endsWith('.dmnd') }.sort { f -> f.name }
+        def found = pickOne(dmnd, "--checkm2_db (checkm2/*.dmnd in ${p.db_dir})", problems, hint)
+        if (found) { res.checkm2_db = found.toString() }
+    }
+    if (!res.bakta_db && root.resolve('bakta').isDirectory()) {
+        def found = pickOne(findVersionedDirs(root.resolve('bakta'), 'db', null),
+                            "--bakta_db (bakta/db* in ${p.db_dir})", problems, hint)
+        if (found) {
+            if (found.resolve('version.json').exists()) {
+                res.bakta_db = found.toString()
+            } else {
+                problems.add("--bakta_db: ${found} has no version.json")
+            }
+        }
+    }
+    def amr = root.resolve('amrfinderplus/amrfinderdb.tar.gz')
+    if (!res.amrfinderplus_db && amr.exists()) { res.amrfinderplus_db = amr.toString() }
+    def mob = root.resolve('mobsuite')
+    if (!res.mobsuite_db && mob.isDirectory()) { res.mobsuite_db = mob.toString() }
+    def model = root.resolve("medaka/${p.medaka_model}_model_pt.tar.gz")
+    if (!res.medaka_model_path && model.exists()) { res.medaka_model_path = model.toString() }
+    def refs = root.resolve('panel_references')
+    if (!res.panel_references_dir && refs.isDirectory()) { res.panel_references_dir = refs.toString() }
+}
+
+//
+// Every accession of --panel_references needs <dir>/<accession>.fna.gz.
+//
+def checkPanelReferences(dir, references, problems) {
+    def accessions = references.readLines().drop(1).findAll { line -> line.trim() }.collect { line -> line.split('\t')[1].trim() }
+    def missing = accessions.findAll { acc -> !dir.resolve("${acc}.fna.gz").exists() }
+    if (missing) {
+        problems.add("--panel_references_dir: ${dir} lacks ${missing.size()} reference genome(s): ${missing.take(10).join(', ')}${missing.size() > 10 ? ', ...' : ''}. Rebuild with --build_databases (or --panel_references_dir).")
+    }
 }
 
 //
