@@ -14,12 +14,15 @@ process PATHOGEN_CANDIDATES {
     tuple val("${task.process}"), val('python'), eval('python --version 2>&1 | sed "s/Python //"'), topic: versions, emit: versions_python
 
     script:
-    def bracken_arg = bracken ? "--bracken ${bracken.join(' ')}" : ''
+    // a single staged file arrives as a Path, not a List: normalise before joining
+    def kr = kreports instanceof List ? kreports : [kreports]
+    def br = bracken instanceof List ? bracken : [bracken]
+    def bracken_arg = bracken ? "--bracken ${br.join(' ')}" : ''
     """
     pathogen_candidates.py \\
         --panel ${panel_resolved} \\
         --samples ${samples_tsv} \\
-        --kreports ${kreports.join(' ')} \\
+        --kreports ${kr.join(' ')} \\
         ${bracken_arg} \\
         --min-reads ${params.pathogen_min_reads} \\
         --out pathogen_candidates.tsv \\
