@@ -22,6 +22,7 @@ nextflow_process {
             // the synonym warning goes to the task's stderr, which nf-test only surfaces for failed tasks
             def taskErr = []
             new File(workDir.toString()).eachFileRecurse { f -> if (f.name == '.command.err') { taskErr << f.text } }
+            assert taskErr.size() == 1
             assert taskErr.join('\n').contains("current NCBI name is 'Parahaemophilus parainfluenzae'")
         }
     }
