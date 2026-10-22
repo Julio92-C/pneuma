@@ -111,6 +111,7 @@ workflow PIPELINE_INITIALISATION {
     if (!params.build_databases) {
         def rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
         warnRunsWithoutControls(rows)
+        notePatients(rows)
 
         ch_samplesheet = channel
             .fromList(rows)
@@ -344,26 +345,48 @@ def resolveDatabases(p) {
 }
 
 //
+// Optional samplesheet values arrive as null or [] from nf-schema; normalise to a String.
+//
+def metaText(value) {
+    return value in [null, []] ? '' : value.toString()
+}
+
+//
 // Merge all runs of one sample into a single meta + ordered fastq list.
-// batch / site / is_control must agree across a sample's runs.
+// batch / site / is_control / patient must agree across a sample's runs.
 //
 def groupRuns(id, metas, fastqs) {
-    ['batch', 'site', 'is_control'].each { key ->
-        def values = metas.collect { it[key] }.unique()
+    ['batch', 'site', 'is_control', 'patient'].each { key ->
+        def values = metas.collect { m -> key == 'is_control' ? m[key] : metaText(m[key]) }.unique()
         if (values.size() > 1) {
             error("Sample '${id}' has conflicting '${key}' values across runs: ${values}")
         }
     }
-    def order = (0..<metas.size()).toList().sort { metas[it].run_id }
+    def order = (0..<metas.size()).toList().sort { i -> metas[i].run_id }
     def meta = [
         id         : id,
         batch      : metas[0].batch,
-        site       : metas[0].site ?: '',
+        site       : metaText(metas[0].site),
+        patient    : metaText(metas[0].patient),
         is_control : metas[0].is_control as Boolean,
-        run_ids    : order.collect { metas[it].run_id },
+        run_ids    : order.collect { i -> metas[i].run_id },
         single_end : true
     ]
-    return [ meta, order.collect { fastqs[it] } ]
+    return [ meta, order.collect { i -> fastqs[i] } ]
+}
+
+//
+// Patient-level pooling of pathogen reads needs `patient`; say once when there is none.
+//
+def notePatients(rows) {
+    def withPatient = rows.findAll { row -> metaText(row[0].patient) }
+    if (!withPatient) {
+        log.info "No 'patient' values in the samplesheet: patient-level pooling of pathogen reads is skipped (each sample is reconstructed on its own)."
+    }
+    def controls = withPatient.findAll { row -> row[0].is_control }.collect { row -> row[0].id }.unique()
+    if (controls) {
+        log.warn "Negative control(s) with a patient value are never pooled: ${controls.join(', ')}"
+    }
 }
 
 //

@@ -30,6 +30,8 @@ nextflow_workflow {
             assert eb[0].single_end == true
             def cn = items.find { it[0].id == 'CNF0-0001' }
             assert cn[0].is_control == true
+            assert eb[0].patient == 'PT01'
+            assert cn[0].patient == ''
         }
     }
 

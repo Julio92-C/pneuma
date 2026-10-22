@@ -1,0 +1,44 @@
+nextflow_process {
+    name "Test RESOLVE_PANEL"
+    script "../main.nf"
+    process "RESOLVE_PANEL"
+
+    test("asset panel resolves against the fixture taxdump") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/assets/pathogen_panel.csv", checkIfExists: true)
+                input[1] = file("${projectDir}/assets/panel_references.tsv", checkIfExists: true)
+                input[2] = file("${projectDir}/tests/data/pathogen_fixture/taxdump", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            def lines = path(process.out.tsv[0]).readLines()
+            assert lines.size() == 26
+            def hpa = lines.find { l -> l.startsWith('Haemophilus parainfluenzae\t') }.split('\t')
+            assert hpa[5] == '729' && hpa[7] == 'synonym'
+            // the synonym warning goes to the task's stderr, which nf-test only surfaces for failed tasks
+            def taskErr = []
+            new File(workDir.toString()).eachFileRecurse { f -> if (f.name == '.command.err') { taskErr << f.text } }
+            assert taskErr.join('\n').contains("current NCBI name is 'Parahaemophilus parainfluenzae'")
+        }
+    }
+
+    test("misspelled species fails the run with a suggestion") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/data/pathogen_contracts/panel_misspelled.csv", checkIfExists: true)
+                input[1] = file("${projectDir}/assets/panel_references.tsv", checkIfExists: true)
+                input[2] = file("${projectDir}/tests/data/pathogen_fixture/taxdump", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.failed
+            assert (process.stderr + process.stdout).join('\n').contains('did you mean: Streptococcus pneumoniae')
+        }
+    }
+}

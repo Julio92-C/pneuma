@@ -1,5 +1,5 @@
-sample,run_id,batch,site,fastq,is_control
-EBF0-0001,RUN1,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,false
-EBF0-0001,RUN2,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,false
-SPF0-0001,RUN1,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,false
-CNF0-0001,RUN1,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,true
+sample,run_id,batch,site,fastq,is_control,patient
+EBF0-0001,RUN1,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,false,PT01
+EBF0-0001,RUN2,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,false,PT01
+SPF0-0001,RUN1,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,false,PT01
+CNF0-0001,RUN1,TEST,SITEA,https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz,true,

@@ -103,6 +103,27 @@
                     "exists": true,
                     "description": "Analysis mode: folder written by --build_databases. Fills --kraken2_db, --taxdump, --host_index, --abricate_db and --database_manifest that are not given explicitly.",
                     "fa_icon": "fas fa-folder"
+                },
+                "skip_pathogen_download": {
+                    "type": "boolean",
+                    "description": "With --build_databases: skip CheckM2, Bakta, AMRFinderPlus, MOB-suite, Medaka model, MLST record and panel reference genomes."
+                },
+                "skip_mobsuite_download": {
+                    "type": "boolean",
+                    "description": "With --build_databases: skip the MOB-suite database."
+                },
+                "bakta_db_type": {
+                    "type": "string",
+                    "default": "light",
+                    "enum": [
+                        "light",
+                        "full"
+                    ],
+                    "description": "Bakta database type to download (light ~1.5 GB, full ~40 GB)."
+                },
+                "checkm2_zenodo_id": {
+                    "type": "integer",
+                    "description": "Zenodo record of the CheckM2 database; unset = the nf-core default (database v3)."
                 }
             }
         },
@@ -444,6 +465,148 @@
                     "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
                 }
             }
+        },
+        "pathogen_options": {
+            "title": "Pathogen reconstruction options",
+            "type": "object",
+            "fa_icon": "fas fa-virus",
+            "description": "Per sample x panel species: Kraken2 read extraction, coverage gate, Flye/Medaka, CheckM2/QUAST, skani, MLST/AMRFinderPlus/ABRicate/Bakta, patient-level pooling.",
+            "properties": {
+                "skip_pathogens": {
+                    "type": "boolean",
+                    "description": "Skip pathogen reconstruction and the pathogen report."
+                },
+                "pathogen_panel": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "default": "${projectDir}/assets/pathogen_panel.csv",
+                    "description": "Pathogen panel CSV (species,tier,who_category,action,reference_accession,confusable_with,ani_min[,amrfinder_organism]). Species are names, resolved against --taxdump."
+                },
+                "panel_references": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "default": "${projectDir}/assets/panel_references.tsv",
+                    "description": "Reference accession per panel species and confusable (species, accession, role)."
+                },
+                "pathogen_min_reads": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "PROVISIONAL. Sample x species with fewer Kraken2 clade reads are reported LOW_COVERAGE without extraction.",
+                    "minimum": 1
+                },
+                "gate_min_depth": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "PROVISIONAL. Coverage gate: minimum mean depth over the panel reference.",
+                    "minimum": 0
+                },
+                "gate_min_breadth": {
+                    "type": "number",
+                    "default": 0.5,
+                    "description": "PROVISIONAL. Coverage gate: minimum fraction of the reference covered >= 1x.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "flye_mode": {
+                    "type": "string",
+                    "default": "--nano-hq",
+                    "enum": [
+                        "--nano-hq",
+                        "--nano-raw",
+                        "--nano-corr"
+                    ],
+                    "description": "Flye read mode (--nano-hq for R10.4.1 sup/hac reads)."
+                },
+                "flye_meta": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "PROVISIONAL. Run Flye with --meta (uneven coverage of extracted / pooled reads)."
+                },
+                "medaka_model": {
+                    "type": "string",
+                    "default": "r1041_e82_400bps_bacterial_methylation",
+                    "description": "Medaka model name; its file is staged from --db_dir/medaka/ or --medaka_model_path."
+                },
+                "run_mobsuite": {
+                    "type": "boolean",
+                    "description": "Also run MOB-suite mob_recon on typed assemblies (needs the MOB-suite database)."
+                },
+                "mixed_min_depth": {
+                    "type": "integer",
+                    "default": 8,
+                    "description": "Mixed-strain check: minimum depth of an evaluable site.",
+                    "minimum": 1
+                },
+                "mixed_min_maf": {
+                    "type": "number",
+                    "default": 0.25,
+                    "description": "Mixed-strain check: minimum minor-allele frequency of a site.",
+                    "minimum": 0,
+                    "maximum": 0.5
+                },
+                "mixed_min_alt": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Mixed-strain check: minimum minor-allele reads (seen on both strands).",
+                    "minimum": 1
+                },
+                "mixed_max_het_per_kb": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "PROVISIONAL. Mixed-strain check: maximum minor-allele sites per kb before a patient-level assembly is called MIXED_STRAINS.",
+                    "minimum": 0
+                },
+                "mixed_min_evaluable": {
+                    "type": "integer",
+                    "default": 10000,
+                    "description": "Mixed-strain check: fewer evaluable sites gives 'not_evaluable' (noted, not blocking).",
+                    "minimum": 0
+                },
+                "checkm2_db": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "CheckM2 DIAMOND database (.dmnd). Default: checkm2/*.dmnd in --db_dir.",
+                    "fa_icon": "fas fa-database"
+                },
+                "bakta_db": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Bakta database directory (db or db-light). Default: bakta/db* in --db_dir.",
+                    "fa_icon": "fas fa-database"
+                },
+                "amrfinderplus_db": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "AMRFinderPlus database (amrfinderdb.tar.gz). Default: amrfinderplus/ in --db_dir.",
+                    "fa_icon": "fas fa-database"
+                },
+                "mobsuite_db": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "MOB-suite database directory (mob_init). Default: mobsuite/ in --db_dir. Needed with --run_mobsuite.",
+                    "fa_icon": "fas fa-database"
+                },
+                "medaka_model_path": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Medaka model file (<model>_model_pt.tar.gz). Default: medaka/<--medaka_model>_model_pt.tar.gz in --db_dir.",
+                    "fa_icon": "fas fa-database"
+                },
+                "panel_references_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Directory with <accession>.fna.gz for every accession in --panel_references. Default: panel_references/ in --db_dir.",
+                    "fa_icon": "fas fa-database"
+                }
+            }
         }
     },
     "allOf": [
@@ -464,6 +627,9 @@
         },
         {
             "$ref": "#/$defs/meridian_options"
+        },
+        {
+            "$ref": "#/$defs/pathogen_options"
         },
         {
             "$ref": "#/$defs/provenance_options"

@@ -1,0 +1,26 @@
+species,tier,who_category,action,reference_accession,confusable_with,ani_min,amrfinder_organism
+Streptococcus pneumoniae,1,BPPL 2024 medium,reconstruct,GCF_001457635.1,Streptococcus mitis;Streptococcus oralis;Streptococcus pseudopneumoniae,95,Streptococcus_pneumoniae
+Haemophilus influenzae,1,BPPL 2024 medium,reconstruct,GCF_020736045.1,Haemophilus haemolyticus;Haemophilus parainfluenzae,95,Haemophilus_influenzae
+Klebsiella pneumoniae,2,BPPL 2024 critical,reconstruct,GCF_000240185.1,Klebsiella variicola;Klebsiella quasipneumoniae,95,Klebsiella_pneumoniae
+Acinetobacter baumannii,2,BPPL 2024 critical,reconstruct,GCF_009035845.1,,95,Acinetobacter_baumannii
+Pseudomonas aeruginosa,2,BPPL 2024 high,reconstruct,GCF_000006765.1,,95,Pseudomonas_aeruginosa
+Staphylococcus aureus,2,BPPL 2024 high,reconstruct,GCF_000013425.1,Staphylococcus argenteus,95,Staphylococcus_aureus
+Escherichia coli,2,BPPL 2024 critical,reconstruct,GCF_000005845.2,Shigella flexneri;Shigella sonnei,95,Escherichia
+Stenotrophomonas maltophilia,3,,reconstruct,GCF_020641395.2,,95,
+Burkholderia cenocepacia,3,,reconstruct,GCF_001718895.1,Burkholderia multivorans,95,Burkholderia_cepacia
+Burkholderia multivorans,3,,reconstruct,GCF_036352035.1,Burkholderia cenocepacia,95,Burkholderia_cepacia
+Mycobacteroides abscessus,3,,reconstruct,GCF_000069185.1,,95,
+Moraxella catarrhalis,3,,reconstruct,GCF_900476075.1,,95,
+Neisseria meningitidis,3,,reconstruct,GCF_022869645.1,Neisseria subflava,95,Neisseria_meningitidis
+Mycobacterium tuberculosis,D,BPPL 2024 critical,detect,,,,
+Aspergillus fumigatus,D,FPPL 2022 critical,detect,,,,
+Candida albicans,D,FPPL 2022 critical,detect,,,,
+Cryptococcus neoformans,D,FPPL 2022 critical,detect,,,,
+Pneumocystis jirovecii,D,FPPL 2022 medium,detect,,,,
+Haemophilus parainfluenzae,R,,reconstruct,GCF_016127215.1,Haemophilus influenzae,95,
+Streptococcus mitis,R,,reconstruct,GCF_018603625.2,Streptococcus pneumoniae;Streptococcus oralis;Streptococcus pseudopneumoniae,95,
+Streptococcus oralis,R,,reconstruct,GCF_900637025.1,Streptococcus mitis;Streptococcus pneumoniae,95,
+Prevotella melaninogenica,R,,reconstruct,GCF_000144405.1,,95,
+Veillonella parvula,R,,reconstruct,GCF_900186885.1,,95,
+Neisseria subflava,R,,reconstruct,GCF_005221305.1,Neisseria meningitidis,95,
+Staphylococcus epidermidis,R,,reconstruct,GCF_006094375.1,Staphylococcus aureus,95,
