@@ -15,19 +15,19 @@ OUT = Path(__file__).with_name("pneuma_metro_map.svg")
 BG = "#f6f8fa"       # light backing panel (readable on light and dark GitHub themes)
 INK = "#1f2328"
 MUTED = "#57606a"
-GREY = "#8c959f"
 FONT = "Helvetica, Arial, sans-serif"
 
 C_QC, C_AB, C_CO = "#0072B2", "#009E73", "#D55E00"
 C_FN, C_DS = "#9B3FA8", "#D4A017"
 C_MQ = "#57606a"
+C_PA = "#CC79A7"     # pathogens (Okabe-Ito reddish purple)
 
 W, H = 1380, 486
 LW = 6                      # line width
 
 # lane geometry
 Y0 = 240                    # trunk / functional / downstream line
-YA, YC, YR = 96, 150, 350  # abundance, contamination, reconstruction lanes
+YA, YC, YR = 96, 150, 350  # abundance, contamination, pathogen lanes
 
 out = []
 
@@ -76,12 +76,9 @@ def stage(x, y, label, anchor="start"):
 
 
 def station(x, y, kind="", r=6.5, fill="#ffffff"):
-    """kind: '' process | 'opt' optional (dotted) | 'plan' planned (hollow dotted)."""
+    """kind: '' process | 'opt' optional (dotted)."""
     if kind == "opt":
         add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#ffffff" stroke="{INK}" '
-            f'stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>')
-    elif kind == "plan":
-        add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{BG}" stroke="{GREY}" '
             f'stroke-width="2.5" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>')
     else:
         add(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{fill}" stroke="{INK}" '
@@ -106,11 +103,16 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "trunk (cat, Porechop_ABI, nanoq, NanoPlot, SeqKit stats, Hostile) reaches the "
     "Kraken2 interchange which branches into Abundance (Bracken, KrakenTools "
     "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
-    "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a planned Metagenome "
-    "reconstruction line. The first three end at a vertical junction interchange, "
+    "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a Pathogen reconstruction "
+    "line. The first three end at a vertical junction interchange, "
     "from which the downstream line (MERIDIAN, then the Report) and a grey exit to "
     "MultiQC (report of all steps) leave; filled stops mark the stations whose "
-    "output MultiQC reports.</desc>")
+    "output MultiQC reports. The pathogen line is an opt-in line that runs per "
+    "sample and panel species: read extraction, a coverage gate (with patient-level "
+    "pooling when no sample passes), Flye and Medaka, CheckM2 and QUAST, skani "
+    "species confirmation, MLST, AMRFinderPlus, ABRicate and Bakta (MOB-suite "
+    "optional), ending in the Pathogen report; QUAST, CheckM2 and the pathogen "
+    "status are reported in MultiQC.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
 text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
@@ -125,6 +127,7 @@ TX = 60                               # input terminus
 MQD = 36                              # MultiQC spur drop
 JX = 1150                             # junction interchange centre
 MQX, MQY = 1310, Y0 + 30              # MultiQC terminus
+PTX = 1340                            # Pathogen report terminus
 
 # lines (drawn first, stations on top)
 line([(TX, Y0), (KX - 20, Y0)], C_QC)
@@ -148,9 +151,9 @@ line([(FX0, Y0), (FX1 + SP, Y0), (JX, Y0)], C_FN)
 line([(JX, MQY), (MQX, MQY)], C_MQ)
 # downstream (gold)
 line([(JX, Y0), (RX, Y0)], C_DS)
-# reconstruction (grey, dashed)
-xr = 570
-line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (1060, YR)], GREY, dashed=True)
+# pathogen reconstruction (reddish purple)
+xr = 560
+line([(KX, Y0), (xr, Y0), (xr + YR - Y0, YR), (PTX, YR)], C_PA)
 
 # ---------------------------------------------------------------- trunk stations
 qc = [("cat", 116, "", 1), ("Porechop_ABI", 178, "opt", -1), ("nanoq", 240, "", 1),
@@ -211,22 +214,31 @@ terminus(RX, Y0, C_DS)
 text(RX, Y0 - 20, ["Report"], size=12, weight="700")
 stage(MX, Y0 - 44, "DOWNSTREAM", anchor="middle")
 
-# ---------------------------------------------------------------- reconstruction (planned)
-for name, x in [("binning /|assembly", 770), ("CheckM2", 850), ("Bakta", 920),
-                ("MLST", 985)]:
-    station(x, YR, "plan")
-    parts = name.split("|")
-    text(x, YR - 14 - 13 * (len(parts) - 1), parts, size=12, weight="400", fill=MUTED)
-terminus(1060, YR, GREY)
-text(1060, YR - 20, ["Pathogen report"], size=12, weight="400", fill=MUTED)
-stage(725, YR + 28, "METAGENOME RECONSTRUCTION (PLANNED)")
+# ---------------------------------------------------------------- pathogen reconstruction
+# labels alternate above / below the lane (as on the QC trunk); the filled stop is reported in MultiQC
+PX0, PDX = 720, 92
+for k, (lines, kind, filled) in enumerate([
+        (["Extract", "reads"], "", False), (["Coverage", "gate"], "", False),
+        (["Flye", "Medaka"], "", False), (["CheckM2", "QUAST"], "", True),
+        (["skani"], "", False), (["MLST · AMR", "VF · Bakta"], "", False),
+        (["MOB-suite"], "opt", False)]):
+    x = PX0 + k * PDX
+    station(x, YR, kind, fill=C_PA if filled else "#ffffff")
+    if k % 2 == 0:
+        text(x, YR - 14 - 13 * (len(lines) - 1), lines, size=12, weight="700")
+    else:
+        text(x, YR + 22, lines, size=12, weight="700")
+text(PX0 + PDX, YR + 22 + 13 + 14, ["patient-level pooling"], size=10, fill=MUTED, style="italic")
+terminus(PTX, YR, C_PA)
+text(PTX, YR + 28, ["Pathogen", "report"], size=12, weight="700")
+stage(700, YR - 52, "PATHOGEN RECONSTRUCTION")
 
 # ---------------------------------------------------------------- legend
 LY = 424
 stage(30, LY - 18, "LEGEND")
 lines_leg = [("QC &amp; taxonomy", C_QC, False), ("Abundance", C_AB, False),
              ("Contamination", C_CO, False), ("Functional (AMR / VF / MGE)", C_FN, False),
-             ("Downstream", C_DS, False), ("Planned", GREY, True)]
+             ("Downstream", C_DS, False), ("Pathogens (opt-in)", C_PA, False)]
 xs = [30, 190, 320, 470, 700, 840]
 for (lab, col, dashed), x in zip(lines_leg, xs):
     dash = ' stroke-dasharray="8 6"' if dashed else ""
@@ -234,15 +246,15 @@ for (lab, col, dashed), x in zip(lines_leg, xs):
         f'stroke-width="{LW}" stroke-linecap="round"{dash}/>')
     text(x + 44, LY + 4, [lab], anchor="start", size=12)
 SY = LY + 32
-sym = [("Process", "", 30), ("Optional step", "opt", 150), ("Planned step", "plan", 300)]
+sym = [("Process", "", 30), ("Optional step", "opt", 150)]
 for lab, kind, x in sym:
     station(x + 8, SY, kind)
     text(x + 24, SY + 4, [lab], anchor="start", size=12)
-interchange(470 + 24, SY, w=44)
-text(470 + 56, SY + 4, ["Interchange"], anchor="start", size=12)
-station(640, SY, fill=C_QC)
-text(654, SY + 4, ["Reported in MultiQC"], anchor="start", size=12)
-text(830, SY + 4, ["Databases: --build_databases to download, or --db_dir to reuse"],
+interchange(300 + 24, SY, w=44)
+text(300 + 56, SY + 4, ["Interchange"], anchor="start", size=12)
+station(470, SY, fill=C_QC)
+text(484, SY + 4, ["Reported in MultiQC"], anchor="start", size=12)
+text(660, SY + 4, ["Databases: --build_databases to download, or --db_dir to reuse"],
      anchor="start", size=10.5, fill=MUTED, style="italic")
 
 add("</svg>")
