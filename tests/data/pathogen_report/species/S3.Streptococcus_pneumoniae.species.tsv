@@ -1,0 +1,2 @@
+unit_id	panel_species	best_species	best_accession	ani	af_query	confirmed	reason
+S3.Streptococcus_pneumoniae	Streptococcus pneumoniae	Streptococcus mitis	GCF_018603625.2	96.8	88.0	false	best_hit_other_species

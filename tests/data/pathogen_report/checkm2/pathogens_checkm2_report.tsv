@@ -1,0 +1,7 @@
+Name	Completeness	Contamination	Completeness_Model_Used	Translation_Table_Used
+S1.Streptococcus_pneumoniae	97.5	1.2	Gradient Boost (General Model)	11
+S3.Streptococcus_pneumoniae	97.5	1.2	Gradient Boost (General Model)	11
+S3.Haemophilus_influenzae	97.5	1.2	Gradient Boost (General Model)	11
+S3.Streptococcus_mitis	97.5	1.2	Gradient Boost (General Model)	11
+patient-P4.Haemophilus_influenzae	97.5	1.2	Gradient Boost (General Model)	11
+patient-P5.Streptococcus_pneumoniae	97.5	1.2	Gradient Boost (General Model)	11

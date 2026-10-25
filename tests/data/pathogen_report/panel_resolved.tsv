@@ -1,0 +1,5 @@
+species	slug	tier	who_category	action	taxid	scientific_name	matched_name_class	taxids	reference_accession	confusable_with	confusable_accessions	ani_min	amrfinder_organism
+Streptococcus pneumoniae	Streptococcus_pneumoniae	1	BPPL 2024 medium	reconstruct	1313	Streptococcus pneumoniae	scientific name	1313;170187	GCF_001457635.1	Streptococcus mitis	GCF_018603625.2	95.0	Streptococcus_pneumoniae
+Haemophilus influenzae	Haemophilus_influenzae	1	BPPL 2024 medium	reconstruct	727	Haemophilus influenzae	scientific name	727	GCF_020736045.1			95.0	Haemophilus_influenzae
+Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	BPPL 2024 critical	detect	1773	Mycobacterium tuberculosis	scientific name	1773					
+Streptococcus mitis	Streptococcus_mitis	R		reconstruct	28037	Streptococcus mitis	scientific name	28037	GCF_018603625.2	Streptococcus pneumoniae	GCF_001457635.1	95.0	

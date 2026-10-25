@@ -1,0 +1,2 @@
+unit_id	reads_mapped	mean_depth	breadth	gate_min_depth	gate_min_breadth	pass
+S4.Haemophilus_influenzae	1000	6.1	0.88	10.0	0.5	false

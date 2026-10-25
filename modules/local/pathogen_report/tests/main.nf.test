@@ -1,0 +1,45 @@
+nextflow_process {
+    name "Test BUILD_PATHOGEN_REPORT"
+    script "../main.nf"
+    process "BUILD_PATHOGEN_REPORT"
+
+    test("one status per sample x species, pooled rows, HTML") {
+        when {
+            params {
+                gate_min_depth = 10
+                gate_min_breadth = 0.5
+            }
+            process {
+                """
+                def d = "${projectDir}/tests/data/pathogen_report"
+                input[0]  = file("\$d/panel_resolved.tsv")
+                input[1]  = file("\$d/pathogen_candidates.tsv")
+                input[2]  = file("\$d/pathogen_samples.tsv")
+                input[3]  = file("\$d/units.tsv")
+                input[4]  = files("\$d/gate/*")
+                input[5]  = files("\$d/species/*")
+                input[6]  = files("\$d/assemblies/*")
+                input[7]  = files("\$d/mlst/*")
+                input[8]  = files("\$d/amrfinderplus/*")
+                input[9]  = files("\$d/abricate/*")
+                input[10] = []
+                input[11] = files("\$d/mixed/*")
+                input[12] = files("\$d/checkm2/*")
+                input[13] = files("\$d/quast/*")
+                input[14] = files("\$d/functional/*")
+                input[15] = file("\$d/pathogen_panel.csv")
+                input[16] = file("\$d/database_manifest.tsv")
+                """
+            }
+        }
+        then {
+            assert process.success
+            def rows = path(process.out.cohort[0]).readLines()
+            assert rows[0].startsWith('level\tsample\tpatient\tcontributing_samples\tspecies')
+            assert rows.size() == 1 + 9 * 4 + 2
+            assert rows.any { r -> r.startsWith('patient\t\tP4\tS4;S5\tHaemophilus influenzae\t') && r.contains('\tTYPED\t') }
+            assert rows.any { r -> r.startsWith('sample\tS4\tP4\tS4\tHaemophilus influenzae\t') && r.contains('TYPED (pooled, patient P4)') }
+            assert process.out.html.flatten().size() == 9
+        }
+    }
+}

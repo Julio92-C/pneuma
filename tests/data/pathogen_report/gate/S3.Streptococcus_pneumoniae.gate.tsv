@@ -1,0 +1,2 @@
+unit_id	reads_mapped	mean_depth	breadth	gate_min_depth	gate_min_breadth	pass
+S3.Streptococcus_pneumoniae	1000	12.2	0.62	10.0	0.5	true

@@ -1,0 +1,12 @@
+unit_id	level	sample	patient	samples	species	taxid	reference
+S1.Streptococcus_pneumoniae	sample	S1	P1	S1	Streptococcus pneumoniae	1313	GCF_001457635.1
+S2.Streptococcus_mitis	sample	S2	P2	S2	Streptococcus mitis	28037	GCF_018603625.2
+S3.Streptococcus_pneumoniae	sample	S3	P3	S3	Streptococcus pneumoniae	1313	GCF_001457635.1
+S3.Haemophilus_influenzae	sample	S3	P3	S3	Haemophilus influenzae	727	GCF_020736045.1
+S3.Streptococcus_mitis	sample	S3	P3	S3	Streptococcus mitis	28037	GCF_018603625.2
+S4.Haemophilus_influenzae	sample	S4	P4	S4	Haemophilus influenzae	727	GCF_020736045.1
+S5.Haemophilus_influenzae	sample	S5	P4	S5	Haemophilus influenzae	727	GCF_020736045.1
+patient-P4.Haemophilus_influenzae	patient		P4	S4;S5	Haemophilus influenzae	727	GCF_020736045.1
+S6.Streptococcus_pneumoniae	sample	S6	P5	S6	Streptococcus pneumoniae	1313	GCF_001457635.1
+S7.Streptococcus_pneumoniae	sample	S7	P5	S7	Streptococcus pneumoniae	1313	GCF_001457635.1
+patient-P5.Streptococcus_pneumoniae	patient		P5	S6;S7	Streptococcus pneumoniae	1313	GCF_001457635.1

@@ -1,0 +1,2 @@
+unit_id	evaluable_sites	het_sites	het_per_kb	verdict	min_depth	min_maf	min_alt	max_het_per_kb
+patient-P4.Haemophilus_influenzae	40000	2	0.050	single	8	0.25	3	1.0

@@ -1,0 +1,2 @@
+unit_id	evaluable_sites	het_sites	het_per_kb	verdict	min_depth	min_maf	min_alt	max_het_per_kb
+patient-P5.Streptococcus_pneumoniae	38000	190	5.000	mixed	8	0.25	3	1.0

@@ -1,0 +1,37 @@
+sample	patient	is_control	low_depth	species	slug	tier	action	taxid	clade_reads	bracken_reads	bracken_fraction	decision
+S1	P1	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	3000	3000	0.01	extract
+S1	P1	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	not_detected
+S1	P1	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	5	5	0.01	detect
+S1	P1	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected
+S2	P2	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	6	6	0.01	below_min_reads
+S2	P2	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	not_detected
+S2	P2	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+S2	P2	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	900	900	0.01	extract
+S3	P3	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	1500	1500	0.01	extract
+S3	P3	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	1200	1200	0.01	extract
+S3	P3	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+S3	P3	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	1100	1100	0.01	extract
+S4	P4	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	0	0	0	not_detected
+S4	P4	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	400	400	0.01	extract
+S4	P4	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+S4	P4	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected
+S5	P4	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	0	0	0	not_detected
+S5	P4	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	380	380	0.01	extract
+S5	P4	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+S5	P4	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected
+S6	P5	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	350	350	0.01	extract
+S6	P5	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	not_detected
+S6	P5	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+S6	P5	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected
+S7	P5	false	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	360	360	0.01	extract
+S7	P5	false	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	not_detected
+S7	P5	false	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+S7	P5	false	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected
+S8	P6	false	true	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	12	12	0.01	low_depth
+S8	P6	false	true	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	low_depth
+S8	P6	false	true	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	low_depth
+S8	P6	false	true	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	low_depth
+CTRL		true	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	0	0	0	not_detected
+CTRL		true	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	not_detected
+CTRL		true	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
+CTRL		true	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected

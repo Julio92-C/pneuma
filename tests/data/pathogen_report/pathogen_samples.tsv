@@ -1,0 +1,10 @@
+sample	patient	is_control	low_depth	n_reads	classified_reads	unclassified_reads	unclassified_pct
+S1	P1	false	false	20000	19900	100	0.50
+S2	P2	false	false	15000	14900	100	0.67
+S3	P3	false	false	18000	17900	100	0.56
+S4	P4	false	false	9000	8900	100	1.11
+S5	P4	false	false	8000	7900	100	1.25
+S6	P5	false	false	9000	8900	100	1.11
+S7	P5	false	false	9500	9400	100	1.05
+S8	P6	false	true	50	-50	100	200.00
+CTRL		true	false	800	700	100	12.50
