@@ -120,6 +120,11 @@
                         "git_sha": "5f344f0e41fdfaf2506f89400e42a2689d6ab323",
                         "installed_by": ["modules"]
                     },
+                    "samtools/mpileup": {
+                        "branch": "master",
+                        "git_sha": "5f344f0e41fdfaf2506f89400e42a2689d6ab323",
+                        "installed_by": ["modules"]
+                    },
                     "seqkit/stats": {
                         "branch": "master",
                         "git_sha": "d07a945f421a4a91ce4e5a22db63e0e7f8741607",

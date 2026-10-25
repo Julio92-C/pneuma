@@ -1,0 +1,31 @@
+nextflow_process {
+    name "Test MIXED_STRAIN_CHECK"
+    script "../main.nf"
+    process "MIXED_STRAIN_CHECK"
+
+    test("single vs two-strain pileups") {
+        when {
+            params {
+                mixed_min_depth = 8
+                mixed_min_maf = 0.25
+                mixed_min_alt = 3
+                mixed_max_het_per_kb = 1.0
+                mixed_min_evaluable = 1000
+            }
+            process {
+                """
+                def c = "${projectDir}/tests/data/pathogen_contracts"
+                input[0] = channel.of(
+                    [ [ id: 'patient-P1.single' ], file("\$c/mpileup_single.txt", checkIfExists: true) ],
+                    [ [ id: 'patient-P2.mixed' ],  file("\$c/mpileup_mixed.txt",  checkIfExists: true) ]
+                )
+                """
+            }
+        }
+        then {
+            assert process.success
+            def verdict = process.out.tsv.collectEntries { item -> [ (item[0].id): path(item[1]).readLines()[1].split('\t')[4] ] }
+            assert verdict == [ 'patient-P1.single': 'single', 'patient-P2.mixed': 'mixed' ]
+        }
+    }
+}
