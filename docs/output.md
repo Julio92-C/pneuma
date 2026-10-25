@@ -12,6 +12,7 @@ Per-sample file names start with the sample name from the samplesheet (`SAMPLE-0
 - [`taxonomy/`](#taxonomy): Kraken2, Bracken, combined reports, Krona
 - [`contamination/`](#contamination): Recentrifuge
 - [`functional/`](#functional): ABRicate on taxid-tagged reads
+- [`pathogens/`](#pathogens): priority-pathogen reconstruction and the pathogen report (opt-in, `--skip_pathogens false`)
 - [`meridian/`](#meridian): MERIDIAN config and results
 - [`multiqc/`](#multiqc): one report for all stages
 - [`pipeline_info/`](#pipeline-information)
@@ -77,6 +78,36 @@ Classification uses the Kraken2 PlusPF index (`--kraken2_db`, `--kraken2_confide
 
 The tagged read FASTA files that feed ABRicate are intermediate and not published.
 
+### Pathogens
+
+Only produced with `--skip_pathogens false` (pathogen reconstruction is opt-in).
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `pathogens/panel/panel_resolved.tsv`: the panel with taxids (+ descendants), matched name class, confusable accessions.
+- `pathogens/pathogen_candidates.tsv`: per sample × panel species: Kraken2 clade reads, Bracken estimate, decision (`low_depth`, `detect`, `not_detected`, `below_min_reads`, `extract`). `pathogens/pathogen_samples.tsv`: per-sample read totals and unclassified %.
+- `pathogens/gate/<unit>.coverage.txt`, `<unit>.gate.tsv`: samtools coverage of the unit's reads on the panel reference; mean depth, breadth, pass.
+- `pathogens/assemblies/<unit>.fasta`: Medaka-polished Flye assembly; `assemblies/flye/` Flye logs.
+- `pathogens/qc/checkm2/pathogens_checkm2_report.tsv`, `pathogens/qc/quast/`: one CheckM2 and one QUAST run over all assemblies.
+- `pathogens/species/<unit>.skani.tsv`, `<unit>.species.tsv`: ANI against the panel reference and its confusables, and the confirmation verdict.
+- `pathogens/mixed_strain/<unit>.mixed.tsv`: minor-allele sites per kb of patient-level (pooled) assemblies.
+- `pathogens/typing/{mlst,amrfinderplus,abricate,mobsuite}/`, `pathogens/annotation/bakta/<unit>/`: typing and annotation of confirmed assemblies. MOB-suite writes no file for an assembly without plasmids.
+- `pathogens/report/pathogen_cohort.tsv`: one row per sample × panel species (`level=sample`, exactly one status each) plus one row per pooled patient × species (`level=patient`, with `contributing_samples`).
+- `pathogens/report/html/<sample>.pathogens.html`: per-sample report (Tier 1–3, detect-only, Tier R, patient-level section).
+
+</details>
+
+A *unit* is `<sample>.<Species_name>` (sample level) or `patient-<patient>.<Species_name>` (pooled).
+Statuses: `NOT_DETECTED`, `DETECTED_ONLY` (detect tier), `LOW_DEPTH` (sample), `LOW_COVERAGE`,
+`ASSEMBLY_FAILED`, `SPECIES_NOT_CONFIRMED`, `MIXED_STRAINS` (patient level only), `TYPED`, `PARTIAL`, `NO_SCHEME`.
+Units lost before the coverage gate (for example too few extracted reads) show as `LOW_COVERAGE` with a note.
+Gene columns come from the assembly (`gene_source = contig`) when there is a typed assembly, or from
+ABRicate on the Kraken2-tagged reads of the species clade (`read-level`) for `LOW_COVERAGE` / `ASSEMBLY_FAILED`.
+`SPECIES_NOT_CONFIRMED` rows list no genes. MGE = plasmid replicons (PlasmidFinder) and, with
+`--run_mobsuite`, MOB-suite replicon types. Extracted and pooled reads, BAM files and pileups are
+intermediate and not published.
+
 ### MERIDIAN
 
 <details markdown="1">
@@ -120,7 +151,8 @@ Only produced when `--skip_meridian` is not set. See the [MERIDIAN repository](h
 | 8 | Bracken | Bracken reports | top taxa after re-estimation (the plot title says Kraken2 because Bracken writes the same report format) |
 | 9 | Recentrifuge | `pneuma_controls.rcf.stat.csv` (custom table) | per-sample read and score statistics of the control-mode run; only when the samplesheet marks negative controls |
 | 10 | ABRicate hits | `*_abricate.csv` (custom table) | hits per sample for `card`, `vfdb` and `plasmidfinder`, total hits and distinct genes; samples without hits show zeros |
-| 11 | Software versions, workflow summary, methods | pipeline | versions of every tool and the parameters of the run |
+| 11 | Pathogen reconstruction: QUAST, CheckM2, Pathogen status | `pathogens/qc/` and `pathogen_cohort.tsv` (custom table) | QUAST and CheckM2 sections plus the "Pathogen status per sample" table (counts per status, typed species, pooled results); only with `--skip_pathogens false`. QUAST and CheckM2 appear once there are assemblies |
+| 12 | Software versions, workflow summary, methods | pipeline | versions of every tool and the parameters of the run |
 
 The custom tables are written by [`bin/make_mqc_tables.py`](../bin/make_mqc_tables.py) (process `MULTIQC_TABLES`) and the section order is set in [`assets/multiqc_config.yml`](../assets/multiqc_config.yml).
 
@@ -139,7 +171,3 @@ The custom tables are written by [`bin/make_mqc_tables.py`](../bin/make_mqc_tabl
 </details>
 
 [Nextflow](https://docs.seqera.io/platform-cloud/reports/overview) generates reports useful for troubleshooting: launch commands, run times and resource usage.
-
-## Planned outputs
-
-Phase 2 (priority-pathogen reconstruction and the WHO-priority respiratory panel) will add a pathogen report directory; it does not exist yet.

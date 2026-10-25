@@ -63,6 +63,7 @@ workflow PNEUMA {
             databases.database_manifest ? file(databases.database_manifest, checkIfExists: true) : []
         )
         ch_pathogen_cohort = PATHOGEN_REPORT.out.cohort
+        ch_multiqc_files = ch_multiqc_files.mix(PATHOGEN_RECONSTRUCTION.out.multiqc)
     }
 
     ch_versions = ch_versions.mix(PREPROCESS.out.versions, TAXONOMY.out.versions,
@@ -75,7 +76,8 @@ workflow PNEUMA {
         PREPROCESS.out.hostile_log.collect(),
         TAXONOMY.out.reports.map { _meta, f -> f }.collect(),
         FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect(),
-        CONTAMINATION.out.rcf_stat
+        CONTAMINATION.out.rcf_stat,
+        ch_pathogen_cohort
     )
     ch_versions = ch_versions.mix(MULTIQC_TABLES.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(

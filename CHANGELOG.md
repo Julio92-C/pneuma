@@ -3,15 +3,29 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.3.0dev - [unreleased]
+## v0.3.0 - 2026-10-25
 
-Phase 2: priority-pathogen reconstruction and the pathogen report.
+Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--skip_pathogens` defaults to `true`, so a run without `--skip_pathogens false` needs no pathogen database and behaves as in v0.2.x.
 
 ### `Added`
 
+- Phase 2, pathogen reconstruction (spec 4.2, 5.5, 5.6): `PATHOGEN_RECONSTRUCTION` / `PATHOGEN_REPORT` with read extraction (KrakenTools `--include-children`), a minimap2 coverage gate (`--gate_min_depth`, `--gate_min_breadth`), Flye (`--flye_mode`, `--flye_meta`) -> Medaka (`--medaka_model`, staged model file), CheckM2, QUAST, skani species confirmation (`ani_min`), mlst, AMRFinderPlus (`--organism` map), ABRicate VFDB + PlasmidFinder on contigs, Bakta and optional MOB-suite (`--run_mobsuite`). Detect-only species report reads and Bracken abundance. Enabled with `--skip_pathogens false`.
+- Patient-level fallback (amends the spec): optional `patient` samplesheet column; when no sample of a patient passes the gate for a species, its extracted reads are pooled across the patient's non-control samples, re-gated, assembled, and checked for mixed strains (minor-allele sites per kb, `--mixed_*`); `MIXED_STRAINS` status; cohort TSV `level` and `contributing_samples` columns; pooled results shown as `<STATUS> (pooled, patient <id>)` under each contributing sample. No cohort-level pooling.
+- `assets/pathogen_panel.csv` (WHO-priority respiratory panel, tiers 1/2/3/D/R, with an optional `amrfinder_organism` column) and `assets/panel_references.tsv` (RefSeq reference genomes of panel species and confusables). `resolve_panel` resolves names to taxids (NCBI synonyms accepted with a warning; unknown names stop the run with suggestions).
+- `pathogens/report/pathogen_cohort.tsv` (exactly one status per sample x panel species) and `pathogens/report/html/<sample>.pathogens.html`; MultiQC QUAST, CheckM2 and "Pathogen status per sample" sections. Units lost before the coverage gate show as `LOW_COVERAGE` with a note; MOB-suite writes no file for plasmid-free assemblies.
+- `--build_databases` also prepares CheckM2, Bakta (`--bakta_db_type light|full`, default light), AMRFinderPlus, MOB-suite, the Medaka model, a record of the MLST schemes bundled in the mlst container and the panel reference genomes, all in `database_manifest.tsv`; `--db_dir` resolves them. `--skip_pathogen_download`, `--skip_mobsuite_download`.
+- Tests: public-data fixture generator (`tests/make_pathogen_fixture.py`: NCBI RefSeq genomes + seeded Badread reads), a committed 120-kb real-tool fixture for CI, contract snippets of real tool outputs, read-only + offline container tests (`tests/pathogen_readonly.config`), and slow real-database tests in `tests/pathogen/` (tag `pathogen_real`, `nf-test.pathogen.config`).
+
 ### `Changed`
 
-### `Fixed`
+- `TAXONOMY` also emits the per-sample Bracken tables (`bracken_tsv`).
+- Re-running `--build_databases` into an existing `--db_outdir` keeps the manifest rows of databases not rebuilt.
+- `-profile test` uses `tests/data/pathogen_fixture/taxdump` (a superset of the Phase 1 test taxdump with the panel species).
+- Tube map: the planned pathogen lane is now an active line.
+
+### `Known issues`
+
+- Pathogen defaults (`--gate_min_depth`, `--gate_min_breadth`, `--flye_meta`, `--mixed_max_het_per_kb`, `--pathogen_min_reads`) are provisional until the Phase 3 spike-in validation.
 
 ## v0.2.1 - 2026-10-25
 

@@ -6,6 +6,7 @@ Inputs (all optional, any number of files each):
   --kraken    <sample>.kraken2.report.txt  Kraken2 reports
   --abricate  <sample>_abricate.csv        per-sample ABRicate --csv outputs
   --rcf-stat  pneuma_controls.rcf.stat.csv Recentrifuge statistics (CSV)
+  --pathogen-cohort pathogen_cohort.tsv  PNEUMA pathogen report (cohort TSV)
 
 Outputs (written to --outdir, only when the matching input is present):
   pneuma_general_stats_mqc.tsv  columns for the General Statistics table:
@@ -13,6 +14,7 @@ Outputs (written to --outdir, only when the matching input is present):
   hostile_mqc.tsv               "Host removal" section (reads in/out/removed)
   abricate_mqc.tsv              "ABRicate hits" section (hits per database)
   recentrifuge_mqc.tsv          "Recentrifuge" section (per-sample statistics)
+  pathogen_status_mqc.tsv       "Pathogen reconstruction" section (status counts per sample)
 
 Sample names are taken from the file names so that they match the names
 MultiQC derives for its own modules.
@@ -289,12 +291,55 @@ def write_rcf(path, rcf):
     _write(path, header, columns, rcf)
 
 
+PATHOGEN_STATUSES = ["TYPED", "PARTIAL", "NO_SCHEME", "MIXED_STRAINS", "SPECIES_NOT_CONFIRMED",
+                     "ASSEMBLY_FAILED", "LOW_COVERAGE", "DETECTED_ONLY", "LOW_DEPTH"]
+
+
+def parse_pathogen_cohort(path):
+    """{sample: {<status>: n, typed: 'Species STn; ...', pooled: '...'}} from level=sample rows."""
+    data = OrderedDict()
+    with open(str(path), newline="") as fh:
+        rows = list(csv.DictReader(fh, delimiter="\t"))
+    if rows and "level" not in rows[0]:
+        _warn(path, "not a pathogen_cohort.tsv (no 'level' column)")
+        return data
+    for r in rows:
+        if r["level"] != "sample":
+            continue
+        row = data.setdefault(r["sample"], OrderedDict([(s, 0) for s in PATHOGEN_STATUSES] + [("typed", ""), ("pooled", "")]))
+        if r["status"] in row:
+            row[r["status"]] += 1
+        if r["status"] == "TYPED":
+            row["typed"] = "; ".join(filter(None, [row["typed"], "%s ST%s" % (r["species"], r["st"])]))
+        if r.get("pooled_result"):
+            row["pooled"] = "; ".join(filter(None, [row["pooled"], "%s: %s" % (r["species"], r["pooled_result"])]))
+    return data
+
+
+def write_pathogen(path, data):
+    header = [
+        "id: 'pathogen_status'",
+        "section_name: 'Pathogen reconstruction'",
+        "description: 'Per sample: number of panel species in each status (one status per sample x species; NOT_DETECTED is not counted), typed species with their ST, and patient-level pooled results involving the sample. Per-sample HTML reports are in pathogens/report/html/.'",
+        "plot_type: 'table'",
+        "pconfig:",
+        "    id: 'pathogen_status_table'",
+        "    title: 'Pathogen status per sample'",
+        "headers:",
+    ]
+    for key in PATHOGEN_STATUSES:
+        header += ["    %s:" % key, "        title: '%s'" % key, "        format: '{:,.0f}'"]
+    header += ["    typed:", "        title: 'Typed (ST)'", "    pooled:", "        title: 'Pooled (patient level)'"]
+    _write(path, header, PATHOGEN_STATUSES + ["typed", "pooled"], data)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--hostile", nargs="*", default=[])
     parser.add_argument("--kraken", nargs="*", default=[])
     parser.add_argument("--abricate", nargs="*", default=[])
     parser.add_argument("--rcf-stat", nargs="*", default=[])
+    parser.add_argument("--pathogen-cohort", nargs="*", default=[])
     parser.add_argument("--outdir", default=".")
     args = parser.parse_args(argv)
 
@@ -331,6 +376,12 @@ def main(argv=None):
         written.append("recentrifuge_mqc.tsv")
     elif args.rcf_stat:
         failed.append("--rcf-stat")
+    pathogen = parse_pathogen_cohort(args.pathogen_cohort[0]) if args.pathogen_cohort else {}
+    if pathogen:
+        write_pathogen(out("pathogen_status_mqc.tsv"), pathogen)
+        written.append("pathogen_status_mqc.tsv")
+    elif args.pathogen_cohort:
+        failed.append("--pathogen-cohort")
     print("wrote: " + (", ".join(written) or "nothing"), file=sys.stderr)
     if failed:
         print("ERROR: no rows could be built from: " + ", ".join(failed), file=sys.stderr)

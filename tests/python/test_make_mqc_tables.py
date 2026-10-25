@@ -177,3 +177,31 @@ def test_zero_byte_abricate_csv_warns_and_fails(tmp_path, capsys):
     rc = mqc.main(["--abricate", str(f), "--outdir", str(tmp_path / "o")])
     assert "WARNING: %s not parsed: empty file" % f in capsys.readouterr().err
     assert rc == 1
+
+
+COHORT = (
+    "level\tsample\tpatient\tcontributing_samples\tspecies\tstatus\tpooled_result\tst\n"
+    "sample\tS1\tP1\tS1\tStreptococcus pneumoniae\tTYPED\t\t205\n"
+    "sample\tS1\tP1\tS1\tHaemophilus influenzae\tNOT_DETECTED\t\t\n"
+    "sample\tS2\tP2\tS2\tHaemophilus influenzae\tLOW_COVERAGE\tTYPED (pooled, patient P2)\t\n"
+    "patient\t\tP2\tS2;S3\tHaemophilus influenzae\tTYPED\t\t57\n"
+)
+
+
+def test_pathogen_cohort_counts_per_sample(tmp_path):
+    f = tmp_path / "pathogen_cohort.tsv"
+    f.write_text(COHORT)
+    data = mqc.parse_pathogen_cohort(f)
+    assert list(data) == ["S1", "S2"]                     # patient rows are not samples
+    assert data["S1"]["TYPED"] == 1 and data["S1"]["typed"] == "Streptococcus pneumoniae ST205"
+    assert data["S2"]["LOW_COVERAGE"] == 1
+    assert data["S2"]["pooled"] == "Haemophilus influenzae: TYPED (pooled, patient P2)"
+
+
+def test_cli_writes_pathogen_status_table(tmp_path):
+    f = tmp_path / "pathogen_cohort.tsv"
+    f.write_text(COHORT)
+    assert mqc.main(["--pathogen-cohort", str(f), "--outdir", str(tmp_path)]) == 0
+    text = (tmp_path / "pathogen_status_mqc.tsv").read_text()
+    assert "id: 'pathogen_status'" in text
+    assert text.splitlines()[-2].startswith("S1\t1\t")   # TYPED is the first column

@@ -82,7 +82,8 @@ nextflow_pipeline {
     }
 
     test("MultiQC summarises the whole pipeline") {
-        when { params { outdir = "$outputDir" } }
+        // pathogens are opt-in; switched on here so that the pathogen_status section is part of the contract
+        when { params { outdir = "$outputDir"; skip_pathogens = false } }
         then {
             assert workflow.success
             def data = "$outputDir/multiqc/multiqc_data"
@@ -98,15 +99,16 @@ nextflow_pipeline {
              'multiqc_bracken_bracken.txt',        // Bracken
              'multiqc_recentrifuge_table.txt',     // Recentrifuge (custom content; test samplesheet has a control)
              'multiqc_abricate_hits_table.txt',    // ABRicate (custom content)
+             'multiqc_pathogen_status_table.txt',  // pathogen status (custom content; quast/checkm2 need assemblies, see multiqc_pathogens.nf.test)
              'multiqc_software_versions.txt'].each { f ->
                 assert new File("$data/$f").exists() : "missing MultiQC data file ${f}"
             }
-            ['nanostat', 'seqkit', 'nanoq', 'hostile', 'kraken', 'bracken', 'recentrifuge_stats', 'abricate_hits'].each { id ->
+            ['nanostat', 'seqkit', 'nanoq', 'hostile', 'kraken', 'bracken', 'recentrifuge_stats', 'abricate_hits', 'pathogen_status'].each { id ->
                 assert report.contains("mqc-section-${id}") : "missing MultiQC section ${id}"
             }
 
             // sections follow the pipeline flow
-            def order = ['nanostat', 'hostile', 'kraken', 'recentrifuge_stats', 'abricate_hits']
+            def order = ['nanostat', 'hostile', 'kraken', 'recentrifuge_stats', 'abricate_hits', 'pathogen_status']
                 .collect { id -> report.indexOf("id=\"mqc-section-wrapper-${id}") }
             assert order.every { i -> i > 0 }
             assert order == order.sort(false)
@@ -176,6 +178,7 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert !path("$outputDir/pathogens").exists()
+            assert !new File("$outputDir/multiqc/multiqc_data/multiqc_pathogen_status_table.txt").exists()
         }
     }
 }

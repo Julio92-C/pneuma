@@ -152,9 +152,24 @@ with an existing Kraken2 database:
 
 ## 2. Samplesheet
 
-`sample,run_id,batch,site,fastq,is_control` — one row per sample × run. A sample sequenced on
-several flow cells gets several rows with the same `sample`; their reads are concatenated.
-`sample` must match `^[A-Za-z0-9][A-Za-z0-9-]*$`.
+`sample,run_id,batch,site,fastq,is_control,patient` has one row per sample × run. A sample sequenced on
+several flow cells gets several rows with the same `sample`, and their reads are concatenated.
+`sample` and `patient` must match `^[A-Za-z0-9][A-Za-z0-9-]*$`.
+
+`patient` is optional and may be empty (negative controls, or no patient information). It is used
+for one thing only, the **patient-level fallback** of pathogen reconstruction (which is opt-in, see
+[Pathogen reconstruction](#pathogen-reconstruction)):
+
+- Each sample × panel species is first reconstructed on its own (`level=sample`).
+- For a patient × species where **no** sample passed the coverage gate, PNEUMA pools that species'
+  extracted reads from all of the patient's non-control samples (at least 2), gates them again and,
+  on a pass, assembles, types and checks them for mixed strains (`level=patient`).
+- The pooled result appears under each contributing sample as `TYPED (pooled, patient P07)` (or
+  `MIXED_STRAINS (pooled, ...)`, etc.) and in a patient section of the sample's HTML report. It is
+  never presented as one sample's genome. Every sample keeps its own status (e.g. `LOW_COVERAGE`).
+- There is no cohort-level (cross-patient) pooling.
+
+Without any `patient` values the run logs a note and reconstructs each sample on its own.
 
 ## 3. Run
 
@@ -187,13 +202,51 @@ When set (or taken from `--db_dir`), the directory is staged into each `ABRICATE
 `abricate --datadir`. When unset, the databases bundled in the container are used.
 `--abricate_dbs` (default `card,vfdb,plasmidfinder`) is the comma-separated list of database *names* searched inside that directory.
 
+### Pathogen reconstruction
+
+Off by default: a run without it needs no pathogen database and behaves as in v0.2.x. Turn it on with
+`--skip_pathogens false`:
+
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
+      --input samplesheet.csv --outdir results --db_dir ~/Scratch/pneuma_db \
+      --skip_pathogens false -resume
+
+On Nextflow 26.04 put `skip_pathogens: false` in a `-params-file` or set `NXF_SYNTAX_PARSER=v1`, otherwise schema validation
+rejects the string `false` (see [Command-line flags on Nextflow 26.04](#command-line-flags-on-nextflow-2604)).
+
+It needs the pathogen databases, which `--build_databases` downloads by default and `--db_dir` picks
+up: `checkm2/`, `bakta/db-light/` (or `--bakta_db_type full`), `amrfinderplus/`,
+`medaka/<model>_model_pt.tar.gz`, `mlst/` (record of the schemes bundled in the mlst container),
+`panel_references/` and, with `--run_mobsuite`, `mobsuite/` (see
+[Pathogen databases and `--skip_pathogens`](#pathogen-databases-and---skip_pathogens)).
+To add them to an existing database folder, run only those downloads:
+
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile myriad --build_databases --db_outdir ~/Scratch/pneuma_db \
+      --skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download
+
+The existing `database_manifest.tsv` rows are kept. The panel is `assets/pathogen_panel.csv` (species
+**names**, resolved against `--taxdump`; renamed species resolve through NCBI synonyms with a
+warning, and unknown names stop the run with suggestions). Reference genomes for the panel and its
+confusables are listed in `assets/panel_references.tsv`.
+
+**Provisional defaults (revisit after spike-in validation):** `--gate_min_depth 10`,
+`--gate_min_breadth 0.5`, `--flye_meta true`, `--mixed_max_het_per_kb 1.0`, `--pathogen_min_reads 10`.
+
+**Expected behaviour on low-biomass data:** with roughly 5k–20k non-host reads per sample, most
+sample × species rows are `LOW_COVERAGE`. That is the expected outcome. Reconstruction at sample level
+happens only for a dominant pathogen, and the patient-level fallback is what makes reconstruction
+possible across repeat samples of a patient. Units that are lost before the gate (for example too few
+extracted reads) are reported as `LOW_COVERAGE` with a note. MOB-suite writes no file for an assembly
+without plasmids, so a missing `mobsuite/` entry means "no plasmid found".
+
 ## 4. Outputs
 
-- `multiqc/` `multiqc_report.html` (QC, host removal, taxonomy, contamination, ABRicate hits and software versions)
+- `multiqc/` `multiqc_report.html` (QC, host removal, taxonomy, contamination, ABRicate hits, pathogen sections and software versions)
 - `preprocess/` nanoq stats, host-free reads, NanoPlot, seqkit stats
 - `taxonomy/` Kraken2 reports + per-read assignments, Bracken, `bracken_arranged.csv`, `kraken2_combined_reports.txt`, Krona
 - `contamination/` `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.html`
 - `functional/` per-sample ABRicate, `summary_reportClean.csv`
+- `pathogens/` (only with `--skip_pathogens false`) panel resolution, candidates, coverage gate, assemblies, CheckM2/QUAST, skani, typing (mlst, AMRFinderPlus, ABRicate, Bakta, MOB-suite), `report/pathogen_cohort.tsv` and `report/html/<sample>.pathogens.html`
 - `meridian/` MERIDIAN Datasets/Figures/Reports
 - `pipeline_info/` timestamped Nextflow reports, `pneuma_software_mqc_versions.yml`, `database_manifest.tsv`
 
