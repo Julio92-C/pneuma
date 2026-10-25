@@ -30,6 +30,21 @@
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     },
+                    "checkm2/predict": {
+                        "branch": "master",
+                        "git_sha": "deb8254027c27a9e505befc68ab449db1f3dadef",
+                        "installed_by": ["modules"]
+                    },
+                    "flye": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "0902eac3012baaf4f9ab6513c8c55acc9353c96c",
+                        "installed_by": ["modules"]
+                    },
                     "kraken2/kraken2": {
                         "branch": "master",
                         "git_sha": "d67d33d5925fcec4691b499670fa2bd926fd2be5",
@@ -73,6 +88,11 @@
                     "porechop/abi": {
                         "branch": "master",
                         "git_sha": "4aceeffaed1eaa12c0e198b166f898e91e4e781d",
+                        "installed_by": ["modules"]
+                    },
+                    "quast": {
+                        "branch": "master",
+                        "git_sha": "9a034dd2c5df2c9b283e09ddf2667d9118b4ccd7",
                         "installed_by": ["modules"]
                     },
                     "samtools/coverage": {
