@@ -95,7 +95,7 @@ Run directly from GitHub (no clone needed). Pin a release tag with `-r` so the e
 code is recorded and the run is reproducible:
 
 ```bash
-nextflow pull Julio92-C/pneuma -r v0.2.0
+nextflow pull Julio92-C/pneuma -r v0.2.1
 ```
 
 Build the databases once, with the pipeline itself (`--build_databases`; no samplesheet and no
@@ -103,7 +103,7 @@ analysis, only the download). On Myriad use Scratch, not your home directory (th
 small):
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.2.0 -profile <docker|singularity|myriad>   --build_databases --db_outdir ~/Scratch/pneuma_db   --kraken_release <YYYYMMDD> --taxdump_month <YYYY-MM>
+nextflow run Julio92-C/pneuma -r v0.2.1 -profile <docker|singularity|myriad>   --build_databases --db_outdir ~/Scratch/pneuma_db   --kraken_release <YYYYMMDD> --taxdump_month <YYYY-MM>
 ```
 
 This downloads the Kraken2 PlusPF index (`--kraken_release`, see the
@@ -161,23 +161,23 @@ cd pneuma
 Check the installation with the bundled test profile (small public test data, MERIDIAN skipped):
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.2.0 -profile test,docker --outdir results_test
+nextflow run Julio92-C/pneuma -r v0.2.1 -profile test,docker --outdir results_test
 ```
 
 On UCL Myriad use the `myriad` profile, which already enables Singularity and sets its cache
 directory (`~/Scratch/singularity_cache`), so do not add `singularity` yourself:
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.2.0 -profile test,myriad --outdir results_test
+nextflow run Julio92-C/pneuma -r v0.2.1 -profile test,myriad --outdir results_test
 ```
 
 Run on your own data, choosing the profile `docker`, `singularity` or `myriad` (UCL HPC):
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.2.0 -profile <docker|singularity|myriad>   --input samplesheet.csv --outdir results   --db_dir <db_outdir>   --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column>   -resume
+nextflow run Julio92-C/pneuma -r v0.2.1 -profile <docker|singularity|myriad>   --input samplesheet.csv --outdir results   --db_dir <db_outdir>   --meridian_metadata metadata.csv --meridian_group <group_column> --meridian_random_effect <patient_column>   -resume
 ```
 
-Always pin `-r <tag>` (for example `-r v0.2.0`) for reproducibility; without it Nextflow runs the
+Always pin `-r <tag>` (for example `-r v0.2.1`) for reproducibility; without it Nextflow runs the
 default branch. `--input` and `--outdir` are required for an analysis run; `--kraken2_db`, `--taxdump` and
 `--host_index` are required unless `--db_dir` provides them, and `--meridian_metadata` / `--meridian_group` are required unless you
 pass `--skip_meridian`. Pass pipeline parameters on the command line or with `-params-file`, not
@@ -188,7 +188,7 @@ boolean and numeric flags (such as `--build_databases` or `--skip_meridian`) fai
 ("Value is [string] but should be [boolean]"). Put those parameters in a `-params-file`, or set
 `NXF_SYNTAX_PARSER=v1` for the run; Nextflow 25.10 is not affected.
 
-From a development clone, replace `Julio92-C/pneuma -r v0.2.0` with `.`.
+From a development clone, replace `Julio92-C/pneuma -r v0.2.1` with `.`.
 
 With any other Singularity/Apptainer setup (`-profile singularity`), set the image cache first so
 the containers are pulled once and reused (otherwise Nextflow warns that the cache directory has
@@ -201,12 +201,12 @@ export NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache   # any writable, pe
 ### 🧰 Help & version
 
 ```bash
-nextflow run Julio92-C/pneuma -r v0.2.0 --help                 # all parameters, grouped
-nextflow run Julio92-C/pneuma -r v0.2.0 --help kraken2_db      # details of one parameter
-nextflow run Julio92-C/pneuma -r v0.2.0 --help_full --show_hidden   # also hidden parameters
-nextflow run Julio92-C/pneuma -r v0.2.0 --version              # prints "Julio92-C/pneuma v0.2.0"
+nextflow run Julio92-C/pneuma -r v0.2.1 --help                 # all parameters, grouped
+nextflow run Julio92-C/pneuma -r v0.2.1 --help kraken2_db      # details of one parameter
+nextflow run Julio92-C/pneuma -r v0.2.1 --help_full --show_hidden   # also hidden parameters
+nextflow run Julio92-C/pneuma -r v0.2.1 --version              # prints "Julio92-C/pneuma v0.2.0"
 nextflow info Julio92-C/pneuma                                 # local revisions (tags, branches) of the pipeline
-nextflow pull Julio92-C/pneuma -r v0.2.0                       # fetch or update a release (use the new tag to update)
+nextflow pull Julio92-C/pneuma -r v0.2.1                       # fetch or update a release (use the new tag to update)
 ```
 
 (`--help_full` and `--show_hidden` are this pipeline's parameter names; the plugin's own help text
