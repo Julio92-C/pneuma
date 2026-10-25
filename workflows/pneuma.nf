@@ -13,6 +13,8 @@ include { TAXONOMY               } from '../subworkflows/local/taxonomy/main'
 include { CONTAMINATION          } from '../subworkflows/local/contamination/main'
 include { FUNCTIONAL_READS       } from '../subworkflows/local/functional_reads/main'
 include { MERIDIAN               } from '../subworkflows/local/meridian/main'
+include { PATHOGEN_RECONSTRUCTION } from '../subworkflows/local/pathogen_reconstruction/main'
+include { PATHOGEN_REPORT         } from '../subworkflows/local/pathogen_report/main'
 include { MULTIQC_TABLES         } from '../modules/local/multiqc_tables/main'
 
 /*
@@ -40,6 +42,28 @@ workflow PNEUMA {
     TAXONOMY(PREPROCESS.out.reads, databases.kraken2_db)
     CONTAMINATION(TAXONOMY.out.assignments, databases.taxdump)
     FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
+
+    def ch_pathogen_cohort = channel.value([])
+    if (!params.skip_pathogens) {
+        PATHOGEN_RECONSTRUCTION(
+            PREPROCESS.out.reads.map { meta, _fq -> meta },
+            TAXONOMY.out.assignments,
+            TAXONOMY.out.classified,
+            TAXONOMY.out.reports,
+            TAXONOMY.out.bracken_tsv,
+            databases
+        )
+        PATHOGEN_REPORT(
+            PATHOGEN_RECONSTRUCTION.out.panel_resolved,
+            PATHOGEN_RECONSTRUCTION.out.candidates,
+            PATHOGEN_RECONSTRUCTION.out.samples_tsv,
+            PATHOGEN_RECONSTRUCTION.out.units_tsv,
+            PATHOGEN_RECONSTRUCTION.out.report_files,
+            FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect().ifEmpty([]),
+            databases.database_manifest ? file(databases.database_manifest, checkIfExists: true) : []
+        )
+        ch_pathogen_cohort = PATHOGEN_REPORT.out.cohort
+    }
 
     ch_versions = ch_versions.mix(PREPROCESS.out.versions, TAXONOMY.out.versions,
                                   CONTAMINATION.out.versions, FUNCTIONAL_READS.out.versions)

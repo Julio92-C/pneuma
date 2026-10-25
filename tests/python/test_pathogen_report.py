@@ -90,12 +90,13 @@ def test_html_per_sample_with_patient_section(tmp_path):
     assert "Patient-level" not in (out / "html" / "S1.pathogens.html").read_text()
 
 
-def test_missing_gate_is_a_wiring_error(tmp_path):
+def test_unit_lost_before_the_gate_is_low_coverage_not_dropped(tmp_path):
     root = rf.write(tmp_path / "in")
     (root / "gate" / "S1.Streptococcus_pneumoniae.gate.tsv").unlink()
-    with pytest.raises(pr.ContractError, match="no gate result for unit S1.Streptococcus_pneumoniae"):
-        pr.build_report(root / "panel_resolved.tsv", root / "pathogen_candidates.tsv", root / "pathogen_samples.tsv",
-                        root / "units.tsv", root)
+    rows, _patient_rows, _samples = pr.build_report(root / "panel_resolved.tsv", root / "pathogen_candidates.tsv",
+                                                   root / "pathogen_samples.tsv", root / "units.tsv", root)
+    row = next(r for r in rows if r["sample"] == "S1" and r["species"] == "Streptococcus pneumoniae")
+    assert row["status"] == "LOW_COVERAGE" and "no coverage-gate result" in row["notes"]
 
 
 def test_committed_nf_test_fixture_is_current(tmp_path):

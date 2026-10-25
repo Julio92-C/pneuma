@@ -187,7 +187,9 @@ def evaluate_unit(unit, level, res):
     """(status, details) of one reconstruction unit that was extracted and gated."""
     d = {}
     if unit not in res.gate:
-        raise ContractError("no gate result for unit %s" % unit)
+        # extracted/pooled but lost before the coverage gate (no mapping output): reported, never dropped
+        add_note(d, "no coverage-gate result (reads did not map or the unit was not attempted)")
+        return "LOW_COVERAGE", d
     g = read_tsv(res.gate[unit])[0]
     d["depth"], d["breadth"] = g["mean_depth"], g["breadth"]
     if g["pass"] != "true":

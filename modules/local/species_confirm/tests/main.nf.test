@@ -12,7 +12,9 @@ nextflow_process {
                     """
                     def ref = file("${projectDir}/tests/data/pathogen_mini/ref/MINI-TIGR4-SEG.fna.gz", checkIfExists: true)
                     // the "assembly" is a copy under another name: skani query and reference must not collide when staged
-                    def query = java.nio.file.Files.createTempDirectory('skani_query').resolve('MINI-S1.Streptococcus_pneumoniae.fna.gz')
+                    // not under /tmp: the read-only test config mounts a tmpfs there and docker rejects the duplicate mount
+                    def base = java.nio.file.Files.createDirectories(java.nio.file.Paths.get("${projectDir}/.nf-test/tmp"))
+                    def query = java.nio.file.Files.createTempDirectory(base, 'skani_query').resolve('MINI-S1.Streptococcus_pneumoniae.fna.gz')
                     java.nio.file.Files.copy(ref, query)
                     input[0] = [ [ id: 'MINI-S1.Streptococcus_pneumoniae', species: 'Streptococcus pneumoniae', ani_min: '95.0' ], query ]
                     input[1] = [ [ id: 'refs' ], [ ref ] ]

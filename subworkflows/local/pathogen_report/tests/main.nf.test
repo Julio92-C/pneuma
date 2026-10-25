@@ -1,0 +1,81 @@
+nextflow_workflow {
+    name "Pathogen branch end-to-end on the mini fixture (real KrakenTools, minimap2, Flye, Medaka, skani, mlst, mpileup)"
+    script "../main.nf"
+    workflow "PATHOGEN_REPORT"
+    config "../../../../tests/pathogen_mini.config"
+
+    test("MINI-S1 reconstructed at sample level; MB pooled (MINI-S2 + MINI-S3) at patient level, single strain") {
+        setup {
+            run("PATHOGEN_RECONSTRUCTION") {
+                script "../../pathogen_reconstruction/main.nf"
+                workflow {
+                    """
+                    def mini = "${projectDir}/tests/data/pathogen_mini"
+                    def metas = channel.fromPath("\$mini/samples.tsv").splitCsv(sep: '\\t', header: true)
+                        .map { r -> [ id: r.sample, patient: r.patient, is_control: r.is_control == 'true',
+                                      low_depth: r.low_depth == 'true', n_reads: r.n_reads as Long, single_end: true ] }
+                    def db = "${projectDir}/tests/data/db_dir"
+                    input[0] = metas
+                    input[1] = metas.map { m -> [ m, file("\$mini/\${m.id}.kraken2.classifiedreads.txt") ] }
+                    input[2] = metas.map { m -> [ m, file("\$mini/\${m.id}.classified.fastq.gz") ] }
+                    input[3] = metas.map { m -> [ m, file("\$mini/\${m.id}.kraken2.report.txt") ] }
+                    input[4] = metas.map { m -> [ m, file("\$mini/bracken/\${m.id}.tsv") ] }
+                    input[5] = [
+                        taxdump              : "${projectDir}/tests/data/pathogen_fixture/taxdump",
+                        panel_references_dir : "\$mini/ref",
+                        medaka_model_path    : 'https://media.githubusercontent.com/media/nanoporetech/medaka/v2.2.2/medaka/data/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz',
+                        checkm2_db           : "\$db/checkm2/checkm2_db_v3.dmnd",
+                        amrfinderplus_db     : "\$db/amrfinderplus/amrfinderdb.tar.gz",
+                        bakta_db             : "\$db/bakta/db-light",
+                        mobsuite_db          : null,
+                        abricate_db          : null,
+                    ]
+                    """
+                }
+            }
+        }
+        when {
+            params {
+                outdir              = "$outputDir"
+                pathogen_panel      = "${projectDir}/tests/data/pathogen_mini/panel.csv"
+                panel_references    = "${projectDir}/tests/data/pathogen_mini/panel_references.tsv"
+                pathogen_min_reads  = 10
+                gate_min_depth      = 5        // the 120-kb mini fixture is simulated at 12x / 4x
+                gate_min_breadth    = 0.5
+                mixed_min_depth     = 4
+                mixed_min_evaluable = 1000
+            }
+            workflow {
+                """
+                input[0] = PATHOGEN_RECONSTRUCTION.out.panel_resolved
+                input[1] = PATHOGEN_RECONSTRUCTION.out.candidates
+                input[2] = PATHOGEN_RECONSTRUCTION.out.samples_tsv
+                input[3] = PATHOGEN_RECONSTRUCTION.out.units_tsv
+                input[4] = PATHOGEN_RECONSTRUCTION.out.report_files
+                input[5] = files("${projectDir}/tests/data/pathogen_mini/abricate/*_abricate.csv")
+                input[6] = []
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def lines = path(workflow.out.cohort[0]).readLines()
+            def header = lines[0].split('\t') as List
+            def rows = lines.drop(1).collect { l -> [header, l.split('\t', -1) as List].transpose().collectEntries() }
+            def s = { id -> rows.find { r -> r.level == 'sample' && r.sample == id } }
+            assert rows.count { r -> r.level == 'sample' } == 3
+            assert s('MINI-S1').status in ['PARTIAL', 'NO_SCHEME']        // 120-kb segment: not all 7 MLST loci
+            assert (s('MINI-S1').ani as Double) > 99.0                     // skani confirmed the species
+            ['MINI-S2', 'MINI-S3'].each { id ->
+                assert s(id).status == 'LOW_COVERAGE'
+                assert s(id).pooled_result ==~ /(PARTIAL|NO_SCHEME) \(pooled, patient MB\)/
+                assert s(id).st == ''
+            }
+            def mb = rows.find { r -> r.level == 'patient' && r.patient == 'MB' }
+            assert mb.contributing_samples == 'MINI-S2;MINI-S3' && mb.status != 'MIXED_STRAINS'
+            assert (mb.mixed_het_per_kb as Double) < 1.0                   // real mpileup -> mixed check contract
+            assert !rows.any { r -> r.level == 'patient' && r.patient == 'MA' }   // MINI-S1 passed: no pooling
+            assert workflow.out.html.flatten().size() == 3
+        }
+    }
+}

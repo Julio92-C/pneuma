@@ -145,4 +145,37 @@ nextflow_pipeline {
             assert merged.count { l -> l.startsWith('#FILE') } == 1
         }
     }
+
+    test("pathogens are off by default") {
+        when { params { outdir = "$outputDir" } }
+        then {
+            assert workflow.success
+            assert !path("$outputDir/pathogens").exists()
+        }
+    }
+
+    test("--skip_pathogens false: the sarscov2 test data has no panel species, every row is NOT_DETECTED") {
+        when { params { outdir = "$outputDir"; skip_pathogens = false } }
+        then {
+            assert workflow.success
+            def cohort = path("$outputDir/pathogens/report/pathogen_cohort.tsv").readLines()
+            assert cohort[0].split('	')[0..4] == ['level', 'sample', 'patient', 'contributing_samples', 'species']
+            assert cohort.size() == 1 + 3 * 25
+            assert cohort.drop(1).every { l -> l.split('	')[9] == 'NOT_DETECTED' }
+            ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].each { s ->
+                assert path("$outputDir/pathogens/report/html/${s}.pathogens.html").exists()
+            }
+            assert path("$outputDir/pathogens/panel/panel_resolved.tsv").readLines().size() == 26
+            def top = new File("$outputDir").listFiles().findAll { f -> f.isDirectory() }.collect { f -> f.name }.sort()
+            assert top == ['contamination', 'functional', 'multiqc', 'pathogens', 'pipeline_info', 'preprocess', 'taxonomy']
+        }
+    }
+
+    test("--skip_pathogens leaves the pathogen branch out") {
+        when { params { outdir = "$outputDir"; skip_pathogens = true; checkm2_db = null; bakta_db = null } }
+        then {
+            assert workflow.success
+            assert !path("$outputDir/pathogens").exists()
+        }
+    }
 }

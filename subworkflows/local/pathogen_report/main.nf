@@ -1,4 +1,5 @@
 include { BUILD_PATHOGEN_REPORT } from '../../../modules/local/pathogen_report/main'
+include { pathogenPanelPath     } from '../utils_nfcore_pneuma_pipeline/main'
 
 // All files of one kind from the [ kind, file ] channel, as one list ([] when there are none).
 def filesOf(ch, String kind) {
@@ -22,7 +23,7 @@ workflow PATHOGEN_REPORT {
         filesOf(report_files, 'mlst'), filesOf(report_files, 'amrfinderplus'), filesOf(report_files, 'abricate'),
         filesOf(report_files, 'mobsuite'), filesOf(report_files, 'mixed'), filesOf(report_files, 'checkm2'),
         filesOf(report_files, 'quast'), read_abricate,
-        file(params.pathogen_panel, checkIfExists: true), manifest
+        file(pathogenPanelPath(params), checkIfExists: true), manifest
     )
 
     emit:

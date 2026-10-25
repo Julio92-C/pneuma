@@ -1,0 +1,84 @@
+// Full pathogen branch on the public-data fixture (tests/make_pathogen_fixture.py all) with the real
+// pathogen databases (PNEUMA_TEST_DB_DIR) and the asset panel / default thresholds, containers
+// read-only and offline. Checks every sample x species status against expected_status.tsv.
+// Run: see nf-test.pathogen.config (~45-90 min on 4 CPUs / 16 GB).
+nextflow_workflow {
+    name "Pathogen branch on the public-data fixture (real tools and databases)"
+    script "subworkflows/local/pathogen_report/main.nf"
+    workflow "PATHOGEN_REPORT"
+    config "../pathogen_readonly.config"
+    tag "pathogen_real"
+
+    test("statuses match expected_status.tsv; STs match the source genomes") {
+        setup {
+            run("PATHOGEN_RECONSTRUCTION") {
+                script "subworkflows/local/pathogen_reconstruction/main.nf"
+                workflow {
+                    """
+                    def fx = "${projectDir}/tests/data/pathogen_fixture/samples"
+                    def db = System.getenv('PNEUMA_TEST_DB_DIR')
+                    def metas = channel.fromPath("\$fx/samples.tsv").splitCsv(sep: '\\t', header: true)
+                        .map { r -> [ id: r.sample, patient: r.patient, is_control: r.is_control == 'true',
+                                      low_depth: r.low_depth == 'true', n_reads: r.n_reads as Long, single_end: true ] }
+                    input[0] = metas
+                    input[1] = metas.map { m -> [ m, file("\$fx/\${m.id}.kraken2.classifiedreads.txt") ] }
+                    input[2] = metas.map { m -> [ m, file("\$fx/\${m.id}.classified.fastq.gz") ] }
+                    input[3] = metas.map { m -> [ m, file("\$fx/\${m.id}.kraken2.report.txt") ] }
+                    input[4] = metas.map { m -> [ m, file("\$fx/bracken/\${m.id}.tsv") ] }
+                    input[5] = [
+                        taxdump              : "${projectDir}/tests/data/pathogen_fixture/taxdump",
+                        panel_references_dir : "\$db/panel_references",
+                        medaka_model_path    : "\$db/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz",
+                        checkm2_db           : file("\$db/checkm2").listFiles().find { f -> f.name.endsWith('.dmnd') }.toString(),
+                        amrfinderplus_db     : "\$db/amrfinderplus/amrfinderdb.tar.gz",
+                        bakta_db             : file("\$db/bakta").listFiles().find { f -> f.name.startsWith('db') }.toString(),
+                        mobsuite_db          : "\$db/mobsuite",
+                        abricate_db          : null,
+                    ]
+                    """
+                }
+            }
+        }
+        when {
+            params {
+                outdir       = "$outputDir"
+                run_mobsuite = true
+            }
+            workflow {
+                """
+                input[0] = PATHOGEN_RECONSTRUCTION.out.panel_resolved
+                input[1] = PATHOGEN_RECONSTRUCTION.out.candidates
+                input[2] = PATHOGEN_RECONSTRUCTION.out.samples_tsv
+                input[3] = PATHOGEN_RECONSTRUCTION.out.units_tsv
+                input[4] = PATHOGEN_RECONSTRUCTION.out.report_files
+                input[5] = files("${projectDir}/tests/data/pathogen_fixture/samples/abricate/*_abricate.csv")
+                input[6] = file(System.getenv('PNEUMA_TEST_DB_DIR') + '/database_manifest.tsv')
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def table = { f -> def ls = new File(f.toString()).readLines(); def h = ls[0].split('\t') as List
+                               ls.drop(1).collect { l -> [h, l.split('\t', -1) as List].transpose().collectEntries() } }
+            def rows = table(workflow.out.cohort[0])
+            def expected = table("${projectDir}/tests/data/pathogen_fixture/expected_status.tsv")
+            def key = { r -> [r.level, r.level == 'sample' ? r.sample : r.patient, r.species] }
+            def got = rows.collectEntries { r -> [ (key(r)): r ] }
+            expected.each { e -> assert got[key(e)]?.status == e.status : "expected ${e.status} for ${key(e)}, got ${got[key(e)]?.status}" }
+            def listed = expected.collect { e -> key(e) } as Set
+            rows.findAll { r -> r.level == 'sample' && !(key(r) in listed) }.each { r ->
+                assert r.status == 'NOT_DETECTED' : "unexpected ${r.status} for ${key(r)}"
+            }
+            assert rows.count { r -> r.level == 'patient' } == expected.count { e -> e.level == 'patient' }
+            def st = table("${projectDir}/tests/data/pathogen_fixture/expected_st.tsv").collectEntries { r -> [ (r.genome): r.st ] }
+            assert got[['sample', 'PA1-S1', 'Streptococcus pneumoniae']].st == st.spn_tigr4
+            assert got[['patient', 'PD1', 'Haemophilus influenzae']].st == st.hin_rd
+            assert got[['patient', 'PE1', 'Streptococcus pneumoniae']].st == ''
+            assert got[['sample', 'PC1-S1', 'Streptococcus pneumoniae']].ani_reference.startsWith('Streptococcus mitis')
+            ['PD1-S1', 'PD1-S2'].each { s ->
+                assert got[['sample', s, 'Haemophilus influenzae']].pooled_result == 'TYPED (pooled, patient PD1)'
+            }
+            assert (got[['sample', 'PA1-S1', 'Streptococcus pneumoniae']].completeness as Double) > 90
+        }
+    }
+}
