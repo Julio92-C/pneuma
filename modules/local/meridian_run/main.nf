@@ -55,6 +55,10 @@ process MERIDIAN_RUN {
     # Quarto/deno caches must not land in an unwritable HOME
     export XDG_CACHE_HOME="\$PWD/.xdg/cache" XDG_DATA_HOME="\$PWD/.xdg/data" XDG_CONFIG_HOME="\$PWD/.xdg/config"
     mkdir -p "\$XDG_CACHE_HOME" "\$XDG_DATA_HOME" "\$XDG_CONFIG_HOME"
+    # HPC schedulers (e.g. SGE on UCL Myriad) set TMPDIR to a node-local path that Singularity does not
+    # bind into the container; Quarto (deno) then fails with "NotFound ... tmpdir" before rendering.
+    export TMPDIR="\$PWD/.tmp" TMP="\$PWD/.tmp" TEMP="\$PWD/.tmp"
+    mkdir -p "\$TMPDIR"
     # renv: activate from the mirror's .Rprofile (renv/ is a symlink to /opt/meridian/renv)
     export R_PROFILE_USER="\$RW/.Rprofile"
     ( cd "\$RW" && Rscript -e 'lp <- .libPaths(); cat("libPaths:", lp, sep="\n"); if (!requireNamespace("ALDEx2", quietly=TRUE) || !any(grepl("/opt/meridian/renv/library|meridian_rw/renv/library", lp))) stop("renv did not activate /opt/meridian/renv/library")' )

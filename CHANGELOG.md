@@ -13,6 +13,12 @@ Phase 2: priority-pathogen reconstruction and the pathogen report.
 
 ### `Fixed`
 
+## v0.2.1 - 2026-10-25
+
+### `Fixed`
+
+- No MERIDIAN HTML report on SGE/Singularity compute nodes (e.g. UCL Myriad): the scheduler sets `TMPDIR` to a node-local path that Singularity does not bind, and Quarto failed with `NotFound: No such file or directory (os error 2): tmpdir`. `MERIDIAN_RUN` now exports `TMPDIR`/`TMP`/`TEMP` to a `.tmp` folder in its task directory. The read-only real-MERIDIAN test (`tests/meridian_readonly.config`) sets an unbound `TMPDIR` to reproduce it.
+
 ## v0.2.0 - 2026-10-21
 
 ### `Added`
