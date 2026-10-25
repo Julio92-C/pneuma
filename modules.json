@@ -35,6 +35,11 @@
                         "git_sha": "d67d33d5925fcec4691b499670fa2bd926fd2be5",
                         "installed_by": ["modules"]
                     },
+                    "krakentools/extractkrakenreads": {
+                        "branch": "master",
+                        "git_sha": "03bd94fc81b464595bcef5d9dc3f06ea1f34bfa0",
+                        "installed_by": ["modules"]
+                    },
                     "krakentools/kreport2krona": {
                         "branch": "master",
                         "git_sha": "03bd94fc81b464595bcef5d9dc3f06ea1f34bfa0",
@@ -43,6 +48,11 @@
                     "krona/ktimporttext": {
                         "branch": "master",
                         "git_sha": "c565f1b27c06a1e8b726e2a646d4c822ae3b514a",
+                        "installed_by": ["modules"]
+                    },
+                    "minimap2/align": {
+                        "branch": "master",
+                        "git_sha": "135d883a43b1a2324b4112cd270cf22e20835533",
                         "installed_by": ["modules"]
                     },
                     "multiqc": {
@@ -63,6 +73,11 @@
                     "porechop/abi": {
                         "branch": "master",
                         "git_sha": "4aceeffaed1eaa12c0e198b166f898e91e4e781d",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/coverage": {
+                        "branch": "master",
+                        "git_sha": "5f344f0e41fdfaf2506f89400e42a2689d6ab323",
                         "installed_by": ["modules"]
                     },
                     "seqkit/stats": {

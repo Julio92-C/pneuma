@@ -1,0 +1,2 @@
+#rname	startpos	endpos	numreads	covbases	coverage	meandepth	meanbaseq	meanmapq
+MINI-TIGR4-SEG	1	120000	188	120000	100	8.61925	29.2	59.7

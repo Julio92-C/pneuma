@@ -1,0 +1,53 @@
+nextflow_workflow {
+    name "Test PATHOGEN_GATE (real KrakenTools, minimap2, samtools on the mini fixture)"
+    script "../main.nf"
+    workflow "PATHOGEN_GATE"
+    config "../../../../tests/pathogen_readonly.config"
+
+    test("extract --include-children, map and gate: MINI-S1 passes, MINI-S2 does not") {
+        setup {
+            run("KRAKENTOOLS_EXTRACTKRAKENREADS") {
+                script "../../../../modules/nf-core/krakentools/extractkrakenreads/main.nf"
+                process {
+                    """
+                    def mini = "${projectDir}/tests/data/pathogen_mini"
+                    input[0] = '1313'
+                    input[1] = channel.of('MINI-S1', 'MINI-S2').map { s -> [ [ id: "\${s}.Streptococcus_pneumoniae".toString(), sample: s, reference: 'MINI-TIGR4-SEG', single_end: true ], file("\$mini/\${s}.kraken2.classifiedreads.txt") ] }
+                    input[2] = channel.of('MINI-S1', 'MINI-S2').map { s -> [ [ id: "\${s}.Streptococcus_pneumoniae".toString(), sample: s, reference: 'MINI-TIGR4-SEG', single_end: true ], file("\$mini/\${s}.classified.fastq.gz") ] }
+                    input[3] = channel.of('MINI-S1', 'MINI-S2').map { s -> [ [ id: "\${s}.Streptococcus_pneumoniae".toString(), sample: s, reference: 'MINI-TIGR4-SEG', single_end: true ], file("\$mini/\${s}.kraken2.report.txt") ] }
+                    """
+                }
+            }
+        }
+        when {
+            params {
+                outdir = "$outputDir"
+                gate_min_depth = 5
+                gate_min_breadth = 0.5
+            }
+            workflow {
+                """
+                input[0] = KRAKENTOOLS_EXTRACTKRAKENREADS.out.extracted_kraken2_reads
+                input[1] = file("${projectDir}/tests/data/pathogen_mini/ref", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def gated = workflow.out.gated.collectEntries { item -> [ (item[0].sample): item[0] ] }
+            assert gated['MINI-S1'].gate_pass == true
+            assert gated['MINI-S2'].gate_pass == false
+            assert gated['MINI-S1'].depth > gated['MINI-S2'].depth
+            // contract: --include-children took the species AND the TIGR4 strain reads (1313 + 170187)
+            def mini = "${projectDir}/tests/data/pathogen_mini"
+            def expected = new File("$mini/MINI-S1.kraken2.classifiedreads.txt").readLines()
+                .count { l -> def f = l.split('\t'); f[0] == 'C' && f[2] in ['1313', '170187'] }
+            def extracted = workflow.out.gated.find { item -> item[0].sample == 'MINI-S1' }[1]
+            def n = new java.util.zip.GZIPInputStream(new FileInputStream(extracted.toString())).readLines().size() / 4
+            assert n == expected
+            // contract: samtools coverage header as consumed by bin/coverage_gate.py
+            def cov = new File("$outputDir/pathogens/gate/MINI-S1.Streptococcus_pneumoniae.coverage.txt").readLines()[0]
+            assert cov.startsWith('#rname\tstartpos\tendpos\tnumreads\tcovbases\tcoverage\tmeandepth\tmeanbaseq\tmeanmapq')
+        }
+    }
+}
