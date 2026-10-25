@@ -5,9 +5,24 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "abricate/run": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "amrfinderplus/run": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
                     "amrfinderplus/update": {
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "bakta/bakta": {
+                        "branch": "master",
+                        "git_sha": "2080397432fcb0d079121dbacf22ce42ef175cec",
                         "installed_by": ["modules"]
                     },
                     "bakta/baktadbdownload": {
@@ -70,6 +85,11 @@
                         "git_sha": "135d883a43b1a2324b4112cd270cf22e20835533",
                         "installed_by": ["modules"]
                     },
+                    "mlst": {
+                        "branch": "master",
+                        "git_sha": "ddeeb1c3b5090dc65cce55ff1a69e87f26c053f1",
+                        "installed_by": ["modules"]
+                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "98403d15b0e50edae1f3fec5eae5e24982f1fade",
@@ -103,6 +123,11 @@
                     "seqkit/stats": {
                         "branch": "master",
                         "git_sha": "d07a945f421a4a91ce4e5a22db63e0e7f8741607",
+                        "installed_by": ["modules"]
+                    },
+                    "skani/dist": {
+                        "branch": "master",
+                        "git_sha": "2efbadb04908876fa0b630e857a1feb27728468e",
                         "installed_by": ["modules"]
                     },
                     "untar": {

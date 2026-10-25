@@ -1,0 +1,3 @@
+Ref_file	Query_file	ANI	Align_fraction_ref	Align_fraction_query	Ref_name	Query_name
+GCF_018603625.2.fna.gz	PC1-S1.Streptococcus_pneumoniae.fasta	96.85	78.40	83.10	refseq_contig Streptococcus mitis	contig_1
+GCF_001457635.1.fna.gz	PC1-S1.Streptococcus_pneumoniae.fasta	88.20	55.30	60.10	refseq_contig Streptococcus pneumoniae	contig_1

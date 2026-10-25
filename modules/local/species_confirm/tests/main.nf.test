@@ -1,0 +1,42 @@
+nextflow_process {
+    name "Test SKANI_DIST -> SPECIES_CONFIRM (real skani)"
+    script "../main.nf"
+    process "SPECIES_CONFIRM"
+    config "../../../../tests/pathogen_readonly.config"
+
+    test("the TIGR4 segment is confirmed as S. pneumoniae against itself") {
+        setup {
+            run("SKANI_DIST") {
+                script "../../../nf-core/skani/dist/main.nf"
+                process {
+                    """
+                    def ref = file("${projectDir}/tests/data/pathogen_mini/ref/MINI-TIGR4-SEG.fna.gz", checkIfExists: true)
+                    // the "assembly" is a copy under another name: skani query and reference must not collide when staged
+                    def query = java.nio.file.Files.createTempDirectory('skani_query').resolve('MINI-S1.Streptococcus_pneumoniae.fna.gz')
+                    java.nio.file.Files.copy(ref, query)
+                    input[0] = [ [ id: 'MINI-S1.Streptococcus_pneumoniae', species: 'Streptococcus pneumoniae', ani_min: '95.0' ], query ]
+                    input[1] = [ [ id: 'refs' ], [ ref ] ]
+                    """
+                }
+            }
+        }
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                input[0] = SKANI_DIST.out.dist
+                input[1] = file("${projectDir}/tests/data/pathogen_mini/panel_references.tsv", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            def lines = path(process.out.tsv[0][1]).readLines()
+            def row = [lines[0].split('\t') as List, lines[1].split('\t', -1) as List].transpose().collectEntries()
+            assert row.confirmed == 'true' && row.best_accession == 'MINI-TIGR4-SEG' && (row.ani as Double) > 99.9
+            // contract: skani dist header consumed by bin/species_confirm.py
+            def skani = new File("$outputDir/pathogens/species/MINI-S1.Streptococcus_pneumoniae.skani.tsv").readLines()[0]
+            assert skani.startsWith('Ref_file\tQuery_file\tANI\tAlign_fraction_ref\tAlign_fraction_query')
+        }
+    }
+}
