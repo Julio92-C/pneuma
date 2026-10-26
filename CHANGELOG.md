@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.2.2 - 2026-10-26
+
+### `Fixed`
+
+- The run failed at the very end, after MERIDIAN had finished, with `while scanning a simple key ... END_VERSIONS` (UCL Myriad, v0.2.1). A `"
+"` in the `MERIDIAN_RUN` script became a real newline at column 0, so Nextflow did not strip the script indent and the indented `END_VERSIONS` heredoc terminator was never matched: `versions.yml` was malformed. The R newline escape is now doubled, and the real-MERIDIAN test checks that every `versions.yml` it emits is a valid YAML map.
+
 ## v0.2.1 - 2026-10-25
 
 ### `Fixed`
