@@ -44,7 +44,7 @@ workflow PNEUMA {
     FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
 
     def ch_pathogen_cohort = channel.value([])
-    if (!params.skip_pathogens) {
+    if (params.pathogens) {
         PATHOGEN_RECONSTRUCTION(
             PREPROCESS.out.reads.map { meta, _fq -> meta },
             TAXONOMY.out.assignments,

@@ -83,7 +83,7 @@ nextflow_pipeline {
 
     test("MultiQC summarises the whole pipeline") {
         // pathogens are opt-in; switched on here so that the pathogen_status section is part of the contract
-        when { params { outdir = "$outputDir"; skip_pathogens = false } }
+        when { params { outdir = "$outputDir"; pathogens = true } }
         then {
             assert workflow.success
             def data = "$outputDir/multiqc/multiqc_data"
@@ -156,8 +156,8 @@ nextflow_pipeline {
         }
     }
 
-    test("--skip_pathogens false: the sarscov2 test data has no panel species, every row is NOT_DETECTED") {
-        when { params { outdir = "$outputDir"; skip_pathogens = false } }
+    test("--pathogens: the sarscov2 test data has no panel species, every row is NOT_DETECTED") {
+        when { params { outdir = "$outputDir"; pathogens = true } }
         then {
             assert workflow.success
             def cohort = path("$outputDir/pathogens/report/pathogen_cohort.tsv").readLines()
@@ -173,8 +173,8 @@ nextflow_pipeline {
         }
     }
 
-    test("--skip_pathogens leaves the pathogen branch out") {
-        when { params { outdir = "$outputDir"; skip_pathogens = true; checkm2_db = null; bakta_db = null } }
+    test("without --pathogens the pathogen branch is left out") {
+        when { params { outdir = "$outputDir"; pathogens = false; checkm2_db = null; bakta_db = null } }
         then {
             assert workflow.success
             assert !path("$outputDir/pathogens").exists()

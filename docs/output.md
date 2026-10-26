@@ -12,7 +12,7 @@ Per-sample file names start with the sample name from the samplesheet (`SAMPLE-0
 - [`taxonomy/`](#taxonomy): Kraken2, Bracken, combined reports, Krona
 - [`contamination/`](#contamination): Recentrifuge
 - [`functional/`](#functional): ABRicate on taxid-tagged reads
-- [`pathogens/`](#pathogens): priority-pathogen reconstruction and the pathogen report (opt-in, `--skip_pathogens false`)
+- [`pathogens/`](#pathogens): priority-pathogen reconstruction and the pathogen report (opt-in, `--pathogens`)
 - [`meridian/`](#meridian): MERIDIAN config and results
 - [`multiqc/`](#multiqc): one report for all stages
 - [`pipeline_info/`](#pipeline-information)
@@ -80,7 +80,7 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
 
 ### Pathogens
 
-Only produced with `--skip_pathogens false` (pathogen reconstruction is opt-in).
+Only produced with `--pathogens` (pathogen reconstruction is opt-in).
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -151,7 +151,7 @@ Only produced when `--skip_meridian` is not set. See the [MERIDIAN repository](h
 | 8 | Bracken | Bracken reports | top taxa after re-estimation (the plot title says Kraken2 because Bracken writes the same report format) |
 | 9 | Recentrifuge | `pneuma_controls.rcf.stat.csv` (custom table) | per-sample read and score statistics of the control-mode run; only when the samplesheet marks negative controls |
 | 10 | ABRicate hits | `*_abricate.csv` (custom table) | hits per sample for `card`, `vfdb` and `plasmidfinder`, total hits and distinct genes; samples without hits show zeros |
-| 11 | Pathogen reconstruction: QUAST, CheckM2, Pathogen status | `pathogens/qc/` and `pathogen_cohort.tsv` (custom table) | QUAST and CheckM2 sections plus the "Pathogen status per sample" table (counts per status, typed species, pooled results); only with `--skip_pathogens false`. QUAST and CheckM2 appear once there are assemblies |
+| 11 | Pathogen reconstruction: QUAST, CheckM2, Pathogen status | `pathogens/qc/` and `pathogen_cohort.tsv` (custom table) | QUAST and CheckM2 sections plus the "Pathogen status per sample" table (counts per status, typed species, pooled results); only with `--pathogens`. QUAST and CheckM2 appear once there are assemblies |
 | 12 | Software versions, workflow summary, methods | pipeline | versions of every tool and the parameters of the run |
 
 The custom tables are written by [`bin/make_mqc_tables.py`](../bin/make_mqc_tables.py) (process `MULTIQC_TABLES`) and the section order is set in [`assets/multiqc_config.yml`](../assets/multiqc_config.yml).

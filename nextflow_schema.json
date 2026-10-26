@@ -472,10 +472,10 @@
             "fa_icon": "fas fa-virus",
             "description": "Per sample x panel species: Kraken2 read extraction, coverage gate, Flye/Medaka, CheckM2/QUAST, skani, MLST/AMRFinderPlus/ABRicate/Bakta, patient-level pooling.",
             "properties": {
-                "skip_pathogens": {
+                "pathogens": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Skip pathogen reconstruction and the pathogen report. Reconstruction is opt-in: pass --skip_pathogens false (this needs the pathogen databases, see docs/usage.md)."
+                    "default": false,
+                    "description": "Run pathogen reconstruction and the pathogen report. Opt-in: off by default; pass --pathogens to turn it on (this needs the pathogen databases, see docs/usage.md)."
                 },
                 "pathogen_panel": {
                     "type": "string",

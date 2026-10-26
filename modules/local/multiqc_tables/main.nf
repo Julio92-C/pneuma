@@ -7,7 +7,7 @@ process MULTIQC_TABLES {
     path kraken_reports // *.kraken2.report.txt
     path abricate_csvs  // *_abricate.csv
     path rcf_stat       // pneuma_controls.rcf.stat.csv (optional: [] when there are no controls)
-    path pathogen_cohort // pathogen_cohort.tsv (optional: [] with --skip_pathogens)
+    path pathogen_cohort // pathogen_cohort.tsv (optional: [] without --pathogens)
 
     output:
     path "*_mqc.tsv"   , emit: tables

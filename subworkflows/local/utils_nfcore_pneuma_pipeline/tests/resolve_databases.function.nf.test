@@ -7,7 +7,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', skip_pathogens: false,
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', pathogens: true,
                              medaka_model: 'r1041_e82_400bps_bacterial_methylation' ]   // panel_references unset: bundled default
                 """
             }
@@ -34,7 +34,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', skip_pathogens: false,
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', pathogens: true,
                              kraken2_db: '/my/existing/kraken2', host_index: '/my/own_host.fasta',
                              checkm2_db: '/my/checkm2.dmnd',
                              medaka_model: 'r1041_e82_400bps_bacterial_methylation',
@@ -57,7 +57,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fa', abricate_dbs: 'card', skip_pathogens: true ]
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fa', abricate_dbs: 'card', pathogens: false ]
                 """
             }
         }
@@ -73,7 +73,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = [ host_index: '/h.fa', abricate_dbs: 'card', skip_pathogens: true ]
+                input[0] = [ host_index: '/h.fa', abricate_dbs: 'card', pathogens: false ]
                 """
             }
         }
@@ -93,7 +93,7 @@ nextflow_function {
                 new File(d, 'kraken2_pluspf_20250402/hash.k2d').text = 'x'
                 new File(d, 'taxdump_2025-04').mkdirs()
                 new File(d, 'taxdump_2025-04/nodes.dmp').text = 'x'
-                input[0] = [ db_dir: d.toString(), abricate_dbs: 'card,vfdb,plasmidfinder', skip_pathogens: true ]
+                input[0] = [ db_dir: d.toString(), abricate_dbs: 'card,vfdb,plasmidfinder', pathogens: false ]
                 """
             }
         }

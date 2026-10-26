@@ -156,7 +156,7 @@ nextflow_workflow {
             params {
                 outdir = "$outputDir"
                 db_dir = "${projectDir}/tests/data/db_dir"
-                skip_pathogens = false
+                pathogens = true
                 kraken2_db = null
                 taxdump = null
                 host_index = null
@@ -193,7 +193,7 @@ nextflow_workflow {
         }
     }
 
-    test("default (--skip_pathogens true): no pathogen database is needed") {
+    test("default (no --pathogens): no pathogen database is needed") {
         when {
             params {
                 outdir = "$outputDir"
@@ -222,11 +222,11 @@ nextflow_workflow {
         }
     }
 
-    test("--skip_pathogens false: pathogen databases are required") {
+    test("--pathogens: pathogen databases are required") {
         when {
             params {
                 outdir = "$outputDir"
-                skip_pathogens = false
+                pathogens = true
                 checkm2_db = null
                 bakta_db = null
             }

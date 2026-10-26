@@ -6,7 +6,7 @@ The primary route is the pipeline's own database mode. `--build_databases` toget
 `--db_outdir` runs only the `PREPARE_DATABASES` subworkflow: no samplesheet is read and no analysis
 is run. Pin `-r <tag>` for reproducibility:
 
-    nextflow run Julio92-C/pneuma -r v0.2.0 -profile <docker|singularity|myriad> \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
       --build_databases --db_outdir ~/Scratch/pneuma_db \
       --kraken_release <YYYYMMDD> --taxdump_month <YYYY-MM>
 
@@ -44,7 +44,7 @@ skipped. The download processes request little memory and a long time limit (`pr
 
 ### Using the databases
 
-    nextflow run Julio92-C/pneuma -r v0.2.0 -profile <docker|singularity|myriad> \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
       --input samplesheet.csv --outdir results --db_dir ~/Scratch/pneuma_db ...
 
 `--db_dir` fills `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and
@@ -55,15 +55,15 @@ or `--host_index my_host.fasta`. The required files are checked at start-up (`ha
 `--abricate_dbs`) and a clear error lists what is missing. `--kraken2_db`, `--taxdump` and
 `--host_index` are required only when they cannot be resolved from `--db_dir`.
 
-### Pathogen databases and `--skip_pathogens`
+### Pathogen databases and `--pathogens`
 
-Pathogen reconstruction is opt-in: `--skip_pathogens` defaults to `true`, and a run without it needs no
-pathogen database and behaves as in v0.2.0. With `--skip_pathogens false` the analysis run needs the
+Pathogen reconstruction is opt-in: `--pathogens` defaults to `false`, and a run without it needs no
+pathogen database and behaves as in v0.2.x. With `--pathogens` the analysis run needs the
 Phase 2 databases: `--checkm2_db`, `--bakta_db`, `--amrfinderplus_db`, `--medaka_model_path` and
 `--panel_references_dir` (plus `--mobsuite_db` with `--run_mobsuite`). `--build_databases` builds them (CheckM2, Bakta
 `--bakta_db_type light|full`, AMRFinderPlus, the Medaka model, an MLST scheme record, the panel
 reference genomes and, unless `--skip_mobsuite_download`, MOB-suite) and `--db_dir` fills them. Use
-`--skip_pathogen_download` to leave them out of a database build. With `--skip_pathogens false` and a
+`--skip_pathogen_download` to leave them out of a database build. With `--pathogens` and a
 missing database the run stops with "--checkm2_db is required for pathogen reconstruction ...". `--pathogen_panel` and
 `--panel_references` default to the files bundled in `assets/`.
 
@@ -73,7 +73,7 @@ The same download as a stand-alone script, for systems where you would rather no
 it. Fetch it from the release tag you use (the Nextflow assets path is not stable: newer Nextflow
 keeps per-commit clones under `~/.nextflow/assets/.repos/<org>/<repo>/clones/<sha>/`):
 
-    curl -fsSL -o prepare_databases.sh https://raw.githubusercontent.com/Julio92-C/pneuma/v0.2.0/bin/prepare_databases.sh
+    curl -fsSL -o prepare_databases.sh https://raw.githubusercontent.com/Julio92-C/pneuma/v0.3.0/bin/prepare_databases.sh
     bash prepare_databases.sh --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
 
 It writes the same layout and `database_manifest.tsv` (so `--db_dir ~/Scratch/pneuma_db` works for
@@ -121,7 +121,7 @@ dates). Nextflow runs the processes on the node with Singularity, so keep the wo
     #$ -wd /home/<user>/Scratch/pneuma_db_logs
     module load java   # or whatever provides Java and Nextflow on your system
     export NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache
-    nextflow run Julio92-C/pneuma -r v0.2.0 -profile singularity \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile singularity \
       -work-dir ~/Scratch/pneuma_db_work \
       --build_databases --db_outdir ~/Scratch/pneuma_db \
       --kraken_release <YYYYMMDD> --taxdump_month <YYYY-MM>
@@ -142,7 +142,7 @@ To fetch only the databases you do not have, skip the others. Skipped databases 
 downloaded and are left out of `database_manifest.tsv`; pass your own path for them. For example,
 with an existing Kraken2 database:
 
-    nextflow run Julio92-C/pneuma -r v0.2.0 -profile <docker|singularity|myriad> \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
       --build_databases --db_outdir ~/Scratch/pneuma_db --skip_kraken_download --taxdump_month <YYYY-MM>
     # then, in analysis runs: --db_dir ~/Scratch/pneuma_db --kraken2_db /path/to/existing/kraken2_db
 
@@ -173,7 +173,7 @@ Without any `patient` values the run logs a note and reconstructs each sample on
 
 ## 3. Run
 
-    nextflow run Julio92-C/pneuma -r v0.2.0 -profile <docker|singularity|myriad> \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
       --input samplesheet.csv --outdir results \
       --db_dir ~/Scratch/pneuma_db \
       --meridian_metadata metadata.csv --meridian_group sample_type --meridian_random_effect ID \
@@ -205,20 +205,20 @@ When set (or taken from `--db_dir`), the directory is staged into each `ABRICATE
 ### Pathogen reconstruction
 
 Off by default: a run without it needs no pathogen database and behaves as in v0.2.x. Turn it on with
-`--skip_pathogens false`:
+`--pathogens`:
 
     nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
       --input samplesheet.csv --outdir results --db_dir ~/Scratch/pneuma_db \
-      --skip_pathogens false -resume
+      --pathogens -resume
 
-On Nextflow 26.04 put `skip_pathogens: false` in a `-params-file` or set `NXF_SYNTAX_PARSER=v1`, otherwise schema validation
-rejects the string `false` (see [Command-line flags on Nextflow 26.04](#command-line-flags-on-nextflow-2604)).
+On Nextflow 26.04 the bare flag is passed as the string `true` and schema validation rejects it: put
+`pathogens: true` in a `-params-file` or set `NXF_SYNTAX_PARSER=v1` (see [Command-line flags on Nextflow 26.04](#command-line-flags-on-nextflow-2604)).
 
 It needs the pathogen databases, which `--build_databases` downloads by default and `--db_dir` picks
 up: `checkm2/`, `bakta/db-light/` (or `--bakta_db_type full`), `amrfinderplus/`,
 `medaka/<model>_model_pt.tar.gz`, `mlst/` (record of the schemes bundled in the mlst container),
 `panel_references/` and, with `--run_mobsuite`, `mobsuite/` (see
-[Pathogen databases and `--skip_pathogens`](#pathogen-databases-and---skip_pathogens)).
+[Pathogen databases and `--pathogens`](#pathogen-databases-and---pathogens)).
 To add them to an existing database folder, run only those downloads:
 
     nextflow run Julio92-C/pneuma -r v0.3.0 -profile myriad --build_databases --db_outdir ~/Scratch/pneuma_db \
@@ -246,7 +246,7 @@ without plasmids, so a missing `mobsuite/` entry means "no plasmid found".
 - `taxonomy/` Kraken2 reports + per-read assignments, Bracken, `bracken_arranged.csv`, `kraken2_combined_reports.txt`, Krona
 - `contamination/` `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.html`
 - `functional/` per-sample ABRicate, `summary_reportClean.csv`
-- `pathogens/` (only with `--skip_pathogens false`) panel resolution, candidates, coverage gate, assemblies, CheckM2/QUAST, skani, typing (mlst, AMRFinderPlus, ABRicate, Bakta, MOB-suite), `report/pathogen_cohort.tsv` and `report/html/<sample>.pathogens.html`
+- `pathogens/` (only with `--pathogens`) panel resolution, candidates, coverage gate, assemblies, CheckM2/QUAST, skani, typing (mlst, AMRFinderPlus, ABRicate, Bakta, MOB-suite), `report/pathogen_cohort.tsv` and `report/html/<sample>.pathogens.html`
 - `meridian/` MERIDIAN Datasets/Figures/Reports
 - `pipeline_info/` timestamped Nextflow reports, `pneuma_software_mqc_versions.yml`, `database_manifest.tsv`
 

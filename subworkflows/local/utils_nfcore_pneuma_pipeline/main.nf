@@ -86,7 +86,7 @@ workflow PIPELINE_INITIALISATION {
         }
         def dbs = resolveDatabases(params)
         def keys = ['kraken2_db', 'taxdump', 'host_index', 'abricate_db', 'database_manifest'] +
-                   (params.skip_pathogens ? [] : ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'mobsuite_db', 'medaka_model_path', 'panel_references_dir'])
+                   (params.pathogens ? ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'mobsuite_db', 'medaka_model_path', 'panel_references_dir'] : [])
         keys.each { k ->
             def source = params[k] ? 'explicit parameter' : (dbs[k] ? "--db_dir (${params.db_dir})" : 'not set')
             log.info "database ${k.padRight(20)} <- ${source}${dbs[k] ? ': ' + dbs[k] : ''}"
@@ -276,8 +276,8 @@ def panelReferencesPath(p) {
 // is filled from --db_dir (database_manifest.tsv + the layout written by --build_databases).
 // Returns [kraken2_db:, taxdump:, host_index:, abricate_db:, database_manifest:, checkm2_db:, bakta_db:,
 // amrfinderplus_db:, mobsuite_db:, medaka_model_path:, panel_references_dir:] as strings or null.
-// Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory; unless
-// --skip_pathogens, so are checkm2_db, bakta_db, amrfinderplus_db, medaka_model_path and
+// Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory; with
+// --pathogens, so are checkm2_db, bakta_db, amrfinderplus_db, medaka_model_path and
 // panel_references_dir (mobsuite_db only with --run_mobsuite).
 //
 def resolveDatabases(p) {
@@ -357,7 +357,7 @@ def resolveDatabases(p) {
         if (!res.abricate_db && !root.resolve('abricate').isDirectory()) {
             log.warn "No abricate/ folder in --db_dir '${p.db_dir}' and no --abricate_db: ABRicate will use the databases bundled in the container (2021-Mar-27)"
         }
-        if (!p.skip_pathogens) {
+        if (p.pathogens) {
             resolvePathogenDatabases(p, root, res, problems, hint)
         }
     }
@@ -367,12 +367,12 @@ def resolveDatabases(p) {
             problems.add("--${k} is required: pass it or provide --db_dir containing it")
         }
     }
-    if (!p.skip_pathogens) {
+    if (p.pathogens) {
         def needed = ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'medaka_model_path', 'panel_references_dir'] +
                      (p.run_mobsuite ? ['mobsuite_db'] : [])
         needed.each { k ->
             if (!res[k] && !problems.any { pr -> pr.contains("--${k}") }) {
-                problems.add("--${k} is required for pathogen reconstruction: pass it, provide --db_dir containing it, or use --skip_pathogens")
+                problems.add("--${k} is required for pathogen reconstruction: pass it, provide --db_dir containing it, or do not pass --pathogens")
             }
         }
         if (res.panel_references_dir) {
