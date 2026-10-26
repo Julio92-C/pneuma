@@ -78,6 +78,13 @@ nextflow_workflow {
                 assert cfg.contains("- \"${g}\"")
             }
             assert new File("$outputDir/meridian/inputs/pneuma.rcf.meridian.csv").exists()
+            // the pipeline collates every versions.yml at the end: a malformed one fails the whole run after
+            // MERIDIAN has finished (v0.2.1 on Myriad: unterminated END_VERSIONS heredoc)
+            workflow.out.versions.each { f ->
+                def txt = new File(f.toString()).text
+                assert !txt.contains('END_VERSIONS') : "unterminated heredoc in ${f}: ${txt}"
+                assert new org.yaml.snakeyaml.Yaml().load(txt) instanceof Map : "versions.yml is not a YAML map: ${f}"
+            }
         }
     }
 
