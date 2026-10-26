@@ -55,7 +55,7 @@ process MERIDIAN_RUN {
     # Quarto/deno caches must not land in an unwritable HOME
     export XDG_CACHE_HOME="\$PWD/.xdg/cache" XDG_DATA_HOME="\$PWD/.xdg/data" XDG_CONFIG_HOME="\$PWD/.xdg/config"
     mkdir -p "\$XDG_CACHE_HOME" "\$XDG_DATA_HOME" "\$XDG_CONFIG_HOME"
-    # HPC schedulers (e.g. SGE on UCL Myriad) set TMPDIR to a node-local path that Singularity does not
+    # HPC schedulers (e.g. SGE) set TMPDIR to a node-local path that Singularity does not
     # bind into the container; Quarto (deno) then fails with "NotFound ... tmpdir" before rendering.
     export TMPDIR="\$PWD/.tmp" TMP="\$PWD/.tmp" TEMP="\$PWD/.tmp"
     mkdir -p "\$TMPDIR"
@@ -63,7 +63,7 @@ process MERIDIAN_RUN {
     export R_PROFILE_USER="\$RW/.Rprofile"
     # The R newline escape below is written with a doubled backslash: a single one becomes a real newline in this
     # Groovy string, starts a script line at column 0, stops Nextflow stripping the indent and leaves the
-    # END_VERSIONS heredoc unclosed (malformed versions.yml; v0.2.1 run on Myriad)
+    # END_VERSIONS heredoc unclosed (malformed versions.yml in v0.2.1 on an SGE cluster)
     ( cd "\$RW" && Rscript -e 'lp <- .libPaths(); cat("libPaths:", lp, sep="\\n"); if (!requireNamespace("ALDEx2", quietly=TRUE) || !any(grepl("/opt/meridian/renv/library|meridian_rw/renv/library", lp))) stop("renv did not activate /opt/meridian/renv/library")' )
     ( cd "\$RW" && Rscript run_pipeline.R "\$OLDPWD/run_config.yaml" )
     rm -rf "\$RW"
