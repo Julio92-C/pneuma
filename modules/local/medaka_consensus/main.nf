@@ -1,7 +1,7 @@
 //
 // Medaka consensus with a STAGED model file. The nf-core medaka module has no model input, and the
 // bioconda medaka 2.2.2 package does not bundle r1041_e82_400bps_bacterial_methylation, so it would
-// download the model at run time: impossible on offline Myriad compute nodes / read-only images.
+// download the model at run time: impossible on offline HPC compute nodes / read-only images.
 //
 process MEDAKA_CONSENSUS {
     tag "$meta.id"

@@ -79,7 +79,7 @@ nextflow_workflow {
             }
             assert new File("$outputDir/meridian/inputs/pneuma.rcf.meridian.csv").exists()
             // the pipeline collates every versions.yml at the end: a malformed one fails the whole run after
-            // MERIDIAN has finished (v0.2.1 on Myriad: unterminated END_VERSIONS heredoc)
+            // MERIDIAN has finished (v0.2.1 on an HPC cluster: unterminated END_VERSIONS heredoc)
             workflow.out.versions.each { f ->
                 def txt = new File(f.toString()).text
                 assert !txt.contains('END_VERSIONS') : "unterminated heredoc in ${f}: ${txt}"

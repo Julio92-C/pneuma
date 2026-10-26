@@ -143,7 +143,7 @@ def test_partial_failure_warns_but_succeeds(tmp_path, capsys):
     assert (tmp_path / "o" / "hostile_mqc.tsv").exists()
 
 
-# --- Recentrifuge sample names (real Myriad shape, anonymised IDs) -------------
+# --- Recentrifuge sample names (real HPC-run shape, anonymised IDs) -------------
 
 RCF_STAT = (
     ",kraken/S1.kraken2.classifiedreads,kraken/S2.kraken2.classifiedreads,"

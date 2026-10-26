@@ -6,8 +6,8 @@ The primary route is the pipeline's own database mode. `--build_databases` toget
 `--db_outdir` runs only the `PREPARE_DATABASES` subworkflow: no samplesheet is read and no analysis
 is run. Pin `-r <tag>` for reproducibility:
 
-    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
-      --build_databases --db_outdir ~/Scratch/pneuma_db \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \
+      --build_databases --db_outdir /scratch/pneuma_db \
       --kraken_release <YYYYMMDD> --taxdump_month <YYYY-MM>
 
 It downloads the pinned Kraken2 PlusPF index (`--kraken_release`, see
@@ -44,8 +44,8 @@ skipped. The download processes request little memory and a long time limit (`pr
 
 ### Using the databases
 
-    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
-      --input samplesheet.csv --outdir results --db_dir ~/Scratch/pneuma_db ...
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \
+      --input samplesheet.csv --outdir results --db_dir /scratch/pneuma_db ...
 
 `--db_dir` fills `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and
 `--database_manifest` from that folder, using `database_manifest.tsv` (versions) and the layout
@@ -74,15 +74,15 @@ it. Fetch it from the release tag you use (the Nextflow assets path is not stabl
 keeps per-commit clones under `~/.nextflow/assets/.repos/<org>/<repo>/clones/<sha>/`):
 
     curl -fsSL -o prepare_databases.sh https://raw.githubusercontent.com/Julio92-C/pneuma/v0.3.0/bin/prepare_databases.sh
-    bash prepare_databases.sh --outdir ~/Scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
+    bash prepare_databases.sh --outdir /scratch/pneuma_db --kraken-release <YYYYMMDD> --taxdump-month <YYYY-MM>
 
-It writes the same layout and `database_manifest.tsv` (so `--db_dir ~/Scratch/pneuma_db` works for
+It writes the same layout and `database_manifest.tsv` (so `--db_dir /scratch/pneuma_db` works for
 its output too), prints the five `--param` lines, and needs singularity (or apptainer, or docker) on
 the node. Use `--dry-run` to print the commands only; `prepare_databases.sh --help` lists all options
 (`--skip-kraken`, `--skip-taxdump`, `--skip-hostile`, `--skip-abricate`). From a development clone use
 `bin/prepare_databases.sh` directly.
 
-Use `~/Scratch/...` on Myriad: the home quota is too small for the Kraken2 index.
+On an HPC cluster use a scratch filesystem: home quotas are usually too small for the Kraken2 index.
 
 ### Command-line flags on Nextflow 26.04
 
@@ -103,32 +103,32 @@ typed parameters, either put such parameters in a `-params-file` (YAML/JSON keep
 | ABRicate (3 DBs) | tens of MB | under 1 GB | negligible |
 
 Sizes are approximate (Kraken2 figures from the Kraken2 index list for PlusPF, others from the
-download URLs). Kraken2 loads the whole index into RAM, so it needs about the index size; the
-`myriad` profile requests 110 GB for `KRAKEN2_KRAKEN2`, which matches PlusPF. Budget about 250 GB
+download URLs). Kraken2 loads the whole index into RAM, so it needs about the index size; on a
+cluster request about 110 GB for `KRAKEN2_KRAKEN2` (see the example config in section 3), which matches PlusPF. Budget about 250 GB
 of free disk while the databases are built (Nextflow's work directory holds the extracted
 Kraken2 index and the published copy goes to `--db_outdir`; remove the work directory afterwards).
 
-### Myriad job script for the download
+### HPC job script for the download (SGE example)
 
 The build needs little CPU or RAM but a lot of time and disk. Example (adjust the time, `-wd` and the
-dates). Nextflow runs the processes on the node with Singularity, so keep the work directory on Scratch:
+dates). Nextflow runs the processes on the node with Singularity, so keep the work directory on scratch:
 
     #!/bin/bash -l
     #$ -N pneuma_db
     #$ -l h_rt=24:00:00
     #$ -l mem=8G
     #$ -pe smp 2
-    #$ -wd /home/<user>/Scratch/pneuma_db_logs
+    #$ -wd /scratch/pneuma_db_logs
     module load java   # or whatever provides Java and Nextflow on your system
-    export NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache
+    export NXF_SINGULARITY_CACHEDIR=/scratch/singularity_cache
     nextflow run Julio92-C/pneuma -r v0.3.0 -profile singularity \
-      -work-dir ~/Scratch/pneuma_db_work \
-      --build_databases --db_outdir ~/Scratch/pneuma_db \
+      -work-dir /scratch/pneuma_db_work \
+      --build_databases --db_outdir /scratch/pneuma_db \
       --kraken_release <YYYYMMDD> --taxdump_month <YYYY-MM>
 
-(With Nextflow 26.04 put the `--` parameters in a `-params-file`, see above.) With `-profile myriad`
-the download processes are submitted to SGE as separate jobs instead; use `-profile singularity` as
-above when compute nodes have no outbound internet and run Nextflow inside `tmux` or `screen` on a
+(With Nextflow 26.04 put the `--` parameters in a `-params-file`, see above.) With a scheduler config
+(`-c`, section 3) the download processes are submitted as separate jobs instead; run them on the node
+as above when compute nodes have no outbound internet and run Nextflow inside `tmux` or `screen` on a
 login node (so it survives a dropped connection), or use the fallback script there.
 
 ### Reusing an existing database
@@ -142,9 +142,9 @@ To fetch only the databases you do not have, skip the others. Skipped databases 
 downloaded and are left out of `database_manifest.tsv`; pass your own path for them. For example,
 with an existing Kraken2 database:
 
-    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
-      --build_databases --db_outdir ~/Scratch/pneuma_db --skip_kraken_download --taxdump_month <YYYY-MM>
-    # then, in analysis runs: --db_dir ~/Scratch/pneuma_db --kraken2_db /path/to/existing/kraken2_db
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \
+      --build_databases --db_outdir /scratch/pneuma_db --skip_kraken_download --taxdump_month <YYYY-MM>
+    # then, in analysis runs: --db_dir /scratch/pneuma_db --kraken2_db /path/to/existing/kraken2_db
 
 (The manifest then lacks a Kraken2 row; add one by hand with the `name`, `version`, `path`,
 `sha256` columns if you want it recorded.) The fallback script has the matching `--skip-kraken`,
@@ -173,17 +173,47 @@ Without any `patient` values the run logs a note and reconstructs each sample on
 
 ## 3. Run
 
-    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \
       --input samplesheet.csv --outdir results \
-      --db_dir ~/Scratch/pneuma_db \
+      --db_dir /scratch/pneuma_db \
       --meridian_metadata metadata.csv --meridian_group sample_type --meridian_random_effect ID \
       -resume
 
-On UCL Myriad use `-profile myriad` (and `-profile test,myriad` for the test): it enables
-Singularity and sets `singularity.cacheDir` to `~/Scratch/singularity_cache`. If you instead
-combine `singularity` with another profile (for example `-profile test,singularity`), Nextflow warns
-"Singularity cache directory has not been defined"; export `NXF_SINGULARITY_CACHEDIR=~/Scratch/singularity_cache`
-before running to avoid repeated image pulls.
+With `-profile singularity` Nextflow warns "Singularity cache directory has not been defined" unless
+you export `NXF_SINGULARITY_CACHEDIR` (any writable, persistent directory, for example
+`/scratch/singularity_cache`) or set `singularity.cacheDir`; do so to avoid repeated image pulls.
+
+### Running on an HPC cluster
+
+Use `-profile singularity` and give Nextflow your scheduler settings in a config file with `-c`
+(executor and resources only; pipeline parameters go on the command line or in `-params-file`).
+Example for an SGE cluster that requests memory per core; adapt the executor, queue and resource
+options to your site:
+
+    // my_cluster.config
+    executor {
+        name            = 'sge'
+        queueSize       = 50
+        submitRateLimit = '10 sec'
+    }
+    process {
+        executor       = 'sge'
+        penv           = 'smp'
+        // memory requested per core: Nextflow adds -pe smp <cpus> and -l h_rt from task.time
+        clusterOptions = { "-l mem=${Math.max(1, Math.ceil(task.memory.toGiga() / task.cpus) as int)}G" }
+        resourceLimits = [ cpus: 36, memory: 1500.GB, time: 48.h ]
+        withName: 'KRAKEN2_KRAKEN2' {
+            cpus   = 12
+            memory = 110.GB
+            time   = 24.h
+        }
+    }
+    singularity.cacheDir = '/scratch/singularity_cache'
+
+    nextflow run Julio92-C/pneuma -r <tag> -profile singularity -c my_cluster.config ...
+
+Check the scheduler headers Nextflow generates on a login node
+(`grep '^#\$' work/*/*/.command.run | sort -u`) if `qsub` rejects a resource request.
 
 To compare more than one metadata column, give `--meridian_group` a comma-separated list, for
 example `--meridian_group sample_type,Macrolide_prophylaxis`. MERIDIAN then runs once per column, in
@@ -207,8 +237,8 @@ When set (or taken from `--db_dir`), the directory is staged into each `ABRICATE
 Off by default: a run without it needs no pathogen database and behaves as in v0.2.x. Turn it on with
 `--pathogens`:
 
-    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity|myriad> \
-      --input samplesheet.csv --outdir results --db_dir ~/Scratch/pneuma_db \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \
+      --input samplesheet.csv --outdir results --db_dir /scratch/pneuma_db \
       --pathogens -resume
 
 On Nextflow 26.04 the bare flag is passed as the string `true` and schema validation rejects it: put
@@ -221,7 +251,7 @@ up: `checkm2/`, `bakta/db-light/` (or `--bakta_db_type full`), `amrfinderplus/`,
 [Pathogen databases and `--pathogens`](#pathogen-databases-and---pathogens)).
 To add them to an existing database folder, run only those downloads:
 
-    nextflow run Julio92-C/pneuma -r v0.3.0 -profile myriad --build_databases --db_outdir ~/Scratch/pneuma_db \
+    nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> --build_databases --db_outdir /scratch/pneuma_db \
       --skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download
 
 The existing `database_manifest.tsv` rows are kept. The panel is `assets/pathogen_panel.csv` (species
@@ -249,9 +279,3 @@ without plasmids, so a missing `mobsuite/` entry means "no plasmid found".
 - `pathogens/` (only with `--pathogens`) panel resolution, candidates, coverage gate, assemblies, CheckM2/QUAST, skani, typing (mlst, AMRFinderPlus, ABRicate, Bakta, MOB-suite), `report/pathogen_cohort.tsv` and `report/html/<sample>.pathogens.html`
 - `meridian/` MERIDIAN Datasets/Figures/Reports
 - `pipeline_info/` timestamped Nextflow reports, `pneuma_software_mqc_versions.yml`, `database_manifest.tsv`
-
-## Known Myriad issues
-
-None recorded yet. The SGE headers generated by the `myriad` profile have to be checked on a
-Myriad login node (`grep '^#\$' work/*/*/.command.run | sort -u`); if `qsub` rejects a resource
-Nextflow adds itself, record the exact header line here.

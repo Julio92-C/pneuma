@@ -23,6 +23,10 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 - `-profile test` uses `tests/data/pathogen_fixture/taxdump` (a superset of the Phase 1 test taxdump with the panel species).
 - Tube map: the planned pathogen lane is now an active line.
 
+### `Removed`
+
+- The site-specific SGE cluster profile. On an HPC cluster use `-profile singularity` and pass the scheduler settings in your own config with `-c`; `docs/usage.md` has an SGE example (per-core memory, Kraken2 at 110 GB).
+
 ### `Known issues`
 
 - Pathogen defaults (`--gate_min_depth`, `--gate_min_breadth`, `--flye_meta`, `--mixed_max_het_per_kb`, `--pathogen_min_reads`) are provisional until the Phase 3 spike-in validation.
@@ -31,13 +35,13 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 
 ### `Fixed`
 
-- The run failed at the very end, after MERIDIAN had finished, with `while scanning a simple key ... END_VERSIONS` (UCL Myriad, v0.2.1). A `"\n"` in the `MERIDIAN_RUN` script became a real newline at column 0, so Nextflow did not strip the script indent and the indented `END_VERSIONS` heredoc terminator was never matched: `versions.yml` was malformed. The R newline escape is now doubled, and the real-MERIDIAN test checks that every `versions.yml` it emits is a valid YAML map.
+- The run failed at the very end, after MERIDIAN had finished, with `while scanning a simple key ... END_VERSIONS` (SGE/Singularity HPC cluster, v0.2.1). A `"\n"` in the `MERIDIAN_RUN` script became a real newline at column 0, so Nextflow did not strip the script indent and the indented `END_VERSIONS` heredoc terminator was never matched: `versions.yml` was malformed. The R newline escape is now doubled, and the real-MERIDIAN test checks that every `versions.yml` it emits is a valid YAML map.
 
 ## v0.2.1 - 2026-10-25
 
 ### `Fixed`
 
-- No MERIDIAN HTML report on SGE/Singularity compute nodes (e.g. UCL Myriad): the scheduler sets `TMPDIR` to a node-local path that Singularity does not bind, and Quarto failed with `NotFound: No such file or directory (os error 2): tmpdir`. `MERIDIAN_RUN` now exports `TMPDIR`/`TMP`/`TEMP` to a `.tmp` folder in its task directory. The read-only real-MERIDIAN test (`tests/meridian_readonly.config`) sets an unbound `TMPDIR` to reproduce it.
+- No MERIDIAN HTML report on SGE/Singularity compute nodes: the scheduler sets `TMPDIR` to a node-local path that Singularity does not bind, and Quarto failed with `NotFound: No such file or directory (os error 2): tmpdir`. `MERIDIAN_RUN` now exports `TMPDIR`/`TMP`/`TEMP` to a `.tmp` folder in its task directory. The read-only real-MERIDIAN test (`tests/meridian_readonly.config`) sets an unbound `TMPDIR` to reproduce it.
 
 ## v0.2.0 - 2026-10-21
 
@@ -83,7 +87,7 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 ### `Added`
 
 - MultiQC station on the pipeline metro map.
-- README "Help & version" section, Myriad profile and Singularity cache guidance, description of the `test` profile data.
+- README "Help & version" section, HPC profile and Singularity cache guidance, description of the `test` profile data.
 
 ### `Fixed`
 
@@ -107,7 +111,7 @@ Initial release of Julio92-C/pneuma, created with the [nf-core](https://nf-co.re
 - Contamination: Recentrifuge (plain and control mode).
 - Functional reads: ABRicate (`card`, `vfdb`, `plasmidfinder`) on Kraken-tagged reads.
 - MERIDIAN hand-off (config generation and containerised run).
-- `docker`, `singularity`, `test` and `myriad` profiles; `bin/prepare_databases.sh`.
+- `docker`, `singularity` and `test` profiles, plus a site-specific SGE cluster profile (since removed); `bin/prepare_databases.sh`.
 
 ### `Fixed`
 
