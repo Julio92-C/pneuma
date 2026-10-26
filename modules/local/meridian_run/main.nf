@@ -61,7 +61,10 @@ process MERIDIAN_RUN {
     mkdir -p "\$TMPDIR"
     # renv: activate from the mirror's .Rprofile (renv/ is a symlink to /opt/meridian/renv)
     export R_PROFILE_USER="\$RW/.Rprofile"
-    ( cd "\$RW" && Rscript -e 'lp <- .libPaths(); cat("libPaths:", lp, sep="\n"); if (!requireNamespace("ALDEx2", quietly=TRUE) || !any(grepl("/opt/meridian/renv/library|meridian_rw/renv/library", lp))) stop("renv did not activate /opt/meridian/renv/library")' )
+    # The R newline escape below is written with a doubled backslash: a single one becomes a real newline in this
+    # Groovy string, starts a script line at column 0, stops Nextflow stripping the indent and leaves the
+    # END_VERSIONS heredoc unclosed (malformed versions.yml; v0.2.1 run on Myriad)
+    ( cd "\$RW" && Rscript -e 'lp <- .libPaths(); cat("libPaths:", lp, sep="\\n"); if (!requireNamespace("ALDEx2", quietly=TRUE) || !any(grepl("/opt/meridian/renv/library|meridian_rw/renv/library", lp))) stop("renv did not activate /opt/meridian/renv/library")' )
     ( cd "\$RW" && Rscript run_pipeline.R "\$OLDPWD/run_config.yaml" )
     rm -rf "\$RW"
 

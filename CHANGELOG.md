@@ -27,6 +27,12 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 
 - Pathogen defaults (`--gate_min_depth`, `--gate_min_breadth`, `--flye_meta`, `--mixed_max_het_per_kb`, `--pathogen_min_reads`) are provisional until the Phase 3 spike-in validation.
 
+## v0.2.2 - 2026-10-26
+
+### `Fixed`
+
+- The run failed at the very end, after MERIDIAN had finished, with `while scanning a simple key ... END_VERSIONS` (UCL Myriad, v0.2.1). A `"\n"` in the `MERIDIAN_RUN` script became a real newline at column 0, so Nextflow did not strip the script indent and the indented `END_VERSIONS` heredoc terminator was never matched: `versions.yml` was malformed. The R newline escape is now doubled, and the real-MERIDIAN test checks that every `versions.yml` it emits is a valid YAML map.
+
 ## v0.2.1 - 2026-10-25
 
 ### `Fixed`
