@@ -1,6 +1,7 @@
 include { CAT_FASTQ     } from '../../../modules/nf-core/cat/fastq/main'
 include { PORECHOP_ABI  } from '../../../modules/nf-core/porechop/abi/main'
 include { NANOQ         } from '../../../modules/nf-core/nanoq/main'
+include { HOSTILE_INDEX } from '../../../modules/local/hostile_index/main'
 include { HOSTILE_CLEAN } from '../../../modules/local/hostile_clean/main'
 include { NANOPLOT      } from '../../../modules/nf-core/nanoplot/main'
 include { SEQKIT_STATS  } from '../../../modules/nf-core/seqkit/stats/main'
@@ -33,7 +34,15 @@ workflow PREPROCESS {
 
     NANOQ(ch_merged, 'fastq.gz')
 
-    HOSTILE_CLEAN(NANOQ.out.reads, host_index)
+    // A FASTA host reference is indexed once and the .mmi shared by every sample;
+    // passed straight to hostile, each task would build its own copy (~7.7 GB for GRCh38).
+    def ch_host_index = host_index
+    if (!host_index.name.endsWith('.mmi')) {
+        HOSTILE_INDEX(host_index)
+        ch_host_index = HOSTILE_INDEX.out.mmi.first()   // value channel: reused by every task
+        ch_versions   = ch_versions.mix(HOSTILE_INDEX.out.versions)
+    }
+    HOSTILE_CLEAN(NANOQ.out.reads, ch_host_index)
     ch_versions = ch_versions.mix(HOSTILE_CLEAN.out.versions.first())
 
     NANOPLOT(HOSTILE_CLEAN.out.reads)

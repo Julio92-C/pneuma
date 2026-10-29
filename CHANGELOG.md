@@ -37,6 +37,8 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 
 ### `Fixed`
 
+- Host removal with a FASTA `--host_index`: the minimap2 index is built once (`HOSTILE_INDEX`) and shared by every sample. Before, hostile built its own `.mmi` (~7.7 GB for GRCh38) in every task's work dir, filling the disk on large cohorts. A `.mmi` is still used as given.
+
 - The run failed at the very end, after MERIDIAN had finished, with `while scanning a simple key ... END_VERSIONS` (SGE/Singularity HPC cluster, v0.2.1). A `"\n"` in the `MERIDIAN_RUN` script became a real newline at column 0, so Nextflow did not strip the script indent and the indented `END_VERSIONS` heredoc terminator was never matched: `versions.yml` was malformed. The R newline escape is now doubled, and the real-MERIDIAN test checks that every `versions.yml` it emits is a valid YAML map.
 
 ## v0.2.1 - 2026-10-25
