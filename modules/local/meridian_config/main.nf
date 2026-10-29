@@ -16,13 +16,16 @@ process MERIDIAN_CONFIG {
     script:
     def safe = group.replaceAll(/[^A-Za-z0-9_.-]/, '_')
     def re = params.meridian_random_effect ? "--random-effect ${params.meridian_random_effect}" : ''
+    def match = params.meridian_control_match_cols ? "--control-match-cols \"${params.meridian_control_match_cols}\"" : ''
+    def ret = params.meridian_random_effect_tests ? '--random-effect-tests' : ''
+    def minr = params.meridian_min_sample_reads ? "--min-sample-reads ${params.meridian_min_sample_reads}" : ''
     """
     make_meridian_config.py \
         --template ${template} --out config.yaml \
         --study-id ${params.meridian_study_id}_${safe} \
         --metadata ${metadata} \
         --group "${group}" ${re} \
-        --controls "${controls.join(',')}"
+        --controls "${controls.join(',')}" ${match} ${ret} ${minr}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

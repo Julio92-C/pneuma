@@ -285,9 +285,23 @@
                     "description": "Study identifier written into the MERIDIAN config.",
                     "default": "pneuma"
                 },
+                "meridian_control_match_cols": {
+                    "type": "string",
+                    "description": "Comma-separated metadata columns used to match negative controls to samples (e.g. `seq_run,batch`): each sample is compared only with the controls sharing its value in the first listed column that has any. Unset: every control is used for every sample. Controls need these columns in the metadata too."
+                },
+                "meridian_random_effect_tests": {
+                    "type": "boolean",
+                    "description": "Patient/cluster-aware tests: Kruskal-Wallis, Wilcoxon, PERMANOVA and PERMDISP p-values from permutations that respect --meridian_random_effect (needs it set)."
+                },
+                "meridian_min_sample_reads": {
+                    "type": "integer",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Beta diversity: leave out samples with fewer reads than this (0 keeps all)."
+                },
                 "meridian_container": {
                     "type": "string",
-                    "default": "ghcr.io/julio92-c/meridian:v1.1.0",
+                    "default": "ghcr.io/julio92-c/meridian:v1.2.0",
                     "description": "MERIDIAN container image (single place to bump the MERIDIAN version)."
                 }
             }
