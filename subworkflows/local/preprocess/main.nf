@@ -39,7 +39,7 @@ workflow PREPROCESS {
     def ch_host_index = host_index
     if (!host_index.name.endsWith('.mmi')) {
         HOSTILE_INDEX(host_index)
-        ch_host_index = HOSTILE_INDEX.out.mmi.first()   // value channel: reused by every task
+        ch_host_index = HOSTILE_INDEX.out.mmi   // a value channel (single value input): reused by every task
         ch_versions   = ch_versions.mix(HOSTILE_INDEX.out.versions)
     }
     HOSTILE_CLEAN(NANOQ.out.reads, ch_host_index)
