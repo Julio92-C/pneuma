@@ -51,6 +51,7 @@ workflow PNEUMA {
             TAXONOMY.out.classified,
             TAXONOMY.out.reports,
             TAXONOMY.out.bracken_tsv,
+            PREPROCESS.out.seqkit_stats,
             databases
         )
         PATHOGEN_REPORT(

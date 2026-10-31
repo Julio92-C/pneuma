@@ -503,6 +503,12 @@
                     "exists": true,
                     "description": "Reference accession per panel species and confusable (species, accession, role). Default: the bundled assets/panel_references.tsv file."
                 },
+                "pathogen_min_est_depth": {
+                    "type": "number",
+                    "default": 2.5,
+                    "minimum": 0,
+                    "description": "Skip read extraction for a sample x species whose estimated depth (Kraken2 clade reads x the sample's mean read length / panel reference genome size) is below this, in the sample and summed over the patient's samples; reported LOW_COVERAGE. 0 turns the filter off."
+                },
                 "pathogen_min_reads": {
                     "type": "integer",
                     "default": 10,

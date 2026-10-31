@@ -27,6 +27,7 @@ workflow PATHOGEN_RECONSTRUCTION {
     ch_classified   // [ meta, <id>.classified.fastq.gz ]
     ch_reports      // [ meta, <id>.kraken2.report.txt ]
     ch_bracken      // [ meta, <id>.tsv ] (absent for LOW_DEPTH / no-taxa samples)
+    ch_seqkit       // [ meta, <id>.tsv ] seqkit stats after host removal (mean read length)
     databases       // map from resolveDatabases()
 
     main:
@@ -46,7 +47,9 @@ workflow PATHOGEN_RECONSTRUCTION {
         RESOLVE_PANEL.out.tsv,
         ch_samples_tsv,
         ch_reports.map { _meta, f -> f }.collect(),
-        ch_bracken.map { _meta, f -> f }.collect().ifEmpty([])
+        ch_bracken.map { _meta, f -> f }.collect().ifEmpty([]),
+        ch_seqkit.map { _meta, f -> f }.collect().ifEmpty([]),
+        refdir
     )
 
     def ch_panel = RESOLVE_PANEL.out.tsv

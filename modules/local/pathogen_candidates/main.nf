@@ -7,6 +7,8 @@ process PATHOGEN_CANDIDATES {
     path samples_tsv
     path kreports, stageAs: 'kreports/*'
     path bracken,  stageAs: 'bracken/*'     // [] when no sample has a Bracken table
+    path seqkit,   stageAs: 'seqkit/*'      // seqkit stats tables (mean read length); [] when absent
+    path refdir                             // panel reference genomes (<accession>.fna.gz): genome sizes
 
     output:
     path "pathogen_candidates.tsv", emit: candidates
@@ -18,6 +20,8 @@ process PATHOGEN_CANDIDATES {
     def kr = kreports instanceof List ? kreports : [kreports]
     def br = bracken instanceof List ? bracken : [bracken]
     def bracken_arg = bracken ? "--bracken ${br.join(' ')}" : ''
+    def sk = seqkit instanceof List ? seqkit : [seqkit]
+    def seqkit_arg = seqkit ? "--seqkit-stats ${sk.join(' ')}" : ''
     """
     pathogen_candidates.py \\
         --panel ${panel_resolved} \\
@@ -25,6 +29,9 @@ process PATHOGEN_CANDIDATES {
         --kreports ${kr.join(' ')} \\
         ${bracken_arg} \\
         --min-reads ${params.pathogen_min_reads} \\
+        ${seqkit_arg} \\
+        --refdir ${refdir} \\
+        --min-est-depth ${params.pathogen_min_est_depth} \\
         --out pathogen_candidates.tsv \\
         --samples-out pathogen_samples.tsv
     """

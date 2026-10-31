@@ -78,3 +78,65 @@ def test_real_mini_fixture(tmp_path):
     rows = list(csv.DictReader(open(out), delimiter="\t"))
     assert [r["decision"] for r in rows] == ["extract", "extract", "extract"]
     assert int(rows[0]["clade_reads"]) > int(rows[1]["clade_reads"]) > 0
+
+
+# --- estimated-depth filter (--min-est-depth) -------------------------------------------------
+import gzip
+
+
+def refdir(tmp_path, length=10_000):
+    d = tmp_path / "refs"
+    d.mkdir()
+    with gzip.open(d / "GCF_1.fna.gz", "wt") as fh:      # S. pneumoniae reference
+        fh.write(">c1\n" + "A" * (length // 2) + "\n>c2\n" + "C" * (length // 2) + "\n")
+    return d
+
+
+def stats(tmp_path, sample, n, bases):
+    d = tmp_path / "seqkit"
+    d.mkdir(exist_ok=True)
+    return write(d / ("%s.tsv" % sample), "file\tformat\ttype\tnum_seqs\tsum_len\tmin_len\tavg_len\tmax_len\n"
+                 "%s.fq.gz\tFASTQ\tDNA\t%d\t%d\t1\t1\t1\n" % (sample, n, bases))
+
+
+def run_depth(tmp_path, rows, stat_rows, min_est_depth=2.5, with_refs=True):
+    samples = write(tmp_path / "samples.tsv", "sample\tpatient\tis_control\tlow_depth\tn_reads\n" +
+                    "".join("%s\t%s\t%s\tfalse\t1000\n" % (s, p, c) for s, p, c, _ in rows))
+    reports = [kreport(tmp_path, s, spn, 0) for s, _, _, spn in rows]
+    st = [stats(tmp_path, s, n, b) for s, n, b in stat_rows]
+    args = ["--panel", str(panel(tmp_path)), "--samples", str(samples), "--kreports", *map(str, reports),
+            "--min-reads", "10", "--min-est-depth", str(min_est_depth),
+            "--out", str(tmp_path / "c.tsv"), "--samples-out", str(tmp_path / "s.tsv")]
+    if st:
+        args += ["--seqkit-stats", *map(str, st)]
+    if with_refs:
+        args += ["--refdir", str(refdir(tmp_path))]
+    assert pc.main(args) == 0
+    out = csv.DictReader(open(tmp_path / "c.tsv"), delimiter="\t")
+    return {r["sample"]: r for r in out if r["species"] == "Streptococcus pneumoniae"}
+
+
+def test_est_depth_filters_hopeless_candidates(tmp_path):
+    # mean read length 1000 bp, genome 10 kb: depth = clade reads / 10
+    rows = run_depth(tmp_path,
+                     [("A", "P1", "false", 120),    # 12x  -> extract
+                      ("B", "P2", "false", 20),     #  2x, patient P2 total 4x -> extract (pooling)
+                      ("C", "P2", "false", 20),
+                      ("D", "", "false", 20),       #  2x, no patient -> below_est_depth
+                      ("E", "P3", "true", 20)],     #  2x, control: never pooled -> below_est_depth
+                     [(s, 1000, 1_000_000) for s in "ABCDE"])
+    assert rows["A"]["decision"] == "extract"
+    assert rows["B"]["decision"] == rows["C"]["decision"] == "extract"
+    assert rows["D"]["decision"] == "below_est_depth"
+    assert rows["E"]["decision"] == "below_est_depth"
+    assert float(rows["D"]["est_depth"]) == pytest.approx(2.0)
+
+
+def test_est_depth_unknown_keeps_old_behaviour(tmp_path):
+    rows = run_depth(tmp_path, [("D", "", "false", 20)], [])                  # no seqkit stats
+    assert rows["D"]["decision"] == "extract" and rows["D"]["est_depth"] == "NA"
+
+
+def test_est_depth_zero_disables_filter(tmp_path):
+    rows = run_depth(tmp_path, [("D", "", "false", 20)], [("D", 1000, 1_000_000)], min_est_depth=0)
+    assert rows["D"]["decision"] == "extract"

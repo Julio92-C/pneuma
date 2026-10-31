@@ -70,5 +70,6 @@ workflow PREPROCESS {
     reads    = ch_clean
     multiqc  = ch_multiqc
     hostile_log = HOSTILE_CLEAN.out.log.map { _meta, f -> f }   // Hostile JSON logs, for the MultiQC tables
+    seqkit_stats = SEQKIT_STATS.out.stats                       // [ meta, <id>.tsv ] read counts + bases after host removal
     versions = ch_versions
 }

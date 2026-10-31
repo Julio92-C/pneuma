@@ -39,7 +39,7 @@ STATUS_HELP = [
     ("MIXED_STRAINS", "pooled assembly with minor-allele sites above the threshold: more than one strain, no ST"),
     ("SPECIES_NOT_CONFIRMED", "best ANI hit is another species, or ANI below ani_min: no typing under this name"),
     ("ASSEMBLY_FAILED", "passed the coverage gate but Flye/Medaka produced no assembly"),
-    ("LOW_COVERAGE", "reads present but below the coverage gate (or below --pathogen_min_reads)"),
+    ("LOW_COVERAGE", "reads present but below the coverage gate (or below --pathogen_min_reads / --pathogen_min_est_depth)"),
     ("DETECTED_ONLY", "detect-only species with Kraken2 reads (no reconstruction)"),
     ("LOW_DEPTH", "sample below --min_reads after host removal: reconstruction skipped"),
     ("NOT_DETECTED", "no Kraken2 read in the species clade"),
@@ -298,6 +298,11 @@ def build_report(panel_path, cand_path, samples_path, units_path, results_root):
             elif decision == "below_min_reads":
                 row["status"] = "LOW_COVERAGE"
                 add_note(row, "%d reads < --pathogen_min_reads: not extracted" % clade)
+                row.update(read_level_genes(sid, taxids, res))
+            elif decision == "below_est_depth":
+                row["status"] = "LOW_COVERAGE"
+                add_note(row, "estimated depth %sx < --pathogen_min_est_depth (sample and patient): not extracted"
+                         % c.get("est_depth", "NA"))
                 row.update(read_level_genes(sid, taxids, res))
             elif decision == "extract":
                 status, d = evaluate_unit("%s.%s" % (sid, p["slug"]), "sample", res)
