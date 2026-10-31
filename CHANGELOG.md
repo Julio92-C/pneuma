@@ -20,7 +20,7 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 
 - Pathogen candidates: `--pathogen_min_est_depth` (default 2.5) skips read extraction for a sample x species whose estimated depth (Kraken2 clade reads x mean read length / panel reference genome size) cannot reach the coverage gate, in the sample or pooled over the patient; reported `LOW_COVERAGE` with the estimate. On a 143-sample cohort the old 10-read floor alone sent ~950 candidates to extraction and gating, most of which failed the gate. `0` restores the old behaviour.
 
-- MERIDIAN v1.2.0 (`--meridian_container`), with three new pass-through options: `--meridian_random_effect_tests` (patient-aware permutation tests), `--meridian_control_match_cols` (negative controls matched per sample by run, else batch) and `--meridian_min_sample_reads` (beta-diversity read floor). Defaults keep the v1.1.0 behaviour.
+- MERIDIAN v1.3.0 (`--meridian_container`; adds the `shared_fraction`, `taxa_tree` and `daa_tree` stages), with three new pass-through options: `--meridian_random_effect_tests` (patient-aware permutation tests), `--meridian_control_match_cols` (negative controls matched per sample by run, else batch) and `--meridian_min_sample_reads` (beta-diversity read floor). Defaults keep the v1.1.0 behaviour.
 
 - `TAXONOMY` also emits the per-sample Bracken tables (`bracken_tsv`).
 - Re-running `--build_databases` into an existing `--db_outdir` keeps the manifest rows of databases not rebuilt.

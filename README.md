@@ -296,7 +296,7 @@ metadata against the samples), and runs MERIDIAN in the container
 | `--meridian_control_match_cols` | match negative controls to samples, e.g. `seq_run,batch`: each sample uses its own run's controls, else its batch's (default: every control for every sample) |
 | `--meridian_min_sample_reads` | beta diversity leaves out samples with fewer reads (default `0`) |
 | `--meridian_study_id` | study label (default `pneuma`) |
-| `--meridian_container` | MERIDIAN image (default `ghcr.io/julio92-c/meridian:v1.2.0`); the only place the tag lives |
+| `--meridian_container` | MERIDIAN image (default `ghcr.io/julio92-c/meridian:v1.3.0`); the only place the tag lives |
 | `--skip_meridian` | stop after the PNEUMA stages |
 
 ---
