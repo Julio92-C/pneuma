@@ -17,7 +17,7 @@ process MERIDIAN_CONFIG {
     def safe = group.replaceAll(/[^A-Za-z0-9_.-]/, '_')
     def re = params.meridian_random_effect ? "--random-effect ${params.meridian_random_effect}" : ''
     def match = params.meridian_control_match_cols ? "--control-match-cols \"${params.meridian_control_match_cols}\"" : ''
-    def ret = params.meridian_random_effect_tests ? '--random-effect-tests' : ''
+    def ret = (params.meridian_random_effect && params.meridian_random_effect_tests) ? '--random-effect-tests' : ''
     def minr = params.meridian_min_sample_reads ? "--min-sample-reads ${params.meridian_min_sample_reads}" : ''
     """
     make_meridian_config.py \

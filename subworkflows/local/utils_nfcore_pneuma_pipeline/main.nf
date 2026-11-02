@@ -97,8 +97,8 @@ workflow PIPELINE_INITIALISATION {
         if (!params.skip_meridian && !params.meridian_group.toString().split(',').any { it.trim() }) {
             error("--meridian_group lists no metadata column")
         }
-        if (!params.skip_meridian && params.meridian_random_effect_tests && !params.meridian_random_effect) {
-            error("--meridian_random_effect_tests needs --meridian_random_effect (the patient column to permute within)")
+        if (!params.skip_meridian && params.meridian_random_effect && !params.meridian_random_effect_tests) {
+            log.warn "MERIDIAN: --meridian_random_effect is set but --meridian_random_effect_tests is false: PERMANOVA and Kruskal-Wallis permute freely across repeated samples of one patient, which is anticonservative."
         }
     }
 

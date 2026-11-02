@@ -292,7 +292,7 @@ metadata against the samples), and runs MERIDIAN in the container
 | `--meridian_metadata` | study metadata CSV (one row per sample) |
 | `--meridian_group` | metadata column holding the comparison groups; a comma-separated list (`sample_type,treatment`) runs one MERIDIAN comparison per column in parallel, each in `meridian/<column>/` (study id `<study_id>_<column>`) |
 | `--meridian_random_effect` | metadata column holding the repeated-measure / patient identifier |
-| `--meridian_random_effect_tests` | patient-aware tests: KW / Wilcoxon / PERMANOVA / PERMDISP p-values from permutations that respect `--meridian_random_effect` (default `false`) |
+| `--meridian_random_effect_tests` | patient-aware tests: KW / Wilcoxon / PERMANOVA / PERMDISP p-values from permutations that respect `--meridian_random_effect`; on by default, used only when that column is set (default `true`) |
 | `--meridian_control_match_cols` | match negative controls to samples, e.g. `seq_run,batch`: each sample uses its own run's controls, else its batch's (default: every control for every sample) |
 | `--meridian_min_sample_reads` | beta diversity leaves out samples with fewer reads (default `0`) |
 | `--meridian_study_id` | study label (default `pneuma`) |

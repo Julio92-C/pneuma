@@ -291,7 +291,8 @@
                 },
                 "meridian_random_effect_tests": {
                     "type": "boolean",
-                    "description": "Patient/cluster-aware tests: Kruskal-Wallis, Wilcoxon, PERMANOVA and PERMDISP p-values from permutations that respect --meridian_random_effect (needs it set)."
+                    "default": true,
+                    "description": "Patient/cluster-aware tests: Kruskal-Wallis, Wilcoxon, PERMANOVA and PERMDISP p-values from permutations that respect --meridian_random_effect. Used only when --meridian_random_effect is set; turning it off with a random effect logs a warning."
                 },
                 "meridian_min_sample_reads": {
                     "type": "integer",
