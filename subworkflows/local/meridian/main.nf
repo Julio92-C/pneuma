@@ -36,5 +36,9 @@ workflow MERIDIAN {
 
     emit:
     reports  = MERIDIAN_RUN.out.reports.collect()
+    // one <comparison>.stage_errors.csv per comparison with failed stages (MultiQC section)
+    stage_errors = MERIDIAN_RUN.out.stage_errors
+        .map { group, csv -> [ "${group.replaceAll(/[^A-Za-z0-9_.-]/, '_')}.stage_errors.csv".toString(), csv ] }
+        .collectFile()
     versions = MERIDIAN_CONFIG.out.versions.mix(RCF_FOR_MERIDIAN.out.versions, MERIDIAN_RUN.out.versions)
 }

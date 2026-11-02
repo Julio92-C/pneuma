@@ -205,3 +205,47 @@ def test_cli_writes_pathogen_status_table(tmp_path):
     text = (tmp_path / "pathogen_status_mqc.tsv").read_text()
     assert "id: 'pathogen_status'" in text
     assert text.splitlines()[-2].startswith("S1\t1\t")   # TYPED is the first column
+
+
+FUNNEL_COHORT = "".join("\t".join(r) + "\n" for r in [
+    ('level', 'sample', 'patient', 'species', 'status', 'st', 'depth', 'contigs', 'confirm_reason', 'gene_source'),
+    ('sample', 'A', 'P1', 'X', 'LOW_COVERAGE', '', '', '', '', ''),
+    ('sample', 'B', 'P1', 'X', 'LOW_COVERAGE', '', '2.0', '', '', ''),
+    ('sample', 'C', 'P2', 'X', 'ASSEMBLY_FAILED', '', '12', '', '', ''),
+    ('sample', 'D', 'P2', 'X', 'TYPED', '5', '20', '40', 'confirmed', 'contig'),
+    ('sample', 'E', 'P3', 'X', 'SPECIES_NOT_CONFIRMED', '', '15', '60', 'ani_below_min', 'contig'),
+    ('sample', 'F', 'P3', 'Y', 'NOT_RESOLVED_BY_ANI', '', '14', '600', 'unresolved_confusable', 'contig'),
+    ('patient', '', 'P4', 'X', 'SPECIES_NOT_CONFIRMED', '', '12', '300', 'best_hit_other_species', 'contig'),
+])  # A: not extracted; B: extracted, below the gate
+
+
+def test_pathogen_funnel_counts(tmp_path):
+    f = tmp_path / "pathogen_cohort.tsv"
+    f.write_text(FUNNEL_COHORT)
+    funnel = mqc.parse_pathogen_funnel(f)
+    s, p = funnel["Sample level"], funnel["Patient level (pooled)"]
+    assert (s["extracted"], s["passed_gate"], s["assembled"], s["confirmed"], s["typed"]) == (5, 4, 3, 1, 3)
+    assert (s["unresolved_by_ani"], s["ani_below_min"], s["other_species"]) == (1, 1, 0)
+    assert (p["extracted"], p["assembled"], p["other_species"], p["typed"]) == (1, 1, 1, 1)
+
+
+def test_cli_writes_funnel_and_stage_errors(tmp_path):
+    f = tmp_path / "pathogen_cohort.tsv"
+    f.write_text(FUNNEL_COHORT)
+    se = tmp_path / "sample_type.stage_errors.csv"
+    se.write_text('"stage","error"\n"network","gap.degree too large"\n')
+    ok = tmp_path / "batch.stage_errors.csv"
+    ok.write_text('"stage","error"\n')
+    assert mqc.main(["--pathogen-cohort", str(f), "--meridian-stage-errors", str(se), str(ok),
+                     "--outdir", str(tmp_path)]) == 0
+    assert "id: 'pathogen_funnel'" in (tmp_path / "pathogen_funnel_mqc.tsv").read_text()
+    text = (tmp_path / "meridian_stage_errors_mqc.tsv").read_text()
+    assert "id: 'meridian_stage_errors'" in text and "sample_type: network\tnetwork\tgap.degree too large" in text
+    assert "batch" not in text.split("headers:")[-1]
+
+
+def test_no_stage_error_table_without_failures(tmp_path):
+    ok = tmp_path / "batch.stage_errors.csv"
+    ok.write_text('"stage","error"\n')
+    assert mqc.main(["--meridian-stage-errors", str(ok), "--outdir", str(tmp_path)]) == 0
+    assert not (tmp_path / "meridian_stage_errors_mqc.tsv").exists()
