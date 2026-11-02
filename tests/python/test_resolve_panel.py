@@ -94,3 +94,16 @@ def test_cli_exit_code(tmp_path):
                   "--references", str(ASSETS / "panel_references.tsv"),
                   "--taxdump", str(DATA / "pathogen_fixture" / "taxdump"), "--out", str(tmp_path / "o.tsv")])
     assert rc == 1
+
+
+def test_mlst_scheme_passes_through_and_is_optional(tmp_path):
+    header = HEADER.rstrip("\n") + ",mlst_scheme\n"
+    p = tmp_path / "panel_s.csv"
+    p.write_text(header + "Streptococcus pneumoniae,1,,reconstruct,GCF_1,,95,,spneumoniae\n"
+                 "Haemophilus parainfluenzae,R,,reconstruct,GCF_3,,95,,none\n")
+    rows = rp.run(p, refs(tmp_path), taxdump(tmp_path), tmp_path / "o.tsv")
+    assert [r["mlst_scheme"] for r in rows] == ["spneumoniae", "none"]
+    t2 = tmp_path / "second"
+    t2.mkdir()
+    rows = rp.run(panel(t2, "Streptococcus mitis,R,,reconstruct,GCF_2,,95,\n"), refs(t2), taxdump(t2), t2 / "o2.tsv")
+    assert rows[0]["mlst_scheme"] == ""

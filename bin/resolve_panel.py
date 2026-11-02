@@ -5,7 +5,8 @@
                    --taxdump <dir with nodes.dmp, names.dmp> --out panel_resolved.tsv
 
 Panel columns: species, tier, who_category, action, reference_accession, confusable_with, ani_min,
-amrfinder_organism (optional). `confusable_with` is a ';'-separated list of species names, each
+amrfinder_organism (optional), mlst_scheme (optional: an mlst scheme name to use instead of
+autodetection, or 'none' when the species has no scheme and the closest one belongs to another species). `confusable_with` is a ';'-separated list of species names, each
 needing an accession in panel_references.tsv (species, accession, role).
 
 Names match NCBI scientific names first (case-insensitive), then synonyms / equivalent names, so a
@@ -26,7 +27,7 @@ NAME_CLASSES = ("scientific name", "synonym", "equivalent name", "genbank synony
 PANEL_COLUMNS = ["species", "tier", "who_category", "action", "reference_accession", "confusable_with", "ani_min"]
 OUT_COLUMNS = ["species", "slug", "tier", "who_category", "action", "taxid", "scientific_name",
                "matched_name_class", "taxids", "reference_accession", "confusable_with",
-               "confusable_accessions", "ani_min", "amrfinder_organism"]
+               "confusable_accessions", "ani_min", "amrfinder_organism", "mlst_scheme"]
 DEFAULT_ANI_MIN = 95.0
 
 
@@ -172,6 +173,7 @@ def run(panel_path, references_path, taxdump, out_path, log=sys.stderr):
             "confusable_accessions": ";".join(r["_confusable_accessions"]),
             "ani_min": r["ani_min"] if r["action"] == "reconstruct" else "",
             "amrfinder_organism": r.get("amrfinder_organism", ""),
+            "mlst_scheme": (r.get("mlst_scheme") or "").strip(),
         })
     if problems:
         raise ValueError("Cannot resolve the pathogen panel:\n  - " + "\n  - ".join(problems))

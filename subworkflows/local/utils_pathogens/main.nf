@@ -22,6 +22,7 @@ def unitMeta(Map panelRow, String level, String sample, String patient, List sam
         confusable_accessions : panelRow.confusable_accessions ? panelRow.confusable_accessions.tokenize(';') : [],
         ani_min               : panelRow.ani_min,
         amr_organism          : panelRow.amrfinder_organism ?: '',
+        mlst_scheme           : panelRow.mlst_scheme ?: '',
         single_end            : true,
     ]
 }
@@ -38,6 +39,7 @@ def panelOf(Map meta) {
         confusable_accessions : meta.confusable_accessions.join(';'),
         ani_min               : meta.ani_min,
         amrfinder_organism    : meta.amr_organism,
+        mlst_scheme           : meta.mlst_scheme,
     ]
 }
 
