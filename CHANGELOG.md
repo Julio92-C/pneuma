@@ -20,6 +20,18 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
 
 - Pathogen candidates: `--pathogen_min_est_depth` (default 2.5) skips read extraction for a sample x species whose estimated depth (Kraken2 clade reads x mean read length / panel reference genome size) cannot reach the coverage gate, in the sample or pooled over the patient; reported `LOW_COVERAGE` with the estimate. On a 143-sample cohort the old 10-read floor alone sent ~950 candidates to extraction and gating, most of which failed the gate. `0` restores the old behaviour.
 
+- Validation round on a clinical ONT cohort (`docs/validation.md`):
+  - Every assembly is typed (MLST, AMRFinderPlus, ABRicate, Bakta, MOB-suite). One that fails species confirmation keeps its status and is reported under its best skani match (`typed_as`); AMRFinderPlus gets `--organism` only for confirmed genomes.
+  - `pathogen_cohort.tsv` gains `confirm_reason`, `typed_as`, `mimag_grade` (MIMAG-like, CheckM2 only) and `size_ratio` (assembly / panel reference). Purity and the read-back check are flags (notes), never gates.
+  - New status `NOT_RESOLVED_BY_ANI`: the best hit is a listed close relative within `--pathogen_ani_confusable_delta` (default 0.5) ANI points of the panel species (e.g. *E. coli* / *Shigella*).
+  - The read-back check (own reads mapped to the assembly, minor-allele sites per kb) runs for every assembly, not only confirmed patient-level ones.
+  - New `pathogens/report/pathogen_genes.tsv`: one row per AMR / VF / replicon hit with its contig and MOB-suite placement (chromosome or plasmid).
+  - Panel column `mlst_scheme` pins the MLST scheme per species; `none` marks species without one (previously *H. parainfluenzae* was typed with the *H. influenzae* scheme).
+  - Negative controls are detection only (`DETECTED_ONLY` with a note) unless `--pathogen_gate_controls`.
+  - `--meridian_random_effect_tests` defaults to `true` and applies only when `--meridian_random_effect` is set; turning it off with a random effect logs a warning.
+  - `taxonomy/bracken/bracken_skipped.tsv` lists samples without a Bracken table and why.
+  - MultiQC: "Pathogen reconstruction funnel" and "MERIDIAN failed stages" sections.
+
 - MERIDIAN v1.3.1 (`--meridian_container`; adds the `shared_fraction`, `taxa_tree` and `daa_tree` stages; v1.3.1 fixes the `shared_fraction` and `network` failures seen on large cohorts), with three new pass-through options: `--meridian_random_effect_tests` (patient-aware permutation tests), `--meridian_control_match_cols` (negative controls matched per sample by run, else batch) and `--meridian_min_sample_reads` (beta-diversity read floor). Defaults keep the v1.1.0 behaviour.
 
 - `TAXONOMY` also emits the per-sample Bracken tables (`bracken_tsv`).
