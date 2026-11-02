@@ -7,7 +7,7 @@ include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_pneuma_pipeline'
+include { methodsDescriptionText; usedDatabaseRows } from '../subworkflows/local/utils_nfcore_pneuma_pipeline'
 include { PREPROCESS             } from '../subworkflows/local/preprocess/main'
 include { TAXONOMY               } from '../subworkflows/local/taxonomy/main'
 include { CONTAMINATION          } from '../subworkflows/local/contamination/main'
@@ -16,6 +16,8 @@ include { MERIDIAN               } from '../subworkflows/local/meridian/main'
 include { PATHOGEN_RECONSTRUCTION } from '../subworkflows/local/pathogen_reconstruction/main'
 include { PATHOGEN_REPORT         } from '../subworkflows/local/pathogen_report/main'
 include { MULTIQC_TABLES         } from '../modules/local/multiqc_tables/main'
+include { DATABASE_ROW as RECORD_DATABASE            } from '../modules/local/database_row/main'
+include { DATABASE_MANIFEST as RUN_DATABASE_MANIFEST } from '../modules/local/database_manifest/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,10 +104,14 @@ workflow PNEUMA {
         MULTIQC_TABLES.out.tables
     )
 
-    if (databases.database_manifest) {
-        channel.fromPath(databases.database_manifest, checkIfExists: true)
-            .collectFile(name: 'database_manifest.tsv', storeDir: "${outdir}/pipeline_info")
-    }
+    // pipeline_info/database_manifest.tsv: the --db_dir manifest plus path + sha256 of databases
+    // passed directly (Kraken2, taxdump, host index), so every taxonomic result has its provenance
+    RECORD_DATABASE(channel.fromList(usedDatabaseRows(databases)))
+    RUN_DATABASE_MANIFEST(
+        RECORD_DATABASE.out.row.collect().ifEmpty([]),
+        channel.value(''),
+        databases.database_manifest ? file(databases.database_manifest, checkIfExists: true) : []
+    )
 
     //
     // Collate and save software versions

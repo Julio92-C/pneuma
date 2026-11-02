@@ -4,7 +4,7 @@
 Each input file holds tab-separated rows: name, version, path (relative to the database output
 directory), sha256. The output has the header `name version path sha256`, one row per database
 in a fixed order (Phase 1 databases, then the pathogen databases), with `--root` prepended to every
-new path. `--existing` (a previous database_manifest.tsv in the same directory) keeps its rows for
+new relative path; an absolute path (a database passed by path at run time) is kept as is. `--existing` (a previous database_manifest.tsv in the same directory) keeps its rows for
 databases that were not rebuilt in this run (their paths are already absolute). Fails (exit 1) on a
 row with a missing field or an empty sha256/version, and when there are no rows at all.
 """
@@ -45,14 +45,15 @@ def build(row_files, root, existing=None):
                         f"{fname}:{lineno}: incomplete row (need name, version, path, sha256): {line!r}")
                     continue
                 name, version, path, sha = cols
-                rows.append((name, version, f"{root.rstrip('/')}/{path}", sha))
-    if not rows and not problems:
-        problems.append("no database rows to write")
+                full = path if path.startswith("/") else f"{root.rstrip('/')}/{path}"
+                rows.append((name, version, full, sha))
     if problems:
         raise ValueError("\n".join(problems))
     if existing:
         rebuilt = {r[0] for r in rows}
         rows += [r for r in read_existing(existing) if r[0] not in rebuilt]
+    if not rows:
+        raise ValueError("no database rows to write")
     rows.sort(key=lambda r: rank(r[0]))
     return rows
 
@@ -63,7 +64,7 @@ def main(argv=None):
     ap.add_argument("--root", required=True, help="database output directory prepended to every path")
     ap.add_argument("--out", default="database_manifest.tsv")
     ap.add_argument("--existing", help="previous database_manifest.tsv whose other rows are kept")
-    ap.add_argument("rows", nargs="+", help="row files")
+    ap.add_argument("rows", nargs="*", help="row files (none: rewrite --existing as is)")
     args = ap.parse_args(argv)
     try:
         rows = build(args.rows, args.root, args.existing)

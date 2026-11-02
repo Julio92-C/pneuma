@@ -15,7 +15,7 @@ process DATABASE_MANIFEST {
     script:
     def keep = existing ? "--existing ${existing}" : ''
     """
-    build_database_manifest.py --root '${root}' ${keep} --out database_manifest.tsv rows/*.row.tsv
+    build_database_manifest.py --root '${root}' ${keep} --out database_manifest.tsv \$(ls rows/*.row.tsv 2>/dev/null)
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -26,7 +26,7 @@ process DATABASE_MANIFEST {
     stub:
     def keep_stub = existing ? "--existing ${existing}" : ''
     """
-    build_database_manifest.py --root '${root}' ${keep_stub} --out database_manifest.tsv rows/*.row.tsv
+    build_database_manifest.py --root '${root}' ${keep_stub} --out database_manifest.tsv \$(ls rows/*.row.tsv 2>/dev/null)
     echo '"${task.process}": {python: stub}' > versions.yml
     """
 }

@@ -31,6 +31,7 @@ Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pa
   - `--meridian_random_effect_tests` defaults to `true` and applies only when `--meridian_random_effect` is set; turning it off with a random effect logs a warning.
   - `taxonomy/bracken/bracken_skipped.tsv` lists samples without a Bracken table and why.
   - MultiQC: "Pathogen reconstruction funnel" and "MERIDIAN failed stages" sections.
+  - `pipeline_info/database_manifest.tsv` also records path and sha256 of databases passed directly (`--kraken2_db`, `--taxdump`, `--host_index`).
 
 - MERIDIAN v1.3.1 (`--meridian_container`; adds the `shared_fraction`, `taxa_tree` and `daa_tree` stages; v1.3.1 fixes the `shared_fraction` and `network` failures seen on large cohorts), with three new pass-through options: `--meridian_random_effect_tests` (patient-aware permutation tests), `--meridian_control_match_cols` (negative controls matched per sample by run, else batch) and `--meridian_min_sample_reads` (beta-diversity read floor). Defaults keep the v1.1.0 behaviour.
 

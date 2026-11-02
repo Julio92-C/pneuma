@@ -226,6 +226,22 @@ def readDatabaseManifest(manifest) {
 }
 
 //
+// Databases used by this run that database_manifest.tsv does not already record at the same path
+// (e.g. --kraken2_db / --host_index passed directly): [name, order, version, path, file] rows for
+// DATABASE_ROW, so pipeline_info/database_manifest.tsv carries their path and sha256 (validation V8).
+//
+def usedDatabaseRows(Map databases) {
+    def manifest = databases.database_manifest ? readDatabaseManifest(file(databases.database_manifest)) : [:]
+    def used = [ [ 'kraken2_pluspf', 'kraken2_db', '01' ], [ 'ncbi_taxdump', 'taxdump', '02' ],
+                 [ 'hostile_index', 'host_index', '03' ] ]
+    return used.findAll { name, key, _order -> databases[key] && manifest[name]?.path != file(databases[key]).toString() }
+        .collect { name, key, order ->
+            def f = file(databases[key])
+            [ name, order, 'supplied at run time', f.toString(), f ]
+        }
+}
+
+//
 // Sub-directories of root named <prefix>*, narrowed to <prefix><version> when that exists.
 //
 def findVersionedDirs(root, prefix, version) {

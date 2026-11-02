@@ -76,3 +76,16 @@ def test_existing_manifest_rows_are_kept_unless_rebuilt(tmp_path):
     rows = mod.build([new], "/db", existing=str(old))
     assert rows == [("kraken2_pluspf", "20250402", "/db/kraken2_pluspf_20250402", SHA),
                     ("checkm2_db", "3", "/db/checkm2/checkm2_db_v3.dmnd", SHA)]
+
+
+def test_absolute_row_path_is_kept_and_replaces_existing_row(tmp_path):
+    # V8: databases passed by path at run time (not built) are recorded with their own absolute path
+    rows = tmp_path / "01_kraken2_pluspf.row.tsv"
+    rows.write_text("kraken2_pluspf\tuser-supplied\t/data/k2_pluspf_08gb\t" + "b" * 64 + "\n")
+    existing = tmp_path / "database_manifest.tsv"
+    existing.write_text("name\tversion\tpath\tsha256\n"
+                        "kraken2_pluspf\t20250402\t/db/kraken2_pluspf_20250402\t" + "a" * 64 + "\n"
+                        "checkm2_db\t3\t/db/checkm2\t" + "c" * 64 + "\n")
+    out = mod.build([str(rows)], "/db", str(existing))
+    assert out[0] == ("kraken2_pluspf", "user-supplied", "/data/k2_pluspf_08gb", "b" * 64)
+    assert ("checkm2_db", "3", "/db/checkm2", "c" * 64) in out

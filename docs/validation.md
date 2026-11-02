@@ -111,7 +111,7 @@ database versions. The findings above were checked against
 | **V5** | Fixed upstream in MERIDIAN v1.3.1 (both failures reproduced and fixed on this cohort); failed stages also appear in MultiQC. |
 | **V6** | Fixed: `taxonomy/bracken/bracken_skipped.tsv` lists each skipped sample and why. |
 | **V7** | Fixed: negative controls are detection only unless `--pathogen_gate_controls`. |
-| **V8** | In progress: path and checksum of the Kraken2 database and the host index in `database_manifest.tsv`. |
+| **V8** | Fixed: databases passed by path at run time (Kraken2, taxdump, host index) get a row with path and sha256 in `pipeline_info/database_manifest.tsv`, alongside the `--db_dir` manifest. |
 
 ### Not covered
 
