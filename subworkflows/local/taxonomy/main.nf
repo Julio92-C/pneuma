@@ -90,6 +90,18 @@ workflow TAXONOMY {
             b_files: b_files
         }
 
+    // The same skips as a file next to the Bracken tables (header only when nothing was skipped), so a
+    // downstream join can tell a skipped sample from a lost one.
+    collectSorted(ch_kraken_ok)
+        .combine(collectSorted(BRACKEN_BRACKEN.out.txt))
+        .combine(ch_low_depth_ids)
+        .flatMap { k_names, _k_files, b_names, _b_files, low_ids ->
+            [ 'sample\treason' ] +
+                low_ids.collect { id -> "${id}\tlow_depth".toString() } +
+                (k_names - b_names - low_ids).collect { id -> "${id}\tno_bracken_output".toString() }
+        }
+        .collectFile(name: 'bracken_skipped.tsv', newLine: true, sort: false, storeDir: "${params.outdir}/taxonomy/bracken")
+
     COMBINE_KRAKEN('kraken2_combined', ch_checked.k_names, ch_checked.k_files)
     COMBINE_BRACKEN('bracken_combined', ch_checked.b_names, ch_checked.b_files)
     ch_versions = ch_versions.mix(COMBINE_KRAKEN.out.versions)
