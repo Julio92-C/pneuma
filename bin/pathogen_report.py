@@ -10,8 +10,14 @@ rows for pooled reconstructions, a cohort TSV and one HTML page per sample.
 <dir>/ holds the per-unit results (a missing sub-directory = nothing of that kind was produced):
   gate/<unit>.gate.tsv  species/<unit>.species.tsv  assemblies/<unit>.fasta  mlst/<unit>.tsv
   amrfinderplus/<unit>.tsv  abricate/<unit>.{vfdb,plasmidfinder}.txt  mobsuite/<unit>.mobtyper_results.txt
-  mixed/<unit>.mixed.tsv  checkm2/*_checkm2_report.tsv  quast/*_quast.tsv  functional/<sample>_abricate.csv
-A missing gate / species / mixed / mlst result for a unit that needs one is a wiring error (exit 1).
+  mobsuite/<unit>.contig_report.txt  mixed/<unit>.mixed.tsv  checkm2/*_checkm2_report.tsv  quast/*_quast.tsv  functional/<sample>_abricate.csv
+A missing gate / species result for an assembled unit, or a missing mlst result for a confirmed one,
+is a wiring error (exit 1). Every assembly is typed: one that fails species confirmation keeps its
+status (SPECIES_NOT_CONFIRMED / NOT_RESOLVED_BY_ANI) and its typing is reported under `typed_as`, its
+best skani match. Purity (MIMAG-like grade from CheckM2, assembly size / reference size) and the
+read-back check are flags (notes), never gates.
+Also writes pathogen_genes.tsv: one row per gene hit on an assembly, with its contig and whether
+MOB-suite placed that contig on the chromosome or a plasmid.
 A pooled (patient-level) result is shown under each contributing sample as
 "<STATUS> (pooled, patient <id>)" and in a patient section; it never replaces the sample's status.
 """
@@ -25,10 +31,11 @@ import sys
 from collections import defaultdict
 
 STATUSES = ["NOT_DETECTED", "DETECTED_ONLY", "LOW_DEPTH", "LOW_COVERAGE", "ASSEMBLY_FAILED",
-            "SPECIES_NOT_CONFIRMED", "MIXED_STRAINS", "TYPED", "PARTIAL", "NO_SCHEME"]
+            "SPECIES_NOT_CONFIRMED", "NOT_RESOLVED_BY_ANI", "MIXED_STRAINS", "TYPED", "PARTIAL", "NO_SCHEME"]
 COLUMNS = ["level", "sample", "patient", "contributing_samples", "species", "tier", "who_category", "action", "taxid",
            "status", "pooled_result", "reads", "bracken_reads", "bracken_fraction", "depth", "breadth", "contigs",
-           "total_length", "n50", "completeness", "contamination", "ani", "ani_reference", "scheme", "st", "alleles",
+           "total_length", "n50", "completeness", "contamination", "ani", "ani_reference", "confirm_reason", "typed_as",
+           "mimag_grade", "size_ratio", "scheme", "st", "alleles",
            "amr_genes", "vf_genes", "mge_genes", "gene_source", "mixed_het_per_kb", "notes"]
 SECTIONS = [("Tier 1-3 priority pathogens", ("1", "2", "3")), ("Detect-only (Tier D)", ("D",)),
             ("Tier R commensal AMR/VF reservoirs", ("R",))]
@@ -37,7 +44,9 @@ STATUS_HELP = [
     ("PARTIAL", "assembled and confirmed; MLST loci missing, novel or ambiguous"),
     ("NO_SCHEME", "assembled and confirmed; no PubMLST scheme for this species"),
     ("MIXED_STRAINS", "pooled assembly with minor-allele sites above the threshold: more than one strain, no ST"),
-    ("SPECIES_NOT_CONFIRMED", "best ANI hit is another species, or ANI below ani_min: no typing under this name"),
+    ("SPECIES_NOT_CONFIRMED", "best ANI hit is another species, or ANI below ani_min: typed under its best match (typed_as)"),
+    ("NOT_RESOLVED_BY_ANI", "best ANI hit is a listed close relative within --pathogen_ani_confusable_delta "
+                            "(e.g. E. coli / Shigella): species needs marker genes or MLST; typed as both names"),
     ("ASSEMBLY_FAILED", "passed the coverage gate but Flye/Medaka produced no assembly"),
     ("LOW_COVERAGE", "reads present but below the coverage gate (or below --pathogen_min_reads / --pathogen_min_est_depth)"),
     ("DETECTED_ONLY", "detect-only species, or a negative control, with Kraken2 reads (no reconstruction)"),
@@ -173,6 +182,7 @@ class Results:
         self.vfdb = by_suffix(d("abricate"), ".vfdb.txt")
         self.plasmid = by_suffix(d("abricate"), ".plasmidfinder.txt")
         self.mob = by_suffix(d("mobsuite"), ".mobtyper_results.txt")
+        self.mob_contigs = by_suffix(d("mobsuite"), ".contig_report.txt")
         self.mixed = by_suffix(d("mixed"), ".mixed.tsv")
         self.checkm2 = parse_checkm2(by_suffix(d("checkm2"), "_checkm2_report.tsv").values())
         self.quast = parse_quast(by_suffix(d("quast"), "_quast.tsv").values())
@@ -183,8 +193,33 @@ def add_note(d, text):
     d["notes"] = (d["notes"] + "; " + text) if d.get("notes") else text
 
 
-def evaluate_unit(unit, level, res):
+MAX_SIZE_RATIO = 1.3
+
+
+def mimag_grade(completeness, contamination):
+    """MIMAG-like draft grade from CheckM2 only (no rRNA / tRNA check): high / medium / low."""
+    try:
+        c, x = float(completeness), float(contamination)
+    except (TypeError, ValueError):
+        return ""
+    if c >= 90 and x < 5:
+        return "high"
+    if c >= 50 and x < 10:
+        return "medium"
+    return "low"
+
+
+def size_ratio(total_length, genome_size):
+    try:
+        t, g = float(total_length), float(genome_size)
+    except (TypeError, ValueError):
+        return ""
+    return "%.2f" % (t / g) if g > 0 else ""
+
+
+def evaluate_unit(unit, level, res, panel_row=None, genome_size=""):
     """(status, details) of one reconstruction unit that was extracted and gated."""
+    panel_row = panel_row or {}
     d = {}
     if unit not in res.gate:
         # extracted/pooled but lost before the coverage gate (no mapping output): reported, never dropped
@@ -201,28 +236,57 @@ def evaluate_unit(unit, level, res):
         return "ASSEMBLY_FAILED", d
     d["completeness"], d["contamination"] = res.checkm2.get(unit, ("", ""))
     d.update(res.quast.get(unit, {}))
+    d["mimag_grade"] = mimag_grade(d["completeness"], d["contamination"])
+    d["size_ratio"] = size_ratio(d.get("total_length"), genome_size)
+    if d["mimag_grade"] == "low" or (d["size_ratio"] and float(d["size_ratio"]) > MAX_SIZE_RATIO):
+        add_note(d, "purity flag: grade %s, assembly / reference size %s"
+                 % (d["mimag_grade"] or "NA", d["size_ratio"] or "NA"))
     if unit not in res.species:
         raise ContractError("no species confirmation for assembled unit %s" % unit)
     s = read_tsv(res.species[unit])[0]
     d["ani"] = s["ani"]
     d["ani_reference"] = "%s (%s)" % (s["best_species"], s["best_accession"]) if s["best_species"] else ""
-    if s["confirmed"] != "true":
-        add_note(d, "species not confirmed (%s): no typing is reported under the panel species name" % s["reason"])
-        return "SPECIES_NOT_CONFIRMED", d
-    if level == "patient":
-        if unit not in res.mixed:
-            raise ContractError("no mixed-strain check for patient-level unit %s" % unit)
+    d["confirm_reason"] = s["reason"]
+    panel_species = s.get("panel_species", "")
+    confirmed = s["confirmed"] == "true"
+    status = None
+    if confirmed:
+        d["typed_as"] = panel_species
+    elif s["reason"] == "unresolved_confusable":
+        status, d["typed_as"] = "NOT_RESOLVED_BY_ANI", "%s/%s" % (panel_species, s["best_species"])
+        add_note(d, "best ANI hit %s is within the confusable margin of %s: needs marker genes / MLST"
+                 % (s["best_species"], panel_species))
+    else:
+        status, d["typed_as"] = "SPECIES_NOT_CONFIRMED", s["best_species"]
+        add_note(d, "species not confirmed (%s)" % s["reason"])
+    if unit in res.mixed:
         m = read_tsv(res.mixed[unit])[0]
         d["mixed_het_per_kb"] = m["het_per_kb"]
         if m["verdict"] == "mixed":
-            add_note(d, "%s minor-allele sites per kb (> %s): more than one strain; no ST reported"
+            add_note(d, "%s minor-allele sites per kb (> %s): more than one strain"
                      % (m["het_per_kb"], m["max_het_per_kb"]))
-            return "MIXED_STRAINS", d
-        if m["verdict"] == "not_evaluable":
-            add_note(d, "mixed-strain check not evaluable (%s sites with enough depth)" % m["evaluable_sites"])
+            if level == "patient" and confirmed:
+                status = "MIXED_STRAINS"
+        elif m["verdict"] == "not_evaluable":
+            add_note(d, "read-back check not evaluable (%s sites with enough depth)" % m["evaluable_sites"])
+    else:
+        add_note(d, "no read-back check result")
     if unit not in res.mlst:
-        raise ContractError("no mlst result for typable unit %s" % unit)
-    status, d["scheme"], d["st"], d["alleles"] = parse_mlst(res.mlst[unit])
+        if confirmed and status is None:
+            raise ContractError("no mlst result for typable unit %s" % unit)
+        add_note(d, "not typed")
+        return status, d
+    mlst_status, d["scheme"], d["st"], d["alleles"] = parse_mlst(res.mlst[unit])
+    if panel_row.get("mlst_scheme") == "none":
+        mlst_status, d["scheme"], d["st"], d["alleles"] = "NO_SCHEME", "", "", ""
+        add_note(d, "no MLST scheme for this species")
+    if status is None:
+        status = mlst_status
+    elif status == "MIXED_STRAINS":
+        d["st"] = ""
+        add_note(d, "no ST reported for mixed strains")
+    else:
+        add_note(d, "typed under its best match (%s), not as %s" % (d["typed_as"], panel_species))
     amr = parse_amrfinder(res.amr[unit]) if unit in res.amr else None
     vf = parse_abricate_tab(res.vfdb[unit]) if unit in res.vfdb else None
     mge = (parse_abricate_tab(res.plasmid[unit]) if unit in res.plasmid else []) + \
@@ -232,6 +296,38 @@ def evaluate_unit(unit, level, res):
     if not_run:
         add_note(d, "not run: " + ", ".join(not_run))
     return status, d
+
+
+GENE_COLUMNS = ["unit_id", "level", "typed_as", "gene", "kind", "contig", "molecule", "mob_cluster", "source"]
+
+
+def unit_genes(unit, level, typed_as, res):
+    """One row per gene hit on an assembly, with the MOB-suite placement of its contig."""
+    place = {}
+    if unit in res.mob_contigs:
+        for r in read_tsv(res.mob_contigs[unit]):
+            place[col(r, "contig_id").split()[0]] = (col(r, "molecule_type"), col(r, "primary_cluster_id"))
+    rows = []
+
+    def add(gene, kind, contig, source):
+        mol, cluster = place.get(contig, ("unknown" if place else "", ""))
+        rows.append({"unit_id": unit, "level": level, "typed_as": typed_as, "gene": gene, "kind": kind,
+                     "contig": contig, "molecule": mol, "mob_cluster": "" if cluster == "-" else cluster,
+                     "source": source})
+
+    if unit in res.amr:
+        for r in read_tsv(res.amr[unit]):
+            if col(r, "Type", "Element type") == "AMR":
+                add(col(r, "Element symbol", "Gene symbol"), "amr", col(r, "Contig id"), "AMRFinderPlus")
+    for kind, paths in (("vf", res.vfdb), ("replicon", res.plasmid)):
+        if unit in paths:
+            lines = [l.rstrip("\n").split("\t") for l in open(paths[unit]) if l.strip()]
+            if lines and lines[0][0].startswith("#FILE"):
+                si, gi = lines[0].index("SEQUENCE"), lines[0].index("GENE")
+                for r in lines[1:]:
+                    if len(r) > max(si, gi):
+                        add(r[gi], kind, r[si], "ABRicate")
+    return rows
 
 
 def read_level_genes(sample, taxids, res):
@@ -261,13 +357,21 @@ def build_report(panel_path, cand_path, samples_path, units_path, results_root):
     samples = {s["sample"]: s for s in read_tsv(samples_path)}
     units = read_tsv(units_path)
     res = Results(results_root)
-    patient_rows, pooled = [], {}
+    patient_rows, pooled, gene_rows = [], {}, []
+
+    def gsize(sample_ids, species):
+        for sid in sample_ids:
+            c = cands.get((sid, species))
+            if c and c.get("genome_size"):
+                return c["genome_size"]
+        return ""
     for u in units:
         if u["level"] != "patient":
             continue
         p = panel[u["species"]]
-        status, d = evaluate_unit(u["unit_id"], "patient", res)
         contributing = u["samples"].split(";")
+        status, d = evaluate_unit(u["unit_id"], "patient", res, p, gsize(contributing, u["species"]))
+        gene_rows += unit_genes(u["unit_id"], "patient", d.get("typed_as", ""), res)
         reads = sum(int(cands[(s, u["species"])]["clade_reads"]) for s in contributing)
         row = base_row(p, "patient", "", u["patient"], ";".join(contributing), reads)
         row["status"] = status
@@ -309,7 +413,9 @@ def build_report(panel_path, cand_path, samples_path, units_path, results_root):
                          % c.get("est_depth", "NA"))
                 row.update(read_level_genes(sid, taxids, res))
             elif decision == "extract":
-                status, d = evaluate_unit("%s.%s" % (sid, p["slug"]), "sample", res)
+                unit = "%s.%s" % (sid, p["slug"])
+                status, d = evaluate_unit(unit, "sample", res, p, gsize([sid], p["species"]))
+                gene_rows += unit_genes(unit, "sample", d.get("typed_as", ""), res)
                 row["status"] = status
                 row.update(d)
                 if status in ("LOW_COVERAGE", "ASSEMBLY_FAILED"):
@@ -321,7 +427,7 @@ def build_report(panel_path, cand_path, samples_path, units_path, results_root):
     keys = [(r["sample"], r["species"]) for r in rows]
     if len(keys) != len(set(keys)):
         raise ContractError("more than one status for a sample x species")
-    return rows, patient_rows, samples
+    return rows, patient_rows, samples, gene_rows
 
 
 CSS = """body{font-family:Helvetica,Arial,sans-serif;margin:24px;color:#1f2328}
@@ -329,12 +435,13 @@ table{border-collapse:collapse;margin:8px 0 24px;font-size:13px}
 th,td{border:1px solid #d0d7de;padding:4px 8px;text-align:left;vertical-align:top}th{background:#f6f8fa}
 .st{font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
 .TYPED{background:#d1f0d9}.PARTIAL,.NO_SCHEME{background:#fff3c4}
-.MIXED_STRAINS,.SPECIES_NOT_CONFIRMED,.ASSEMBLY_FAILED{background:#ffd8d3}
+.MIXED_STRAINS,.SPECIES_NOT_CONFIRMED,.ASSEMBLY_FAILED{background:#ffd8d3}.NOT_RESOLVED_BY_ANI{background:#ffe5c2}
 .LOW_COVERAGE,.LOW_DEPTH,.DETECTED_ONLY{background:#e7ecf3}.NOT_DETECTED{color:#57606a}
 .note{color:#57606a;font-size:12px}"""
 TABLE_COLS = [("species", "Species"), ("status", "Status"), ("reads", "Reads"), ("bracken_fraction", "Bracken fraction"),
               ("depth", "Depth"), ("breadth", "Breadth"), ("completeness", "CheckM2 compl. %"),
-              ("contamination", "CheckM2 contam. %"), ("ani", "ANI %"), ("ani_reference", "Best ANI hit"),
+              ("contamination", "CheckM2 contam. %"), ("mimag_grade", "Grade"), ("size_ratio", "Size / ref."),
+              ("ani", "ANI %"), ("ani_reference", "Best ANI hit"), ("typed_as", "Typed as"),
               ("scheme", "MLST scheme"), ("st", "ST"), ("alleles", "Alleles"), ("amr_genes", "AMR"),
               ("vf_genes", "VF"), ("mge_genes", "MGE"), ("gene_source", "Gene source"),
               ("pooled_result", "Pooled result"), ("notes", "Notes")]
@@ -398,7 +505,7 @@ def main(argv=None):
     ap.add_argument("--outdir", default=".")
     a = ap.parse_args(argv)
     try:
-        rows, patient_rows, samples = build_report(a.panel, a.candidates, a.samples, a.units, a.results)
+        rows, patient_rows, samples, gene_rows = build_report(a.panel, a.candidates, a.samples, a.units, a.results)
     except (ContractError, KeyError) as exc:
         print("ERROR: %s" % exc, file=sys.stderr)
         return 1
@@ -407,6 +514,10 @@ def main(argv=None):
         w = csv.DictWriter(fh, fieldnames=COLUMNS, delimiter="\t", lineterminator="\n")
         w.writeheader()
         w.writerows(rows + patient_rows)
+    with open(os.path.join(a.outdir, "pathogen_genes.tsv"), "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=GENE_COLUMNS, delimiter="\t", lineterminator="\n")
+        w.writeheader()
+        w.writerows(gene_rows)
     header = {"version": a.pipeline_version, "panel_name": os.path.basename(a.panel_file),
               "panel_sha256": sha256(a.panel_file), "gate_min_depth": a.gate_min_depth,
               "gate_min_breadth": a.gate_min_breadth,

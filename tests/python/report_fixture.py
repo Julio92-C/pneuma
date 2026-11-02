@@ -25,7 +25,7 @@ SAMPLES = [("S1", "P1", "false", "false", 20000), ("S2", "P2", "false", "false",
            ("S3", "P3", "false", "false", 18000), ("S4", "P4", "false", "false", 9000),
            ("S5", "P4", "false", "false", 8000), ("S6", "P5", "false", "false", 9000),
            ("S7", "P5", "false", "false", 9500), ("S8", "P6", "false", "true", 50),
-           ("CTRL", "", "true", "false", 800)]
+           ("S9", "P7", "false", "false", 12000), ("CTRL", "", "true", "false", 800)]
 CANDIDATES = {  # (sample, species): (clade_reads, decision); default (0, not_detected | detect | low_depth)
     ("S1", SPN): (3000, "extract"), ("S1", MTB): (5, "detect"),
     ("S2", SPN): (6, "below_min_reads"), ("S2", SMI): (900, "extract"),
@@ -34,7 +34,9 @@ CANDIDATES = {  # (sample, species): (clade_reads, decision); default (0, not_de
     ("S6", SPN): (350, "extract"), ("S7", SPN): (360, "extract"),
     ("S8", SPN): (12, "low_depth"),
     ("CTRL", SPN): (40, "control"),
+    ("S9", HIN): (1300, "extract"),
 }
+GENOME_SIZE = {SPN: 2100000, HIN: 1830000, SMI: 2050000}
 UNITS = [  # unit, level, sample, patient, samples, species, gate pass, depth, breadth
     ("S1.Streptococcus_pneumoniae", "sample", "S1", "P1", "S1", SPN, "true", "25.1", "0.98"),
     ("S2.Streptococcus_mitis", "sample", "S2", "P2", "S2", SMI, "true", "14.0", "0.91"),
@@ -47,9 +49,11 @@ UNITS = [  # unit, level, sample, patient, samples, species, gate pass, depth, b
     ("S6.Streptococcus_pneumoniae", "sample", "S6", "P5", "S6", SPN, "false", "6.0", "0.90"),
     ("S7.Streptococcus_pneumoniae", "sample", "S7", "P5", "S7", SPN, "false", "6.2", "0.90"),
     ("patient-P5.Streptococcus_pneumoniae", "patient", "", "P5", "S6;S7", SPN, "true", "12.2", "0.97"),
+    ("S9.Haemophilus_influenzae", "sample", "S9", "P7", "S9", HIN, "true", "13.0", "0.94"),
 ]
 ASSEMBLED = ["S1.Streptococcus_pneumoniae", "S3.Streptococcus_pneumoniae", "S3.Haemophilus_influenzae",
-             "S3.Streptococcus_mitis", "patient-P4.Haemophilus_influenzae", "patient-P5.Streptococcus_pneumoniae"]
+             "S3.Streptococcus_mitis", "patient-P4.Haemophilus_influenzae", "patient-P5.Streptococcus_pneumoniae",
+             "S9.Haemophilus_influenzae"]
 SPECIES = {  # unit: (best species, accession, ani, confirmed, reason)
     "S1.Streptococcus_pneumoniae": (SPN, "GCF_001457635.1", "98.9", "true", "confirmed"),
     "S3.Streptococcus_pneumoniae": (SMI, "GCF_018603625.2", "96.8", "false", "best_hit_other_species"),
@@ -57,13 +61,19 @@ SPECIES = {  # unit: (best species, accession, ani, confirmed, reason)
     "S3.Streptococcus_mitis": (SMI, "GCF_018603625.2", "95.6", "true", "confirmed"),
     "patient-P4.Haemophilus_influenzae": (HIN, "GCF_020736045.1", "98.1", "true", "confirmed"),
     "patient-P5.Streptococcus_pneumoniae": (SPN, "GCF_001457635.1", "98.7", "true", "confirmed"),
+    "S9.Haemophilus_influenzae": ("Haemophilus haemolyticus", "GCF_000000001.1", "96.1", "false", "unresolved_confusable"),
 }
+CHECKM2 = {"S3.Streptococcus_pneumoniae": ("70.0", "44.0")}   # others 97.5 / 1.2
 MLST = {
     "S1.Streptococcus_pneumoniae": "spneumoniae\t1\taroE(1)\tgdh(1)\tgki(1)\trecP(1)\tspi(1)\txpt(1)\tddl(1)",
     "S3.Haemophilus_influenzae": "hinfluenzae\t-\tadk(1)\tatpG(~3)\tfrdB(-)\tfucK(1)\tmdh(1)\tpgi(1)\trecA(1)",
     "S3.Streptococcus_mitis": "-\t-",
     "patient-P4.Haemophilus_influenzae": "hinfluenzae\t3\tadk(1)\tatpG(1)\tfrdB(1)\tfucK(1)\tmdh(1)\tpgi(1)\trecA(1)",
+    "S3.Streptococcus_pneumoniae": "smitis\t-\taccA(~1)\tgki(2)\thom(3)\toppC(4)\tpatB(5)\trlmN(6)\ttsf(7)",
+    "S9.Haemophilus_influenzae": "hinfluenzae\t-\tadk(1)\tatpG(~3)\tfrdB(1)\tfucK(1)\tmdh(1)\tpgi(1)\trecA(1)",
 }
+MOB_CONTIG_HEADER = ["sample_id", "molecule_type", "primary_cluster_id", "secondary_cluster_id", "contig_id", "size", "gc",
+                     "md5"]
 MIXED = {"patient-P4.Haemophilus_influenzae": ("40000", "2", "0.050", "single"),
          "patient-P5.Streptococcus_pneumoniae": ("38000", "190", "5.000", "mixed")}
 AMR_HEADER = ("Protein id\tContig id\tStart\tStop\tStrand\tElement symbol\tElement name\tScope\tType\tSubtype\tClass\t"
@@ -100,10 +110,11 @@ def write(root):
             sp, slug, tier, action, taxid = row[0], row[1], row[2], row[4], row[5]
             default = "low_depth" if ld == "true" else ("detect" if action == "detect" else "not_detected")
             clade, dec = CANDIDATES.get((s, sp), (0, default))
-            cand.append((s, p, c, ld, sp, slug, tier, action, taxid, clade, clade, "0.01" if clade else "0", dec))
+            cand.append((s, p, c, ld, sp, slug, tier, action, taxid, clade, clade, "0.01" if clade else "0", dec,
+                         GENOME_SIZE.get(sp, "")))
     tsv(root / "pathogen_candidates.tsv",
         ["sample", "patient", "is_control", "low_depth", "species", "slug", "tier", "action", "taxid", "clade_reads",
-         "bracken_reads", "bracken_fraction", "decision"], cand)
+         "bracken_reads", "bracken_fraction", "decision", "genome_size"], cand)
     taxid = {row[0]: row[5] for row in PANEL}
     ref = {row[0]: row[9] for row in PANEL}
     tsv(root / "units.tsv", ["unit_id", "level", "sample", "patient", "samples", "species", "taxid", "reference"],
@@ -132,13 +143,23 @@ def write(root):
         [("S1.Streptococcus_pneumoniae.vfdb.fasta", "contig_1", 1, 1416, "+", "ply", "1-1416/1416", "===", "0/0",
           "100.00", "99.93", "vfdb", "NP_1", "pneumolysin", "")])
     tsv(root / "abricate" / "S1.Streptococcus_pneumoniae.plasmidfinder.txt", ABRICATE_TAB.split("\t"), [])
+    tsv(root / "amrfinderplus" / "S3.Streptococcus_pneumoniae.tsv", AMR_HEADER.split("\t"),
+        [("NA", "contig_2", 10, 1500, "+", "msr(D)", "Msr(D)", "core", "AMR", "AMR", "MACROLIDE", "MACROLIDE",
+          "EXACTX", 487, 487, "100.00", "100.00", 487, "WP_3", "Msr(D)", "NA", "NA")])
+    tsv(root / "abricate" / "S3.Streptococcus_pneumoniae.vfdb.txt", ABRICATE_TAB.split("\t"), [])
+    tsv(root / "abricate" / "S3.Streptococcus_pneumoniae.plasmidfinder.txt", ABRICATE_TAB.split("\t"),
+        [("S3.Streptococcus_pneumoniae.fasta", "contig_3", 1, 500, "+", "rep7a", "1-500/500", "===", "0/0",
+          "100.00", "99.00", "plasmidfinder", "AB1", "rep7a", "")])
+    tsv(root / "mobsuite" / "S3.Streptococcus_pneumoniae.contig_report.txt", MOB_CONTIG_HEADER,
+        [("S3.Streptococcus_pneumoniae", "chromosome", "-", "-", "contig_2", 900000, 0.4, "m1"),
+         ("S3.Streptococcus_pneumoniae", "plasmid", "AA001", "AA001", "contig_3", 4000, 0.3, "m2")])
     for u, (ev, het, per_kb, verdict) in MIXED.items():
         tsv(root / "mixed" / ("%s.mixed.tsv" % u),
             ["unit_id", "evaluable_sites", "het_sites", "het_per_kb", "verdict", "min_depth", "min_maf", "min_alt", "max_het_per_kb"],
             [(u, ev, het, per_kb, verdict, 8, 0.25, 3, 1.0)])
     tsv(root / "checkm2" / "pathogens_checkm2_report.tsv",
         ["Name", "Completeness", "Contamination", "Completeness_Model_Used", "Translation_Table_Used"],
-        [(u, "97.5", "1.2", "Gradient Boost (General Model)", 11) for u in ASSEMBLED])
+        [(u,) + CHECKM2.get(u, ("97.5", "1.2")) + ("Gradient Boost (General Model)", 11) for u in ASSEMBLED])
     tsv(root / "quast" / "pathogens_quast.tsv", ["Assembly"] + ASSEMBLED,
         [["# contigs"] + ["3"] * len(ASSEMBLED), ["Total length"] + ["2100000"] * len(ASSEMBLED),
          ["N50"] + ["900000"] * len(ASSEMBLED)])

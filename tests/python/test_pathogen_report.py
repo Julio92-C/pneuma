@@ -56,7 +56,8 @@ def test_every_status(tmp_path):
     assert "not extracted" in s2["notes"]
     assert status(rows, "S2", SMI)["status"] == "ASSEMBLY_FAILED"
     s3 = status(rows, "S3", SPN)
-    assert s3["status"] == "SPECIES_NOT_CONFIRMED" and s3["st"] == "" and s3["amr_genes"] == ""
+    assert s3["status"] == "SPECIES_NOT_CONFIRMED" and s3["st"] == "" and s3["amr_genes"] == "msr(D)"
+    assert s3["typed_as"] == "Streptococcus mitis" and s3["scheme"] == "smitis"
     assert s3["ani_reference"] == "Streptococcus mitis (GCF_018603625.2)"
     assert status(rows, "S3", HIN)["status"] == "PARTIAL"
     assert status(rows, "S3", SMI)["status"] == "NO_SCHEME"
@@ -95,7 +96,7 @@ def test_html_per_sample_with_patient_section(tmp_path):
 def test_unit_lost_before_the_gate_is_low_coverage_not_dropped(tmp_path):
     root = rf.write(tmp_path / "in")
     (root / "gate" / "S1.Streptococcus_pneumoniae.gate.tsv").unlink()
-    rows, _patient_rows, _samples = pr.build_report(root / "panel_resolved.tsv", root / "pathogen_candidates.tsv",
+    rows, _patient_rows, _samples, _genes = pr.build_report(root / "panel_resolved.tsv", root / "pathogen_candidates.tsv",
                                                    root / "pathogen_samples.tsv", root / "units.tsv", root)
     row = next(r for r in rows if r["sample"] == "S1" and r["species"] == "Streptococcus pneumoniae")
     assert row["status"] == "LOW_COVERAGE" and "no coverage-gate result" in row["notes"]
@@ -124,13 +125,13 @@ def test_parsers_match_real_captured_headers():
 
 def test_missing_mobsuite_output_means_no_plasmids(tmp_path):
     root = rf.write(tmp_path / "in")
-    assert not (root / "mobsuite").exists()          # MOB-suite writes nothing for plasmid-free assemblies
+    assert not (root / "mobsuite" / "S1.Streptococcus_pneumoniae.mobtyper_results.txt").exists()   # plasmid-free: no mobtyper file
     assert status(build_rows(root), "S1", SPN)["mge_genes"] == ""
 
 
 def test_mobsuite_replicons_are_reported_and_short_rows_tolerated(tmp_path):
     root = rf.write(tmp_path / "in")
-    (root / "mobsuite").mkdir()
+    (root / "mobsuite").mkdir(exist_ok=True)
     (root / "mobsuite" / "S1.Streptococcus_pneumoniae.mobtyper_results.txt").write_text(
         "sample_id\tnum_contigs\tsize\trep_type(s)\trep_type_accession(s)\n"
         "contig_1\t1\t5000\tIncFIB,rep1\n")                # trailing column stripped
@@ -138,6 +139,49 @@ def test_mobsuite_replicons_are_reported_and_short_rows_tolerated(tmp_path):
 
 
 def build_rows(root):
-    rows, _p, _s = pr.build_report(root / "panel_resolved.tsv", root / "pathogen_candidates.tsv",
+    rows, _p, _s, _g = pr.build_report(root / "panel_resolved.tsv", root / "pathogen_candidates.tsv",
                                    root / "pathogen_samples.tsv", root / "units.tsv", root)
     return rows
+
+
+def test_flags_and_reasons(tmp_path):
+    _out, rows = build(tmp_path)
+    s3 = status(rows, "S3", SPN)
+    assert s3["confirm_reason"] == "best_hit_other_species" and s3["mimag_grade"] == "low"
+    assert s3["size_ratio"] == "1.00" and "purity flag" in s3["notes"] and "typed under its best match" in s3["notes"]
+    s1 = status(rows, "S1", SPN)
+    assert (s1["status"], s1["mimag_grade"], s1["typed_as"], s1["confirm_reason"]) == (
+        "TYPED", "high", SPN, "confirmed")
+    s9 = status(rows, "S9", HIN)
+    assert s9["status"] == "NOT_RESOLVED_BY_ANI" and s9["typed_as"] == "Haemophilus influenzae/Haemophilus haemolyticus"
+    assert s9["scheme"] == "hinfluenzae" and s9["st"] == ""
+
+
+def test_gene_table_with_contig_placement(tmp_path):
+    out, _rows = build(tmp_path)
+    genes = list(csv.DictReader(open(out / "pathogen_genes.tsv"), delimiter="\t"))
+    assert list(genes[0]) == pr.GENE_COLUMNS
+    msr = next(g for g in genes if g["gene"] == "msr(D)")
+    assert (msr["unit_id"], msr["kind"], msr["contig"], msr["molecule"], msr["typed_as"]) == (
+        "S3.Streptococcus_pneumoniae", "amr", "contig_2", "chromosome", "Streptococcus mitis")
+    rep = next(g for g in genes if g["gene"] == "rep7a")
+    assert (rep["kind"], rep["molecule"], rep["mob_cluster"]) == ("replicon", "plasmid", "AA001")
+    tet = next(g for g in genes if g["gene"] == "tet(M)")
+    assert tet["unit_id"] == "S1.Streptococcus_pneumoniae" and tet["molecule"] == ""   # no MOB-suite output
+
+
+def test_mlst_scheme_none_means_no_scheme(tmp_path):
+    root = rf.write(tmp_path / "in")
+    panel = root / "panel_resolved.tsv"
+    lines = panel.read_text().splitlines()
+    lines[0] += "\tmlst_scheme"
+    lines[1:] = [l + ("\tnone" if l.startswith("Streptococcus mitis\t") else "\t") for l in lines[1:]]
+    panel.write_text("\n".join(lines) + "\n")
+    row = status(build_rows(root), "S3", SMI)
+    assert row["status"] == "NO_SCHEME" and "no MLST scheme for this species" in row["notes"]
+
+
+def test_grade_and_ratio_helpers():
+    assert pr.mimag_grade("95", "2") == "high" and pr.mimag_grade("60", "8") == "medium"
+    assert pr.mimag_grade("98", "43") == "low" and pr.mimag_grade("", "1") == ""
+    assert pr.size_ratio("3000000", "2000000") == "1.50" and pr.size_ratio("1", "") == ""

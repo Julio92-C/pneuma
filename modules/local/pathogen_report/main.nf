@@ -23,6 +23,7 @@ process BUILD_PATHOGEN_REPORT {
 
     output:
     path "pathogen_cohort.tsv", emit: cohort
+    path "pathogen_genes.tsv"  , emit: genes
     path "html/*.html"        , emit: html
     tuple val("${task.process}"), val('python'), eval('python --version 2>&1 | sed "s/Python //"'), topic: versions, emit: versions_python
 
