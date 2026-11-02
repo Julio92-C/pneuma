@@ -33,8 +33,9 @@ nextflow_process {
         then {
             assert process.success
             def rows = path(process.out.candidates[0]).readLines()
-            assert rows[0].split('\t')[-1] == 'decision'
-            assert rows.drop(1).collect { r -> r.split('\t')[-1] } == ['extract', 'extract', 'extract']
+            def di = rows[0].split('\t').toList().indexOf('decision')
+            assert di >= 0 && rows[0].split('\t')[-1] == 'genome_size'
+            assert rows.drop(1).collect { r -> r.split('\t', -1)[di] } == ['extract', 'extract', 'extract']
             assert path(process.out.samples[0]).readLines().size() == 4
         }
     }

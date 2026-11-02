@@ -20,7 +20,8 @@ nextflow_workflow {
                     input[2] = metas.map { m -> [ m, file("\$mini/\${m.id}.classified.fastq.gz") ] }
                     input[3] = metas.map { m -> [ m, file("\$mini/\${m.id}.kraken2.report.txt") ] }
                     input[4] = metas.map { m -> [ m, file("\$mini/bracken/\${m.id}.tsv") ] }
-                    input[5] = [
+                    input[5] = channel.empty()   // no seqkit stats: depth filter off
+                    input[6] = [
                         taxdump              : "${projectDir}/tests/data/pathogen_fixture/taxdump",
                         panel_references_dir : "\$mini/ref",
                         medaka_model_path    : 'https://media.githubusercontent.com/media/nanoporetech/medaka/v2.2.2/medaka/data/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz',

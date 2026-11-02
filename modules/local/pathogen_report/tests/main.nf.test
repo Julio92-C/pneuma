@@ -36,10 +36,11 @@ nextflow_process {
             assert process.success
             def rows = path(process.out.cohort[0]).readLines()
             assert rows[0].startsWith('level\tsample\tpatient\tcontributing_samples\tspecies')
-            assert rows.size() == 1 + 9 * 4 + 2
+            assert rows.size() == 1 + 10 * 4 + 2   // 10 samples x 4 panel species + 2 patient rows
             assert rows.any { r -> r.startsWith('patient\t\tP4\tS4;S5\tHaemophilus influenzae\t') && r.contains('\tTYPED\t') }
             assert rows.any { r -> r.startsWith('sample\tS4\tP4\tS4\tHaemophilus influenzae\t') && r.contains('TYPED (pooled, patient P4)') }
-            assert process.out.html.flatten().size() == 9
+            assert process.out.html.flatten().size() == 10
+            assert path(process.out.genes[0]).readLines()[0].startsWith('unit_id\tlevel\ttyped_as\tgene')
         }
     }
 }
