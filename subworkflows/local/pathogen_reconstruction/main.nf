@@ -18,7 +18,9 @@ include { unitMeta; panelOf; poolingDecision; tsvField; referenceFiles } from '.
 // Spec 5.5 + patient-level fallback. Per sample x reconstruct-species: Kraken2 read extraction
 // (--include-children) -> coverage gate -> Flye/Medaka -> CheckM2/QUAST -> skani species
 // confirmation -> mlst / AMRFinderPlus / ABRicate / Bakta (/ MOB-suite). Patient x species where
-// no sample passed the gate: pooled reads -> gate -> assembly -> species -> mixed-strain check -> typing.
+// no sample passed the gate: pooled reads -> gate -> assembly -> species -> typing. Every assembly is
+// typed (one that fails species confirmation is reported under its best skani match) and has its
+// own reads mapped back to it (minor-allele sites per kb: mixed strains / chimeric bins).
 //
 workflow PATHOGEN_RECONSTRUCTION {
     take:
@@ -122,16 +124,16 @@ workflow PATHOGEN_RECONSTRUCTION {
     }
     SKANI_DIST(ch_skani.query, ch_skani.refs)
     SPECIES_CONFIRM(SKANI_DIST.out.dist, file(panelReferencesPath(params), checkIfExists: true))
-    def ch_confirmed = SPECIES_CONFIRM.out.tsv
+    // AMRFinderPlus --organism only when the panel species is confirmed: a genome reported under its
+    // best match must not get the panel species' point-mutation set.
+    def ch_typing = SPECIES_CONFIRM.out.tsv
         .map { meta, tsv -> [ meta.id, tsvField(tsv, 'confirmed') == 'true' ] }
         .join(ch_asm.map { meta, fasta -> [ meta.id, meta, fasta ] })
-        .filter { _id, confirmed, _meta, _fasta -> confirmed }
-        .map { _id, _confirmed, meta, fasta -> [ meta, fasta ] }
+        .map { _id, confirmed, meta, fasta -> [ confirmed ? meta : meta + [ amr_organism: '' ], fasta ] }
 
-    // ---- mixed-strain check of confirmed patient-level assemblies (pooled reads -> pooled assembly)
-    def ch_patient_asm = ch_confirmed.filter { meta, _fasta -> meta.level == 'patient' }
-    def ch_mix = ch_patient_asm.map { meta, fasta -> [ meta.id, meta, fasta ] }
-        .join(GATE_PATIENT.out.gated.map { meta, reads -> [ meta.id, reads ] })
+    // ---- read-back check of every assembly (its own gated reads -> its assembly)
+    def ch_mix = ch_asm.map { meta, fasta -> [ meta.id, meta, fasta ] }
+        .join(ch_gated.map { meta, reads -> [ meta.id, reads ] })
         .multiMap { _id, meta, fasta, reads ->
             reads: [ meta, reads ]
             ref:   [ meta, fasta ]
@@ -139,21 +141,16 @@ workflow PATHOGEN_RECONSTRUCTION {
     MINIMAP2_MIXED(ch_mix.reads, ch_mix.ref, true, 'bai', false, false)
     def ch_pile = MINIMAP2_MIXED.out.bam.join(MINIMAP2_MIXED.out.index)
         .map { meta, bam, bai -> [ meta.id, meta, bam, bai ] }
-        .join(ch_patient_asm.map { meta, fasta -> [ meta.id, fasta ] })
+        .join(ch_asm.map { meta, fasta -> [ meta.id, fasta ] })
         .multiMap { _id, meta, bam, bai, fasta ->
             bam:   [ meta, bam, bai, [] ]
             fasta: [ meta, fasta, [] ]
         }
     SAMTOOLS_MPILEUP(ch_pile.bam, ch_pile.fasta)
     MIXED_STRAIN_CHECK(SAMTOOLS_MPILEUP.out.mpileup)
-    def ch_single_strain = MIXED_STRAIN_CHECK.out.tsv
-        .map { meta, tsv -> [ meta.id, tsvField(tsv, 'verdict') != 'mixed' ] }
-        .join(ch_patient_asm.map { meta, fasta -> [ meta.id, meta, fasta ] })
-        .filter { _id, single, _meta, _fasta -> single }
-        .map { _id, _single, meta, fasta -> [ meta, fasta ] }
 
-    // ---- typing / annotation: confirmed sample-level + confirmed single-strain patient-level
-    PATHOGEN_TYPING(ch_confirmed.filter { meta, _fasta -> meta.level == 'sample' }.mix(ch_single_strain), databases)
+    // ---- typing / annotation of every assembly; confirmation, purity and mixed strains are flags
+    PATHOGEN_TYPING(ch_typing, databases)
 
     // ---- report inputs
     // One row per unit that was extracted (or pooled), taken BEFORE the gate: a unit that is lost

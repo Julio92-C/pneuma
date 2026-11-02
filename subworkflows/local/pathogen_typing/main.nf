@@ -6,7 +6,7 @@ include { BAKTA_BAKTA                              } from '../../../modules/nf-c
 include { MOBSUITE_RECON                           } from '../../../modules/local/mobsuite_recon/main'
 
 //
-// Typing and annotation of confirmed assemblies (and, at patient level, single-strain ones):
+// Typing and annotation of every assembly (unconfirmed ones are reported under their best match):
 // mlst (PubMLST schemes bundled in the container), AMRFinderPlus (--organism when the panel maps
 // one), ABRicate VFDB + PlasmidFinder on contigs, Bakta, optional MOB-suite.
 //
@@ -28,9 +28,11 @@ workflow PATHOGEN_TYPING {
     BAKTA_BAKTA(ch_assembly, file(databases.bakta_db, checkIfExists: true, type: 'dir'), [], [], [], [])
 
     def ch_mob = channel.empty()
+    def ch_mob_contigs = channel.empty()
     if (params.run_mobsuite) {
         MOBSUITE_RECON(ch_assembly, file(databases.mobsuite_db, checkIfExists: true, type: 'dir'))
         ch_mob = MOBSUITE_RECON.out.mobtyper
+        ch_mob_contigs = MOBSUITE_RECON.out.contig_report
     }
 
     def ch_files = MLST.out.tsv.map { _meta, f -> [ 'mlst', f ] }
@@ -38,6 +40,7 @@ workflow PATHOGEN_TYPING {
         .mix(ABRICATE_VFDB.out.report.map { _meta, f -> [ 'abricate', f ] })
         .mix(ABRICATE_PLASMIDFINDER.out.report.map { _meta, f -> [ 'abricate', f ] })
         .mix(ch_mob.map { _meta, f -> [ 'mobsuite', f ] })
+        .mix(ch_mob_contigs.map { _meta, f -> [ 'mobsuite', f ] })
 
     emit:
     files = ch_files            // [ kind, file ] for the pathogen report
