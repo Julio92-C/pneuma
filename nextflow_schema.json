@@ -504,6 +504,10 @@
                     "exists": true,
                     "description": "Reference accession per panel species and confusable (species, accession, role). Default: the bundled assets/panel_references.tsv file."
                 },
+                "pathogen_gate_controls": {
+                    "type": "boolean",
+                    "description": "Extract, gate and assemble negative controls like samples. Default: controls are detection only (DETECTED_ONLY with a note)."
+                },
                 "pathogen_min_est_depth": {
                     "type": "number",
                     "default": 2.5,

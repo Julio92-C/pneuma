@@ -61,7 +61,9 @@ def test_every_status(tmp_path):
     assert status(rows, "S3", HIN)["status"] == "PARTIAL"
     assert status(rows, "S3", SMI)["status"] == "NO_SCHEME"
     assert all(status(rows, "S8", sp)["status"] == "LOW_DEPTH" for sp in (SPN, HIN, MTB, SMI))
-    assert all(status(rows, "CTRL", sp)["status"] == "NOT_DETECTED" for sp in (SPN, HIN, MTB, SMI))
+    ctrl = status(rows, "CTRL", SPN)
+    assert ctrl["status"] == "DETECTED_ONLY" and "negative control" in ctrl["notes"]
+    assert all(status(rows, "CTRL", sp)["status"] == "NOT_DETECTED" for sp in (HIN, MTB, SMI))
 
 
 def test_patient_level_rows_and_pooled_references(tmp_path):

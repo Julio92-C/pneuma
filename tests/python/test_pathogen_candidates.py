@@ -99,7 +99,7 @@ def stats(tmp_path, sample, n, bases):
                  "%s.fq.gz\tFASTQ\tDNA\t%d\t%d\t1\t1\t1\n" % (sample, n, bases))
 
 
-def run_depth(tmp_path, rows, stat_rows, min_est_depth=2.5, with_refs=True):
+def run_depth(tmp_path, rows, stat_rows, min_est_depth=2.5, with_refs=True, gate_controls=False):
     samples = write(tmp_path / "samples.tsv", "sample\tpatient\tis_control\tlow_depth\tn_reads\n" +
                     "".join("%s\t%s\t%s\tfalse\t1000\n" % (s, p, c) for s, p, c, _ in rows))
     reports = [kreport(tmp_path, s, spn, 0) for s, _, _, spn in rows]
@@ -111,6 +111,8 @@ def run_depth(tmp_path, rows, stat_rows, min_est_depth=2.5, with_refs=True):
         args += ["--seqkit-stats", *map(str, st)]
     if with_refs:
         args += ["--refdir", str(refdir(tmp_path))]
+    if gate_controls:
+        args += ["--gate-controls"]
     assert pc.main(args) == 0
     out = csv.DictReader(open(tmp_path / "c.tsv"), delimiter="\t")
     return {r["sample"]: r for r in out if r["species"] == "Streptococcus pneumoniae"}
@@ -123,12 +125,12 @@ def test_est_depth_filters_hopeless_candidates(tmp_path):
                       ("B", "P2", "false", 20),     #  2x, patient P2 total 4x -> extract (pooling)
                       ("C", "P2", "false", 20),
                       ("D", "", "false", 20),       #  2x, no patient -> below_est_depth
-                      ("E", "P3", "true", 20)],     #  2x, control: never pooled -> below_est_depth
+                      ("E", "P3", "true", 20)],     #  control: not extracted (no --gate-controls)
                      [(s, 1000, 1_000_000) for s in "ABCDE"])
     assert rows["A"]["decision"] == "extract"
     assert rows["B"]["decision"] == rows["C"]["decision"] == "extract"
     assert rows["D"]["decision"] == "below_est_depth"
-    assert rows["E"]["decision"] == "below_est_depth"
+    assert rows["E"]["decision"] == "control"
     assert float(rows["D"]["est_depth"]) == pytest.approx(2.0)
 
 
@@ -140,3 +142,20 @@ def test_est_depth_unknown_keeps_old_behaviour(tmp_path):
 def test_est_depth_zero_disables_filter(tmp_path):
     rows = run_depth(tmp_path, [("D", "", "false", 20)], [("D", 1000, 1_000_000)], min_est_depth=0)
     assert rows["D"]["decision"] == "extract"
+
+
+def test_control_is_not_extracted_by_default(tmp_path):
+    rows = run_depth(tmp_path, [("K", "", "true", 500)], [("K", 1000, 1_000_000)])
+    assert rows["K"]["decision"] == "control"
+
+
+def test_control_extracted_with_gate_controls(tmp_path):
+    rows = run_depth(tmp_path, [("K", "", "true", 500)], [("K", 1000, 1_000_000)], gate_controls=True)
+    assert rows["K"]["decision"] == "extract"
+
+
+def test_genome_size_column(tmp_path):
+    rows = run_depth(tmp_path, [("A", "P1", "false", 120)], [("A", 1000, 1_000_000)])
+    assert rows["A"]["genome_size"] == "10000"
+    rows = run_depth(tmp_path / "noref", [("A", "P1", "false", 120)], [], with_refs=False) if (tmp_path / "noref").mkdir() is None else None
+    assert rows["A"]["genome_size"] == ""

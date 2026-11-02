@@ -16,10 +16,13 @@ decision (exactly one per sample x species):
                    reported LOW_COVERAGE, not extracted
   extract          otherwise: extract (--include-children), gate, maybe assemble. Also when the depth
                    cannot be estimated (no seqkit stats / reference), as before the filter existed.
+  control          a negative control that would be extracted: detection only (reported
+                   DETECTED_ONLY) unless --gate-controls
 est_depth = the estimate above (NA when unknown).
 clade_reads = the clade count of the species line in the Kraken2 report (species + strains).
 bracken_reads / bracken_fraction = Bracken new_est_reads / fraction_total_reads; 0 when the
 species is absent from the sample's Bracken table, NA when the sample has no Bracken table.
+genome_size = length of the panel reference genome (blank when not staged); the report's size ratio.
 """
 import argparse
 import csv
@@ -28,7 +31,7 @@ import os
 import sys
 
 CAND_COLUMNS = ["sample", "patient", "is_control", "low_depth", "species", "slug", "tier", "action", "taxid",
-                "clade_reads", "bracken_reads", "bracken_fraction", "est_depth", "decision"]
+                "clade_reads", "bracken_reads", "bracken_fraction", "est_depth", "decision", "genome_size"]
 SAMPLE_COLUMNS = ["sample", "patient", "is_control", "low_depth", "n_reads", "classified_reads",
                   "unclassified_reads", "unclassified_pct"]
 
@@ -102,7 +105,7 @@ def read_mean_lengths(paths):
 
 
 def run(panel_path, samples_path, kreports, brackens, min_reads, out_path, samples_out,
-        seqkit_stats=(), refdir=None, min_est_depth=0.0):
+        seqkit_stats=(), refdir=None, min_est_depth=0.0, gate_controls=False):
     with open(panel_path, newline="") as fh:
         panel = list(csv.DictReader(fh, delimiter="\t"))
     with open(samples_path, newline="") as fh:
@@ -136,12 +139,15 @@ def run(panel_path, samples_path, kreports, brackens, min_reads, out_path, sampl
                 b_reads, b_frac = "NA", "NA"
             g, m = sizes.get(p["species"]), mean_len.get(sid)
             est = n * m / g if g and m else None
+            decision = decide(p["action"], low, n, min_reads)
+            if decision == "extract" and truthy(s["is_control"]) and not gate_controls:
+                decision = "control"   # negative controls: detection only unless --gate-controls
             cand_rows.append({
                 "sample": sid, "patient": s["patient"], "is_control": s["is_control"], "low_depth": s["low_depth"],
                 "species": p["species"], "slug": p["slug"], "tier": p["tier"], "action": p["action"],
                 "taxid": p["taxid"], "clade_reads": n, "bracken_reads": b_reads, "bracken_fraction": b_frac,
                 "est_depth": "NA" if est is None else "%.2f" % est,
-                "decision": decide(p["action"], low, n, min_reads),
+                "decision": decision, "genome_size": g or "",
             })
     apply_depth_filter(cand_rows, min_est_depth)
     for path, columns, rows in ((out_path, CAND_COLUMNS, cand_rows), (samples_out, SAMPLE_COLUMNS, sample_rows)):
@@ -183,12 +189,14 @@ def main(argv=None):
     ap.add_argument("--refdir", default=None, help="panel reference genomes (<accession>.fna.gz)")
     ap.add_argument("--min-est-depth", type=float, default=0.0,
                     help="skip extraction below this estimated depth (sample and patient-pooled); 0 = off")
+    ap.add_argument("--gate-controls", action="store_true",
+                    help="extract and gate negative controls like samples (default: detection only)")
     ap.add_argument("--out", default="pathogen_candidates.tsv")
     ap.add_argument("--samples-out", default="pathogen_samples.tsv")
     args = ap.parse_args(argv)
     try:
         rows = run(args.panel, args.samples, args.kreports, args.bracken, args.min_reads, args.out, args.samples_out,
-                   args.seqkit_stats, args.refdir, args.min_est_depth)
+                   args.seqkit_stats, args.refdir, args.min_est_depth, args.gate_controls)
     except (ValueError, KeyError) as exc:
         print("ERROR: %s" % exc, file=sys.stderr)
         return 1

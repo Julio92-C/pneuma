@@ -33,6 +33,7 @@ CANDIDATES = {  # (sample, species): (clade_reads, decision); default (0, not_de
     ("S4", HIN): (400, "extract"), ("S5", HIN): (380, "extract"),
     ("S6", SPN): (350, "extract"), ("S7", SPN): (360, "extract"),
     ("S8", SPN): (12, "low_depth"),
+    ("CTRL", SPN): (40, "control"),
 }
 UNITS = [  # unit, level, sample, patient, samples, species, gate pass, depth, breadth
     ("S1.Streptococcus_pneumoniae", "sample", "S1", "P1", "S1", SPN, "true", "25.1", "0.98"),

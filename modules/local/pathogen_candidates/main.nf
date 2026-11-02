@@ -32,6 +32,7 @@ process PATHOGEN_CANDIDATES {
         ${seqkit_arg} \\
         --refdir ${refdir} \\
         --min-est-depth ${params.pathogen_min_est_depth} \\
+        ${params.pathogen_gate_controls ? '--gate-controls' : ''} \\
         --out pathogen_candidates.tsv \\
         --samples-out pathogen_samples.tsv
     """

@@ -40,7 +40,7 @@ STATUS_HELP = [
     ("SPECIES_NOT_CONFIRMED", "best ANI hit is another species, or ANI below ani_min: no typing under this name"),
     ("ASSEMBLY_FAILED", "passed the coverage gate but Flye/Medaka produced no assembly"),
     ("LOW_COVERAGE", "reads present but below the coverage gate (or below --pathogen_min_reads / --pathogen_min_est_depth)"),
-    ("DETECTED_ONLY", "detect-only species with Kraken2 reads (no reconstruction)"),
+    ("DETECTED_ONLY", "detect-only species, or a negative control, with Kraken2 reads (no reconstruction)"),
     ("LOW_DEPTH", "sample below --min_reads after host removal: reconstruction skipped"),
     ("NOT_DETECTED", "no Kraken2 read in the species clade"),
 ]
@@ -293,6 +293,10 @@ def build_report(panel_path, cand_path, samples_path, units_path, results_root):
                     row.update(read_level_genes(sid, taxids, res))
             elif decision == "detect":
                 row["status"] = "DETECTED_ONLY" if clade > 0 else "NOT_DETECTED"
+            elif decision == "control":
+                row["status"] = "DETECTED_ONLY" if clade > 0 else "NOT_DETECTED"
+                add_note(row, "negative control: not reconstructed (--pathogen_gate_controls)")
+                row.update(read_level_genes(sid, taxids, res))
             elif decision == "not_detected":
                 row["status"] = "NOT_DETECTED"
             elif decision == "below_min_reads":

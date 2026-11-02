@@ -31,7 +31,7 @@ S8	P6	false	true	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct
 S8	P6	false	true	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	low_depth
 S8	P6	false	true	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	low_depth
 S8	P6	false	true	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	low_depth
-CTRL		true	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	0	0	0	not_detected
+CTRL		true	false	Streptococcus pneumoniae	Streptococcus_pneumoniae	1	reconstruct	1313	40	40	0.01	control
 CTRL		true	false	Haemophilus influenzae	Haemophilus_influenzae	1	reconstruct	727	0	0	0	not_detected
 CTRL		true	false	Mycobacterium tuberculosis	Mycobacterium_tuberculosis	D	detect	1773	0	0	0	detect
 CTRL		true	false	Streptococcus mitis	Streptococcus_mitis	R	reconstruct	28037	0	0	0	not_detected
