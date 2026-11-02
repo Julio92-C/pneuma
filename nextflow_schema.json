@@ -504,6 +504,12 @@
                     "exists": true,
                     "description": "Reference accession per panel species and confusable (species, accession, role). Default: the bundled assets/panel_references.tsv file."
                 },
+                "pathogen_ani_confusable_delta": {
+                    "type": "number",
+                    "default": 0.5,
+                    "minimum": 0,
+                    "description": "When the best skani hit is a confusable relative (e.g. Shigella for E. coli) and the panel species' own reference is within this many ANI points (and >= ani_min), the species is reported NOT_RESOLVED_BY_ANI (needs marker genes / MLST) instead of another species."
+                },
                 "pathogen_gate_controls": {
                     "type": "boolean",
                     "description": "Extract, gate and assemble negative controls like samples. Default: controls are detection only (DETECTED_ONLY with a note)."

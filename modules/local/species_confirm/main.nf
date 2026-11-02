@@ -15,6 +15,7 @@ process SPECIES_CONFIRM {
     script:
     """
     species_confirm.py --unit '${meta.id}' --species '${meta.species}' --ani-min ${meta.ani_min} \
-        --skani ${skani} --references ${references} --out ${meta.id}.species.tsv
+        --skani ${skani} --references ${references} \
+        --confusable-delta ${params.pathogen_ani_confusable_delta} --out ${meta.id}.species.tsv
     """
 }
