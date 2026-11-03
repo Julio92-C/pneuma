@@ -4,7 +4,8 @@
 Each input file holds tab-separated rows: name, version, path (relative to the database output
 directory), sha256. The output has the header `name version path sha256`, one row per database
 in a fixed order (Phase 1 databases, then the pathogen databases), with `--root` prepended to every
-new relative path; an absolute path (a database passed by path at run time) is kept as is. `--existing` (a previous database_manifest.tsv in the same directory) keeps its rows for
+new relative path; an absolute path or URL (a database passed at run time) is kept as is. `--existing`
+(a previous database_manifest.tsv in the same directory) keeps its rows for
 databases that were not rebuilt in this run (their paths are already absolute). Fails (exit 1) on a
 row with a missing field or an empty sha256/version, and when there are no rows at all.
 """
@@ -45,7 +46,7 @@ def build(row_files, root, existing=None):
                         f"{fname}:{lineno}: incomplete row (need name, version, path, sha256): {line!r}")
                     continue
                 name, version, path, sha = cols
-                full = path if path.startswith("/") else f"{root.rstrip('/')}/{path}"
+                full = path if path.startswith("/") or "://" in path else f"{root.rstrip('/')}/{path}"
                 rows.append((name, version, full, sha))
     if problems:
         raise ValueError("\n".join(problems))

@@ -89,3 +89,10 @@ def test_absolute_row_path_is_kept_and_replaces_existing_row(tmp_path):
     out = mod.build([str(rows)], "/db", str(existing))
     assert out[0] == ("kraken2_pluspf", "user-supplied", "/data/k2_pluspf_08gb", "b" * 64)
     assert ("checkm2_db", "3", "/db/checkm2", "c" * 64) in out
+
+
+def test_url_row_path_is_kept(tmp_path):
+    rows = tmp_path / "01_kraken2_pluspf.row.tsv"
+    row = ["kraken2_pluspf", "supplied at run time", "https://example.org/db/k2.tar.gz", "b" * 64]
+    rows.write_text("\t".join(row) + "\n")
+    assert mod.build([str(rows)], "", None)[0][2] == "https://example.org/db/k2.tar.gz"
