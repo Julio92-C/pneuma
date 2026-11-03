@@ -234,13 +234,19 @@ def usedDatabaseRows(Map databases) {
     def manifest = databases.database_manifest ? readDatabaseManifest(file(databases.database_manifest)) : [:]
     def used = [ [ 'kraken2_pluspf', 'kraken2_db', '01' ], [ 'ncbi_taxdump', 'taxdump', '02' ],
                  [ 'hostile_index', 'host_index', '03' ] ]
-    // the location as given: a URL keeps its scheme (file(url).toString() drops it), a local path is made absolute
-    def location = { String p -> p.contains('://') ? p : file(p).toString() }
-    return used.findAll { name, key, _order -> databases[key] && manifest[name]?.path != location(databases[key].toString()) }
+    return used.findAll { name, key, _order -> databases[key] && manifest[name]?.path != databaseLocation(databases[key].toString()) }
         .collect { name, key, order ->
             def p = databases[key].toString()
-            [ name, order, 'supplied at run time', location(p), file(p) ]
+            [ name, order, 'supplied at run time', databaseLocation(p), file(p) ]
         }
+}
+
+//
+// A database location as given: a URL keeps its scheme (file(url).toString() drops it), a local
+// path is made absolute.
+//
+def databaseLocation(String p) {
+    return p.contains('://') ? p : file(p).toString()
 }
 
 //
