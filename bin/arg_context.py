@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genomic context of ARG hits: plasmid / chromosomal_mge / chromosome / unresolved.
+"""Genomic context of ARG hits (or VF / MGE hits, --abricate-db): plasmid / chromosomal_mge / chromosome / unresolved.
 
 Inputs are pooled over samples: every sequence id is "<sample>__<id>" (an ONT read for --route reads, an
 assembled contig for --route contigs). One output row per ABRicate CARD hit, classified from geNomad
@@ -184,7 +184,8 @@ def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--route", required=True, choices=["reads", "contigs"])
-    ap.add_argument("--abricate", required=True, help="ABRicate output over all samples (CARD hits are used)")
+    ap.add_argument("--abricate", required=True, help="ABRicate output over all samples")
+    ap.add_argument("--abricate-db", default="card", help="ABRicate database whose hits are classified (card, vfdb, plasmidfinder...)")
     ap.add_argument("--lengths", required=True, help="seqkit fx2tab -n -i -l of the classified sequences")
     ap.add_argument("--genomad-scores", default="", help="<prefix>_aggregated_classification.tsv")
     ap.add_argument("--genomad-virus", default="", help="<prefix>_virus_summary.tsv")
@@ -198,7 +199,7 @@ def main(argv=None):
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     mob = read_mob_contigs(a.mob_contigs) if a.mob_contigs else read_mob_typer(a.mob_typer)
-    rows = loci(a.route, read_abricate(a.abricate), read_lengths(a.lengths), read_genomad_scores(a.genomad_scores),
+    rows = loci(a.route, read_abricate(a.abricate, a.abricate_db.lower()), read_lengths(a.lengths), read_genomad_scores(a.genomad_scores),
                 read_proviruses(a.genomad_virus), read_mge_genes(a.genomad_genes), mob,
                 a.min_flank, a.mge_window, a.plasmid_min, a.chrom_min)
     with open(a.out, "w", newline="") as fh:
