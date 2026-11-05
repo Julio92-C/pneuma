@@ -94,3 +94,16 @@ def test_main_contigs_route_uses_mob_recon_and_proviruses(tmp_path):
     rows = {r["seq"]: r for r in csv.DictReader(open(out), delimiter="\t")}
     assert (rows["S1__contig_1"]["category"], rows["S1__contig_1"]["mob_detail"]) == ("plasmid", "AA123")
     assert (rows["S1__contig_2"]["category"], rows["S1__contig_2"]["reason"]) == ("chromosomal_mge", "provirus")
+
+
+def test_abricate_db_option_selects_vfdb_hits(tmp_path):
+    abr = write(tmp_path / "abr.tsv", ABR_HEAD + abr_row("S1__r1", 3000, 4000, "tet(M)") +
+                abr_row("S1__r1", 5000, 6000, "fimH", db="vfdb", res=""))
+    lengths = write(tmp_path / "len.tsv", "S1__r1\t9000\n")
+    scores = write(tmp_path / "agg.tsv", "seq_name\tchromosome_score\tplasmid_score\tvirus_score\n"
+                   "S1__r1\t0.9\t0.05\t0.05\n")
+    out = tmp_path / "loci.tsv"
+    assert ac.main(["--route", "reads", "--abricate", abr, "--abricate-db", "VFDB", "--lengths", lengths,
+                    "--genomad-scores", scores, "--out", str(out)]) == 0
+    rows = list(csv.DictReader(open(out), delimiter="\t"))
+    assert [(r["gene"], r["category"]) for r in rows] == [("fimH", "chromosome")]
