@@ -156,6 +156,10 @@ with an existing Kraken2 database:
 several flow cells gets several rows with the same `sample`, and their reads are concatenated.
 `sample` and `patient` must match `^[A-Za-z0-9][A-Za-z0-9-]*$`.
 
+`subject` is the general name of this column: the host unit a sample belongs to (a patient, an animal,
+a pen, a cage...). A samplesheet may use either `subject` or `patient` (if both are present on a row they
+must agree); below, "patient" means either. Outputs keep the name `patient`.
+
 `patient` is optional and may be empty (negative controls, or no patient information). It is used
 for one thing only, the **patient-level fallback** of pathogen reconstruction (which is opt-in, see
 [Pathogen reconstruction](#pathogen-reconstruction)):

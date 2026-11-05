@@ -1,0 +1,46 @@
+nextflow_function {
+    name "Test subjectMeta (subject column, patient alias)"
+    script "../main.nf"
+    function "subjectMeta"
+
+    test("subject fills patient and is dropped from the meta") {
+        when {
+            function {
+                """
+                input[0] = [ id: 'S1', batch: 'B1', subject: 'PEN4', patient: [], is_control: false ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == [ id: 'S1', batch: 'B1', patient: 'PEN4', is_control: false ]
+        }
+    }
+
+    test("patient alone is kept") {
+        when {
+            function {
+                """
+                input[0] = [ id: 'S1', batch: 'B1', patient: 'P07', is_control: false ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.patient == 'P07'
+        }
+    }
+
+    test("conflicting subject and patient fail") {
+        when {
+            function {
+                """
+                input[0] = [ id: 'S1', batch: 'B1', subject: 'PEN4', patient: 'P07', is_control: false ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+}
