@@ -115,6 +115,7 @@ workflow PIPELINE_INITIALISATION {
     def ch_samplesheet = channel.empty()
     if (!params.build_databases) {
         def rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+            .collect { row -> [ subjectMeta(row[0]) ] + row.drop(1) }
         warnRunsWithoutControls(rows)
         notePatients(rows)
 
@@ -458,6 +459,19 @@ def checkPanelReferences(dir, references, problems) {
 //
 def metaText(value) {
     return value in [null, []] ? '' : value.toString()
+}
+
+//
+// `subject` is the general name of the grouping unit (patient, animal, pen, ...); `patient` stays as its alias.
+// Both feed meta.patient, which the pathogen subject-level pooling reads; they must agree when both are given.
+//
+def subjectMeta(meta) {
+    def subject = metaText(meta.subject)
+    def patient = metaText(meta.patient)
+    if (subject && patient && subject != patient) {
+        error("Sample '${meta.id}' has subject '${subject}' and patient '${patient}': give one of them, or the same value")
+    }
+    return meta.findAll { k, _v -> k != 'subject' } + [ patient: subject ?: patient ]
 }
 
 //
