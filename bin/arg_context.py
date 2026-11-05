@@ -130,14 +130,25 @@ def read_mob_typer(path):
     return out
 
 
+def read_plasmid_evidence(path):
+    """plasmid_summary.tsv -> sequences with a geNomad plasmid hallmark or conjugation gene."""
+    return {r["seq_name"] for r in read_tsv(path)
+            if (r.get("n_hallmarks") or "0") not in ("0", "NA", "") or (r.get("conjugation_genes") or "NA") != "NA"}
+
+
 def classify(scores, mob_molecule="", in_provirus=False, mge_near=False, flank_ok=True,
-             plasmid_min=0.7, chrom_min=0.7):
-    """scores = (plasmid, chromosome, virus) from geNomad, or None when geNomad has no row."""
+             plasmid_min=0.7, chrom_min=0.7, plasmid_supported=True):
+    """scores = (plasmid, chromosome, virus) from geNomad, or None when geNomad has no row.
+
+    plasmid_supported=False: the sequence has no plasmid hallmark / conjugation gene, so a geNomad plasmid
+    score alone does not make a plasmid call (a replicon from MOB-suite / PlasmidFinder still does)."""
     if not flank_ok:
         return "unresolved", "short_flank"
     pl, ch, _vi = scores if scores else (0.0, 0.0, 0.0)
     g_pl, g_ch = pl >= plasmid_min, ch >= chrom_min
     mob_pl = mob_molecule == "plasmid"
+    score_only = g_pl and not plasmid_supported and not mob_pl
+    g_pl = g_pl and not score_only
     if mob_pl and g_ch:
         return "unresolved", "conflict_mob_plasmid_genomad_chromosome"
     if g_pl or mob_pl:
@@ -148,6 +159,8 @@ def classify(scores, mob_molecule="", in_provirus=False, mge_near=False, flank_o
         return "chromosomal_mge", "mge_genes_nearby"
     if g_ch:
         return "chromosome", "genomad"
+    if score_only:
+        return "unresolved", "plasmid_score_only"
     return "unresolved", "low_scores" if scores else "no_scores"
 
 
@@ -156,7 +169,9 @@ def overlaps(a, b, pad=0):
 
 
 def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge_window=10000,
-         plasmid_min=0.7, chrom_min=0.7):
+         plasmid_min=0.7, chrom_min=0.7, plasmid_evidence=None):
+    """plasmid_evidence: None = geNomad plasmid scores are used as they are; a set = only those sequences may get
+    a plasmid call from the geNomad score (see classify)."""
     rows = []
     for h in hits:
         seq, span = h["seq"], (h["start"], h["end"])
@@ -169,7 +184,8 @@ def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge
         near = sorted({lab for a, b, lab in mge.get(seq, [])
                        if overlaps(span, (a, b), mge_window) and not overlaps(span, (a, b))})
         molecule, detail = mob.get(seq, ("", ""))
-        cat, reason = classify(s, molecule, in_pro, bool(near), flank_ok, plasmid_min, chrom_min)
+        supported = plasmid_evidence is None or seq in plasmid_evidence
+        cat, reason = classify(s, molecule, in_pro, bool(near), flank_ok, plasmid_min, chrom_min, supported)
         rows.append({"sample": sample_of(seq), "route": route, "seq": seq, "seq_len": n, "gene": h["gene"],
                      "drug_class": h["drug_class"], "start": span[0], "end": span[1], "category": cat,
                      "reason": reason,
@@ -192,6 +208,9 @@ def main(argv=None):
     ap.add_argument("--genomad-genes", default="", help="<prefix>_genes.tsv (annotate step)")
     ap.add_argument("--mob-contigs", default="", help="mob_recon contig_report.txt (route contigs)")
     ap.add_argument("--mob-typer", default="", help="mob_typer --multi results (route reads)")
+    ap.add_argument("--genomad-plasmids", default="",
+                    help="<prefix>_plasmid_summary.tsv: when given, a geNomad plasmid call needs a plasmid hallmark or "
+                         "conjugation gene on the sequence (or a replicon from MOB-suite / PlasmidFinder)")
     ap.add_argument("--min-flank", type=int, default=1000, help="bp required on both sides of the gene")
     ap.add_argument("--mge-window", type=int, default=10000, help="bp around the gene searched for MGE genes")
     ap.add_argument("--plasmid-min", type=float, default=0.7)
@@ -201,7 +220,8 @@ def main(argv=None):
     mob = read_mob_contigs(a.mob_contigs) if a.mob_contigs else read_mob_typer(a.mob_typer)
     rows = loci(a.route, read_abricate(a.abricate, a.abricate_db.lower()), read_lengths(a.lengths), read_genomad_scores(a.genomad_scores),
                 read_proviruses(a.genomad_virus), read_mge_genes(a.genomad_genes), mob,
-                a.min_flank, a.mge_window, a.plasmid_min, a.chrom_min)
+                a.min_flank, a.mge_window, a.plasmid_min, a.chrom_min,
+                read_plasmid_evidence(a.genomad_plasmids) if a.genomad_plasmids else None)
     with open(a.out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=LOCUS_COLUMNS, delimiter="\t", lineterminator="\n")
         w.writeheader()

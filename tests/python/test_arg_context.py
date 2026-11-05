@@ -107,3 +107,26 @@ def test_abricate_db_option_selects_vfdb_hits(tmp_path):
                     "--genomad-scores", scores, "--out", str(out)]) == 0
     rows = list(csv.DictReader(open(out), delimiter="\t"))
     assert [(r["gene"], r["category"]) for r in rows] == [("fimH", "chromosome")]
+
+
+@pytest.mark.parametrize("kw,expected", [
+    (dict(scores=(0.9, 0.0, 0.0), plasmid_supported=False), ("unresolved", "plasmid_score_only")),
+    (dict(scores=(0.9, 0.0, 0.0), plasmid_supported=False, mob_molecule="plasmid"), ("plasmid", "genomad+mobsuite")),
+    (dict(scores=(0.9, 0.0, 0.0), plasmid_supported=True), ("plasmid", "genomad")),
+    (dict(scores=(0.9, 0.0, 0.0), plasmid_supported=False, in_provirus=True), ("chromosomal_mge", "provirus")),
+])
+def test_classify_plasmid_evidence(kw, expected):
+    assert ac.classify(**kw) == expected
+
+
+def test_main_genomad_plasmids_requires_hallmark(tmp_path):
+    abr = write(tmp_path / "abr.tsv", ABR_HEAD + abr_row("S1__a", 3000, 4000, "tet(W)") + abr_row("S1__b", 3000, 4000, "tet(W)"))
+    lengths = write(tmp_path / "len.tsv", "S1__a\t9000\nS1__b\t9000\n")
+    scores = write(tmp_path / "agg.tsv", "seq_name\tchromosome_score\tplasmid_score\tvirus_score\n"
+                   "S1__a\t0.02\t0.95\t0.03\nS1__b\t0.02\t0.95\t0.03\n")
+    plas = write(tmp_path / "plas.tsv", "seq_name\tn_hallmarks\tconjugation_genes\nS1__a\t2\tNA\nS1__b\t0\tNA\n")
+    out = tmp_path / "loci.tsv"
+    assert ac.main(["--route", "reads", "--abricate", abr, "--lengths", lengths, "--genomad-scores", scores,
+                    "--genomad-plasmids", plas, "--out", str(out)]) == 0
+    rows = {r["seq"]: (r["category"], r["reason"]) for r in csv.DictReader(open(out), delimiter="\t")}
+    assert rows == {"S1__a": ("plasmid", "genomad"), "S1__b": ("unresolved", "plasmid_score_only")}
