@@ -16,7 +16,7 @@ import sys
 CATEGORIES = ["plasmid", "chromosomal_mge", "chromosome", "unresolved"]
 LOCUS_COLUMNS = ["sample", "route", "seq", "seq_len", "gene", "drug_class", "start", "end", "category",
                  "reason", "plasmid_score", "chromosome_score", "virus_score", "in_provirus", "mge_genes",
-                 "mob_molecule", "mob_detail"]
+                 "mob_molecule", "mob_detail", "gc_gene", "gc_seq", "gc_delta"]
 MGE_RE = re.compile(r"integrase|transposase|recombinase|resolvase|invertase|relaxase|mobili[sz]ation|"
                     r"conjugal|conjugative|excisionase|insertion sequence", re.I)
 GENE_ID_RE = re.compile(r"^(.+)_(\d+)$")
@@ -131,9 +131,48 @@ def read_mob_typer(path):
 
 
 def read_plasmid_evidence(path):
-    """plasmid_summary.tsv -> sequences with a geNomad plasmid hallmark or conjugation gene."""
-    return {r["seq_name"] for r in read_tsv(path)
+    """Sequences with a geNomad plasmid hallmark or conjugation gene.
+
+    Accepts geNomad's genes table (`plasmid_hallmark`, `annotation_conjscan` per gene: every sequence counts) or its
+    plasmid summary (`n_hallmarks`, `conjugation_genes`: only the sequences geNomad kept after its own filters).
+    The genes table is preferred: in chicken batch 2 the summary missed the hallmarks of 78 plasmid-scored reads."""
+    rows = read_tsv(path)
+    if rows and "plasmid_hallmark" in rows[0]:
+        out = set()
+        for r in rows:
+            m = GENE_ID_RE.match(r["gene"])
+            conj = r.get("annotation_conjscan") or "NA"
+            if m and ((r.get("plasmid_hallmark") or "0") not in ("0", "NA", "") or conj != "NA"):
+                out.add(m.group(1))
+        return out
+    return {r["seq_name"] for r in rows
             if (r.get("n_hallmarks") or "0") not in ("0", "NA", "") or (r.get("conjugation_genes") or "NA") != "NA"}
+
+
+def read_replicons(path):
+    """PlasmidFinder hits in an ABRicate file -> {seq: {replicons}} (a replicon on the sequence is plasmid evidence)."""
+    out = {}
+    for h in read_abricate(path, "plasmidfinder"):
+        out.setdefault(h["seq"], set()).add(h["gene"])
+    return out
+
+
+def read_fasta(path):
+    seqs, name = {}, None
+    if exists(path):
+        for line in open(path):
+            if line.startswith(">"):
+                name = line[1:].split()[0]
+                seqs[name] = []
+            elif name:
+                seqs[name].append(line.strip())
+    return {k: "".join(v) for k, v in seqs.items()}
+
+
+def gc(seq):
+    s = seq.upper()
+    acgt = sum(s.count(b) for b in "ACGT")
+    return (s.count("G") + s.count("C")) / acgt if acgt else None
 
 
 def classify(scores, mob_molecule="", in_provirus=False, mge_near=False, flank_ok=True,
@@ -168,8 +207,17 @@ def overlaps(a, b, pad=0):
     return a[0] - pad <= b[1] and b[0] <= a[1] + pad
 
 
+def gc_fields(seq, span):
+    """gc_gene / gc_seq / gc_delta (HGT signal, DRAMMA-style); blank without the sequence."""
+    g = gc(seq[span[0] - 1: span[1]]) if seq else None
+    s = gc(seq) if seq else None
+    if g is None or s is None:
+        return {"gc_gene": "", "gc_seq": "", "gc_delta": ""}
+    return {"gc_gene": "%.3f" % g, "gc_seq": "%.3f" % s, "gc_delta": "%.3f" % (g - s)}
+
+
 def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge_window=10000,
-         plasmid_min=0.7, chrom_min=0.7, plasmid_evidence=None):
+         plasmid_min=0.7, chrom_min=0.7, plasmid_evidence=None, seqs=None):
     """plasmid_evidence: None = geNomad plasmid scores are used as they are; a set = only those sequences may get
     a plasmid call from the geNomad score (see classify)."""
     rows = []
@@ -193,7 +241,8 @@ def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge
                      "chromosome_score": "%.3f" % s[1] if s else "",
                      "virus_score": "%.3f" % s[2] if s else "",
                      "in_provirus": "yes" if in_pro else "no", "mge_genes": ";".join(near),
-                     "mob_molecule": molecule, "mob_detail": detail})
+                     "mob_molecule": molecule, "mob_detail": detail,
+                     **gc_fields(seqs.get(seq) if seqs else None, span)})
     return rows
 
 
@@ -209,8 +258,10 @@ def main(argv=None):
     ap.add_argument("--mob-contigs", default="", help="mob_recon contig_report.txt (route contigs)")
     ap.add_argument("--mob-typer", default="", help="mob_typer --multi results (route reads)")
     ap.add_argument("--genomad-plasmids", default="",
-                    help="<prefix>_plasmid_summary.tsv: when given, a geNomad plasmid call needs a plasmid hallmark or "
-                         "conjugation gene on the sequence (or a replicon from MOB-suite / PlasmidFinder)")
+                    help="<prefix>_genes.tsv (preferred) or <prefix>_plasmid_summary.tsv: when given, a geNomad plasmid "
+                         "call needs a plasmid hallmark or conjugation gene on the sequence (or a replicon from MOB-suite / "
+                         "a PlasmidFinder hit in --abricate)")
+    ap.add_argument("--fasta", default="", help="FASTA of the classified sequences (adds gc_gene / gc_seq / gc_delta)")
     ap.add_argument("--min-flank", type=int, default=1000, help="bp required on both sides of the gene")
     ap.add_argument("--mge-window", type=int, default=10000, help="bp around the gene searched for MGE genes")
     ap.add_argument("--plasmid-min", type=float, default=0.7)
@@ -218,10 +269,14 @@ def main(argv=None):
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     mob = read_mob_contigs(a.mob_contigs) if a.mob_contigs else read_mob_typer(a.mob_typer)
+    for seq, reps in read_replicons(a.abricate).items():      # PlasmidFinder on the same sequence = replicon evidence
+        _molecule, detail = mob.get(seq, ("", ""))
+        mob[seq] = ("plasmid", ",".join(sorted(reps | {x for x in detail.split(",") if x})))
     rows = loci(a.route, read_abricate(a.abricate, a.abricate_db.lower()), read_lengths(a.lengths), read_genomad_scores(a.genomad_scores),
                 read_proviruses(a.genomad_virus), read_mge_genes(a.genomad_genes), mob,
                 a.min_flank, a.mge_window, a.plasmid_min, a.chrom_min,
-                read_plasmid_evidence(a.genomad_plasmids) if a.genomad_plasmids else None)
+                read_plasmid_evidence(a.genomad_plasmids) if a.genomad_plasmids else None,
+                read_fasta(a.fasta) if a.fasta else None)
     with open(a.out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=LOCUS_COLUMNS, delimiter="\t", lineterminator="\n")
         w.writeheader()

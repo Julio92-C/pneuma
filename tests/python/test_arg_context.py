@@ -130,3 +130,40 @@ def test_main_genomad_plasmids_requires_hallmark(tmp_path):
                     "--genomad-plasmids", plas, "--out", str(out)]) == 0
     rows = {r["seq"]: (r["category"], r["reason"]) for r in csv.DictReader(open(out), delimiter="\t")}
     assert rows == {"S1__a": ("plasmid", "genomad"), "S1__b": ("unresolved", "plasmid_score_only")}
+
+
+def test_genes_table_is_plasmid_evidence(tmp_path):
+    genes = write(tmp_path / "genes.tsv",
+                  "gene\tstart\tend\tplasmid_hallmark\tannotation_conjscan\tannotation_description\n"
+                  "S1__a_1\t10\t500\t1\tNA\trep protein\n"
+                  "S1__b_1\t10\t500\t0\tNA\thypothetical\n"
+                  "S1__c_1\t10\t500\t0\tMOBQ\trelaxase\n")
+    assert ac.read_plasmid_evidence(genes) == {"S1__a", "S1__c"}
+    summary = write(tmp_path / "plas.tsv", "seq_name\tn_hallmarks\tconjugation_genes\nS1__a\t2\tNA\nS1__b\t0\tNA\n")
+    assert ac.read_plasmid_evidence(summary) == {"S1__a"}
+
+
+def test_plasmidfinder_hit_on_the_read_is_replicon_evidence(tmp_path):
+    abr = write(tmp_path / "abr.tsv", ABR_HEAD + abr_row("S1__r", 3000, 4000, "tet(L)", res="tetracycline") +
+                abr_row("S1__r", 6000, 6500, "rep27_2_repA(pSGG1)", db="plasmidfinder", res=""))
+    lengths = write(tmp_path / "len.tsv", "S1__r\t9000\n")
+    scores = write(tmp_path / "agg.tsv", "seq_name\tchromosome_score\tplasmid_score\tvirus_score\nS1__r\t0.02\t0.95\t0.03\n")
+    genes = write(tmp_path / "genes.tsv", "gene\tstart\tend\tplasmid_hallmark\tannotation_conjscan\tannotation_description\n"
+                  "S1__r_1\t3000\t4000\t0\tNA\ttetracycline efflux\n")
+    out = tmp_path / "loci.tsv"
+    assert ac.main(["--route", "reads", "--abricate", abr, "--lengths", lengths, "--genomad-scores", scores,
+                    "--genomad-genes", genes, "--genomad-plasmids", genes, "--out", str(out)]) == 0
+    row = list(csv.DictReader(open(out), delimiter="\t"))[0]
+    assert (row["category"], row["reason"], row["mob_detail"]) == ("plasmid", "genomad+mobsuite", "rep27_2_repA(pSGG1)")
+
+
+def test_gc_delta_from_fasta(tmp_path):
+    seq = "A" * 1000 + "GC" * 500 + "A" * 1000          # gene 1001-2000 is all GC
+    fa = write(tmp_path / "r.fa", ">S1__r\n" + seq + "\n")
+    abr = write(tmp_path / "abr.tsv", ABR_HEAD + abr_row("S1__r", 1001, 2000, "tet(W)", res="tetracycline"))
+    lengths = write(tmp_path / "len.tsv", "S1__r\t3000\n")
+    out = tmp_path / "loci.tsv"
+    assert ac.main(["--route", "reads", "--abricate", abr, "--lengths", lengths, "--fasta", fa, "--out", str(out)]) == 0
+    row = list(csv.DictReader(open(out), delimiter="\t"))[0]
+    assert (row["gc_gene"], row["gc_seq"], row["gc_delta"]) == ("1.000", "0.333", "0.667")
+    assert list(row) == ac.LOCUS_COLUMNS
