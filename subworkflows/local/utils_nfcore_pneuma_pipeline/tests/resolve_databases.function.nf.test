@@ -105,4 +105,34 @@ nextflow_function {
             assert err.contains('--host_index')
         }
     }
+
+    test("--genomic_context resolves genomad_db from --db_dir") {
+        when {
+            function {
+                """
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', genomic_context: true,
+                             pathogens: false ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.genomad_db == "${projectDir}/tests/data/db_dir/genomad_db"
+        }
+    }
+
+    test("--genomic_context without a geNomad database fails with the way out") {
+        when {
+            function {
+                """
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fasta', abricate_dbs: 'card', genomic_context: true,
+                             pathogens: false ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+            assert function.stdout.join('\n').contains('--genomic_context false')
+        }
+    }
 }

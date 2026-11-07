@@ -96,3 +96,10 @@ def test_url_row_path_is_kept(tmp_path):
     row = ["kraken2_pluspf", "supplied at run time", "https://example.org/db/k2.tar.gz", "b" * 64]
     rows.write_text("\t".join(row) + "\n")
     assert mod.build([str(rows)], "", None)[0][2] == "https://example.org/db/k2.tar.gz"
+
+
+def test_genomad_row_is_ordered_last(tmp_path):
+    g = write(tmp_path, "14.tsv", ("genomad_db", "1.11", "genomad_db", SHA))
+    b = write(tmp_path, "13.tsv", ("panel_references", "tsv-abc", "panel_references", SHA))
+    k = write(tmp_path, "01.tsv", ("kraken2_pluspf", "20250402", "k", SHA))
+    assert [r[0] for r in mod.build([g, b, k], "/r")] == ["kraken2_pluspf", "panel_references", "genomad_db"]
