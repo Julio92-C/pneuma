@@ -1,0 +1,3 @@
+gene	start	end	plasmid_hallmark	annotation_conjscan	annotation_description
+S1__p_1	3001	4000	0	NA	tetracycline efflux
+S1__c_1	3001	4000	0	NA	RNA polymerase beta

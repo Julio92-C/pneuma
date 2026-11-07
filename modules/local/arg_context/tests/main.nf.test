@@ -1,0 +1,26 @@
+nextflow_process {
+    name "Test ARG_CONTEXT"
+    script "../main.nf"
+    process "ARG_CONTEXT"
+
+    test("replicon-backed plasmid read and a chromosomal read") {
+        when {
+            params { context_min_flank = 1000; context_mge_window = 10000; context_plasmid_min = 0.7; context_chrom_min = 0.7 }
+            process {
+                """
+                def d = "${projectDir}/tests/data/context"
+                input[0] = [ 'reads', 'card', file("\$d/hits.tsv"), file("\$d/lengths.tsv"), file("\$d/reads.fa"),
+                             file("\$d/agg.tsv"), file("\$d/virus.tsv"), file("\$d/genes.tsv"), [] ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            def rows = path(process.out.loci[0][2]).readLines()
+            def head = rows[0].split('\t') as List
+            def cat = rows.drop(1).collect { r -> r.split('\t')[head.indexOf('category')] }
+            assert cat == ['plasmid', 'chromosome']
+            assert path(process.out.score_only[0][2]).readLines().size() == 3
+        }
+    }
+}

@@ -1,0 +1,23 @@
+nextflow_process {
+    name "Test GENOMAD_ENDTOEND"
+    script "../main.nf"
+    process "GENOMAD_ENDTOEND"
+    options "-stub"
+
+    test("stub emits the four tables") {
+        when {
+            params { genomad_splits = 8 }
+            process {
+                """
+                input[0] = [ [id:'hit_reads'], file("${projectDir}/tests/data/context/reads.fa", checkIfExists: true) ]
+                input[1] = file("${projectDir}/tests/data/db_dir/genomad_db", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.scores[0][1]).readLines()[0] == "seq_name\tchromosome_score\tplasmid_score\tvirus_score"
+            assert path(process.out.genes[0][1]).readLines()[0].startsWith("gene\tstart\tend")
+        }
+    }
+}
