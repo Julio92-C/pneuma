@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.3.0 - 2026-10-25
+## v0.3.0 - 2026-11-08
 
 Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pathogens` (default `false`) turns it on, so a run without it needs no pathogen database and behaves as in v0.2.x.
 
