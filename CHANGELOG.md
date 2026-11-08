@@ -3,14 +3,22 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.4.0 - unreleased
+
+### `Added`
+
+- Samplesheet column `subject` (the host unit samples are grouped by: patient, animal, pen...); `patient` stays as its alias and outputs keep the name `patient`.
+- `bin/arg_context.py`, `bin/arg_context_summary.py`, `bin/bin_recovery.py` (prototype, not yet wired into the workflow): genomic context of ARGs (plasmid / chromosomal MGE / chromosome / unresolved) from reads and from community contigs, and community bins with read-vote species and depth/breadth across a subject's samples.
+- Genomic context, layer 1 (`GENOMIC_CONTEXT`, on by default; `--genomic_context false` skips it): the reads carrying an ABRicate hit are pooled and classified with geNomad 1.13.0, and every hit is placed as plasmid / chromosomal_mge / chromosome / unresolved (`context/reads/loci_reads_<db>.tsv`). A plasmid call needs plasmid evidence on the read: a hallmark or conjugation gene in geNomad's gene table, or a PlasmidFinder / MOB-suite replicon. Parameters `--context_databases`, `--context_min_flank`, `--context_mge_window`, `--context_plasmid_min`, `--context_chrom_min`, `--genomad_splits`.
+- geNomad database in `--build_databases` (`genomad_db/`, `--skip_genomad_download`) and `--db_dir`; `--genomad_db` for an existing one.
+- `bin/hit_reads.py`; `bin/arg_context.py` reads plasmid evidence from geNomad's gene table, counts a PlasmidFinder hit on the same read as a replicon, and reports `gc_gene` / `gc_seq` / `gc_delta`.
+
 ## v0.3.0 - 2026-11-08
 
 Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pathogens` (default `false`) turns it on, so a run without it needs no pathogen database and behaves as in v0.2.x.
 
 ### `Added`
 
-- Samplesheet column `subject` (the host unit samples are grouped by: patient, animal, pen...); `patient` stays as its alias and outputs keep the name `patient`.
-- `bin/arg_context.py`, `bin/arg_context_summary.py`, `bin/bin_recovery.py` (prototype, not yet wired into the workflow): genomic context of ARGs (plasmid / chromosomal MGE / chromosome / unresolved) from reads and from community contigs, and community bins with read-vote species and depth/breadth across a subject's samples.
 - Phase 2, pathogen reconstruction (spec 4.2, 5.5, 5.6): `PATHOGEN_RECONSTRUCTION` / `PATHOGEN_REPORT` with read extraction (KrakenTools `--include-children`), a minimap2 coverage gate (`--gate_min_depth`, `--gate_min_breadth`), Flye (`--flye_mode`, `--flye_meta`) -> Medaka (`--medaka_model`, staged model file), CheckM2, QUAST, skani species confirmation (`ani_min`), mlst, AMRFinderPlus (`--organism` map), ABRicate VFDB + PlasmidFinder on contigs, Bakta and optional MOB-suite (`--run_mobsuite`). Detect-only species report reads and Bracken abundance. Enabled with `--pathogens`.
 - Patient-level fallback (amends the spec): optional `patient` samplesheet column; when no sample of a patient passes the gate for a species, its extracted reads are pooled across the patient's non-control samples, re-gated, assembled, and checked for mixed strains (minor-allele sites per kb, `--mixed_*`); `MIXED_STRAINS` status; cohort TSV `level` and `contributing_samples` columns; pooled results shown as `<STATUS> (pooled, patient <id>)` under each contributing sample. No cohort-level pooling.
 - `assets/pathogen_panel.csv` (WHO-priority respiratory panel, tiers 1/2/3/D/R, with an optional `amrfinder_organism` column) and `assets/panel_references.tsv` (RefSeq reference genomes of panel species and confusables). `resolve_panel` resolves names to taxids (NCBI synonyms accepted with a warning; unknown names stop the run with suggestions).

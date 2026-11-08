@@ -19,3 +19,5 @@ docs/superpowers/
 tests/data/pathogen_fixture/genomes/
 tests/data/pathogen_fixture/reads/
 tests/data/pathogen_fixture/samples/
+# genomic-context real-data fixture (tests/make_context_fixture.sh)
+tests/data/context_real/
