@@ -16,5 +16,6 @@ workflow FUNCTIONAL_READS {
     emit:
     summary    = ABRICATE_MERGE.out.summary
     per_sample = ABRICATE_READS.out.csv
+    tagged     = TAG_READS.out.fasta      // [ meta, <sample>_kraken2ID_PFP.fasta ]: the reads ABRicate scanned
     versions   = TAG_READS.out.versions.first().mix(ABRICATE_READS.out.versions.first(), ABRICATE_MERGE.out.versions)
 }

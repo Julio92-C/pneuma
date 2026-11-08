@@ -1,0 +1,26 @@
+nextflow_workflow {
+    name "Test GENOMIC_CONTEXT"
+    script "../main.nf"
+    workflow "GENOMIC_CONTEXT"
+    options "-stub"
+
+    test("stub run gives one loci table per context database") {
+        when {
+            params { context_databases = 'card,plasmidfinder'; genomad_splits = 8; context_min_flank = 1000; context_mge_window = 10000;
+                     context_plasmid_min = 0.7; context_chrom_min = 0.7 }
+            workflow {
+                """
+                input[0] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1_kraken2ID_PFP.fasta", checkIfExists: true) ])
+                input[1] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1_abricate.csv", checkIfExists: true) ])
+                input[2] = "${projectDir}/tests/data/db_dir/genomad_db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.loci.size() == 2
+            assert workflow.out.loci.collect { it[1] }.sort() == ['card', 'plasmidfinder']
+            assert path(workflow.out.taxa[0]).readLines() == ["S1__r1\t562"]
+        }
+    }
+}
