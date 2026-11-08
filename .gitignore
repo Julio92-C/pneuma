@@ -13,3 +13,9 @@ null/
 .superpowers/
 .nf-test/
 .nf-test.log
+# Planning docs (local only; never committed)
+docs/superpowers/
+# Phase 2 fixture: downloaded genomes, simulated reads, generated per-sample files
+tests/data/pathogen_fixture/genomes/
+tests/data/pathogen_fixture/reads/
+tests/data/pathogen_fixture/samples/

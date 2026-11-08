@@ -6,6 +6,7 @@ Inputs (all optional, any number of files each):
   --kraken    <sample>.kraken2.report.txt  Kraken2 reports
   --abricate  <sample>_abricate.csv        per-sample ABRicate --csv outputs
   --rcf-stat  pneuma_controls.rcf.stat.csv Recentrifuge statistics (CSV)
+  --pathogen-cohort pathogen_cohort.tsv  PNEUMA pathogen report (cohort TSV)
 
 Outputs (written to --outdir, only when the matching input is present):
   pneuma_general_stats_mqc.tsv  columns for the General Statistics table:
@@ -13,6 +14,11 @@ Outputs (written to --outdir, only when the matching input is present):
   hostile_mqc.tsv               "Host removal" section (reads in/out/removed)
   abricate_mqc.tsv              "ABRicate hits" section (hits per database)
   recentrifuge_mqc.tsv          "Recentrifuge" section (per-sample statistics)
+  pathogen_status_mqc.tsv       "Pathogen reconstruction" section (status counts per sample)
+  pathogen_funnel_mqc.tsv       "Pathogen reconstruction funnel": extracted -> gate -> assembled ->
+                                confirmed / why not -> typed, at sample and patient level
+  meridian_stage_errors_mqc.tsv "MERIDIAN failed stages" (only when a comparison has failed stages;
+                                input: --meridian-stage-errors <comparison>.stage_errors.csv ...)
 
 Sample names are taken from the file names so that they match the names
 MultiQC derives for its own modules.
@@ -289,12 +295,139 @@ def write_rcf(path, rcf):
     _write(path, header, columns, rcf)
 
 
+PATHOGEN_STATUSES = ["TYPED", "PARTIAL", "NO_SCHEME", "MIXED_STRAINS", "SPECIES_NOT_CONFIRMED", "NOT_RESOLVED_BY_ANI",
+                     "ASSEMBLY_FAILED", "LOW_COVERAGE", "DETECTED_ONLY", "LOW_DEPTH"]
+FUNNEL = [("extracted", "Reads extracted", "reads extracted and run through the coverage gate"),
+          ("passed_gate", "Passed gate", "passed the coverage gate (assembly attempted)"),
+          ("assembled", "Assembled", "Flye/Medaka produced a draft genome"),
+          ("confirmed", "Species confirmed", "best skani hit is the panel species, ANI >= ani_min"),
+          ("unresolved_by_ani", "Unresolved (close relative)", "a listed close relative within the ANI margin"),
+          ("ani_below_min", "ANI below min", "best hit is the panel species but below ani_min"),
+          ("other_species", "Other species", "best hit is another species"),
+          ("typed", "Typed", "MLST / AMRFinderPlus / ABRicate results reported (every assembly is typed)")]
+REASON_KEY = {"confirmed": "confirmed", "unresolved_confusable": "unresolved_by_ani", "ani_below_min": "ani_below_min",
+              "best_hit_other_species": "other_species"}
+
+
+def parse_pathogen_cohort(path):
+    """{sample: {<status>: n, typed: 'Species STn; ...', pooled: '...'}} from level=sample rows."""
+    data = OrderedDict()
+    with open(str(path), newline="") as fh:
+        rows = list(csv.DictReader(fh, delimiter="\t"))
+    if rows and "level" not in rows[0]:
+        _warn(path, "not a pathogen_cohort.tsv (no 'level' column)")
+        return data
+    for r in rows:
+        if r["level"] != "sample":
+            continue
+        row = data.setdefault(r["sample"], OrderedDict([(s, 0) for s in PATHOGEN_STATUSES] + [("typed", ""), ("pooled", "")]))
+        if r["status"] in row:
+            row[r["status"]] += 1
+        if r["status"] == "TYPED":
+            row["typed"] = "; ".join(filter(None, [row["typed"], "%s ST%s" % (r["species"], r["st"])]))
+        if r.get("pooled_result"):
+            row["pooled"] = "; ".join(filter(None, [row["pooled"], "%s: %s" % (r["species"], r["pooled_result"])]))
+    return data
+
+
+def parse_pathogen_funnel(path):
+    """{'Sample level' | 'Patient level (pooled)': {step: n}} from a pathogen_cohort.tsv."""
+    levels = OrderedDict([("sample", "Sample level"), ("patient", "Patient level (pooled)")])
+    data = OrderedDict((name, OrderedDict((k, 0) for k, _t, _d in FUNNEL)) for name in levels.values())
+    with open(str(path), newline="") as fh:
+        rows = list(csv.DictReader(fh, delimiter="	"))
+    for r in rows:
+        if r.get("level") not in levels or not r.get("depth"):
+            continue
+        row = data[levels[r["level"]]]
+        row["extracted"] += 1
+        if r["status"] != "LOW_COVERAGE":
+            row["passed_gate"] += 1
+        if r.get("contigs"):
+            row["assembled"] += 1
+        key = REASON_KEY.get(r.get("confirm_reason", ""))
+        if key:
+            row[key] += 1
+        if r.get("gene_source") == "contig":
+            row["typed"] += 1
+    return data
+
+
+def write_pathogen_funnel(path, data):
+    header = [
+        "id: 'pathogen_funnel'",
+        "section_name: 'Pathogen reconstruction funnel'",
+        "description: 'How many sample x species (and patient-level pooled) units reached each step, and why "
+        "assemblies were not species-confirmed. Every assembly is typed; unconfirmed ones under their best match.'",
+        "plot_type: 'table'",
+        "pconfig:",
+        "    id: 'pathogen_funnel_table'",
+        "    title: 'Pathogen reconstruction funnel'",
+        "headers:",
+    ]
+    for key, title, desc in FUNNEL:
+        header += ["    %s:" % key, "        title: '%s'" % title, "        description: '%s'" % desc,
+                   "        format: '{:,.0f}'"]
+    _write(path, header, [k for k, _t, _d in FUNNEL], data)
+
+
+def parse_stage_errors(paths):
+    """{'<comparison>: <stage>': {stage, error}} from MERIDIAN <comparison>.stage_errors.csv files."""
+    data = OrderedDict()
+    for p in paths:
+        comparison = sample_name(p, (".stage_errors.csv",))
+        with open(str(p), newline="") as fh:
+            for r in csv.DictReader(fh):
+                if r.get("stage"):
+                    data["%s: %s" % (comparison, r["stage"])] = OrderedDict(
+                        [("stage", r["stage"]), ("error", " ".join((r.get("error") or "").split()))])
+    return data
+
+
+def write_stage_errors(path, data):
+    header = [
+        "id: 'meridian_stage_errors'",
+        "section_name: 'MERIDIAN failed stages'",
+        "description: 'MERIDIAN analysis stages that failed and were skipped (the rest of the comparison completed). "
+        "See meridian/<comparison>/Reports/stage_errors.csv.'",
+        "plot_type: 'table'",
+        "pconfig:",
+        "    id: 'meridian_stage_errors_table'",
+        "    title: 'MERIDIAN failed stages'",
+        "headers:",
+        "    stage:",
+        "        title: 'Stage'",
+        "    error:",
+        "        title: 'Error'",
+    ]
+    _write(path, header, ["stage", "error"], data)
+
+
+def write_pathogen(path, data):
+    header = [
+        "id: 'pathogen_status'",
+        "section_name: 'Pathogen reconstruction'",
+        "description: 'Per sample: number of panel species in each status (one status per sample x species; NOT_DETECTED is not counted), typed species with their ST, and patient-level pooled results involving the sample. Per-sample HTML reports are in pathogens/report/html/.'",
+        "plot_type: 'table'",
+        "pconfig:",
+        "    id: 'pathogen_status_table'",
+        "    title: 'Pathogen status per sample'",
+        "headers:",
+    ]
+    for key in PATHOGEN_STATUSES:
+        header += ["    %s:" % key, "        title: '%s'" % key, "        format: '{:,.0f}'"]
+    header += ["    typed:", "        title: 'Typed (ST)'", "    pooled:", "        title: 'Pooled (patient level)'"]
+    _write(path, header, PATHOGEN_STATUSES + ["typed", "pooled"], data)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--hostile", nargs="*", default=[])
     parser.add_argument("--kraken", nargs="*", default=[])
     parser.add_argument("--abricate", nargs="*", default=[])
     parser.add_argument("--rcf-stat", nargs="*", default=[])
+    parser.add_argument("--pathogen-cohort", nargs="*", default=[])
+    parser.add_argument("--meridian-stage-errors", nargs="*", default=[])
     parser.add_argument("--outdir", default=".")
     args = parser.parse_args(argv)
 
@@ -331,6 +464,19 @@ def main(argv=None):
         written.append("recentrifuge_mqc.tsv")
     elif args.rcf_stat:
         failed.append("--rcf-stat")
+    pathogen = parse_pathogen_cohort(args.pathogen_cohort[0]) if args.pathogen_cohort else {}
+    if pathogen:
+        write_pathogen(out("pathogen_status_mqc.tsv"), pathogen)
+        written.append("pathogen_status_mqc.tsv")
+    elif args.pathogen_cohort:
+        failed.append("--pathogen-cohort")
+    if pathogen:
+        write_pathogen_funnel(out("pathogen_funnel_mqc.tsv"), parse_pathogen_funnel(args.pathogen_cohort[0]))
+        written.append("pathogen_funnel_mqc.tsv")
+    stage_errors = parse_stage_errors(args.meridian_stage_errors)
+    if stage_errors:
+        write_stage_errors(out("meridian_stage_errors_mqc.tsv"), stage_errors)
+        written.append("meridian_stage_errors_mqc.tsv")
     print("wrote: " + (", ".join(written) or "nothing"), file=sys.stderr)
     if failed:
         print("ERROR: no rows could be built from: " + ", ".join(failed), file=sys.stderr)

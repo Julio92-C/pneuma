@@ -1,0 +1,20 @@
+level	sample	patient	contributing_samples	species	status
+sample	PA1-S1	PA1	PA1-S1	Streptococcus pneumoniae	TYPED
+sample	PA1-S1	PA1	PA1-S1	Veillonella parvula	LOW_COVERAGE
+sample	PB1-S1	PB1	PB1-S1	Streptococcus pneumoniae	LOW_COVERAGE
+sample	PB1-S1	PB1	PB1-S1	Veillonella parvula	LOW_COVERAGE
+sample	PC1-S1	PC1	PC1-S1	Streptococcus pneumoniae	SPECIES_NOT_CONFIRMED
+sample	PC1-S1	PC1	PC1-S1	Streptococcus mitis	LOW_COVERAGE
+sample	PC1-S1	PC1	PC1-S1	Veillonella parvula	LOW_COVERAGE
+sample	PD1-S1	PD1	PD1-S1	Haemophilus influenzae	LOW_COVERAGE
+sample	PD1-S1	PD1	PD1-S1	Veillonella parvula	LOW_COVERAGE
+sample	PD1-S2	PD1	PD1-S2	Haemophilus influenzae	LOW_COVERAGE
+sample	PD1-S2	PD1	PD1-S2	Veillonella parvula	LOW_COVERAGE
+sample	PE1-S1	PE1	PE1-S1	Streptococcus pneumoniae	LOW_COVERAGE
+sample	PE1-S1	PE1	PE1-S1	Veillonella parvula	LOW_COVERAGE
+sample	PE1-S2	PE1	PE1-S2	Streptococcus pneumoniae	LOW_COVERAGE
+sample	PE1-S2	PE1	PE1-S2	Veillonella parvula	LOW_COVERAGE
+patient		PD1	PD1-S1;PD1-S2	Haemophilus influenzae	TYPED
+patient		PD1	PD1-S1;PD1-S2	Veillonella parvula	LOW_COVERAGE
+patient		PE1	PE1-S1;PE1-S2	Streptococcus pneumoniae	MIXED_STRAINS
+patient		PE1	PE1-S1;PE1-S2	Veillonella parvula	LOW_COVERAGE

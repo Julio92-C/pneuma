@@ -3,15 +3,56 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.3.0 - 2026-11-08
+
+Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pathogens` (default `false`) turns it on, so a run without it needs no pathogen database and behaves as in v0.2.x.
+
+### `Added`
+
+- Phase 2, pathogen reconstruction (spec 4.2, 5.5, 5.6): `PATHOGEN_RECONSTRUCTION` / `PATHOGEN_REPORT` with read extraction (KrakenTools `--include-children`), a minimap2 coverage gate (`--gate_min_depth`, `--gate_min_breadth`), Flye (`--flye_mode`, `--flye_meta`) -> Medaka (`--medaka_model`, staged model file), CheckM2, QUAST, skani species confirmation (`ani_min`), mlst, AMRFinderPlus (`--organism` map), ABRicate VFDB + PlasmidFinder on contigs, Bakta and optional MOB-suite (`--run_mobsuite`). Detect-only species report reads and Bracken abundance. Enabled with `--pathogens`.
+- Patient-level fallback (amends the spec): optional `patient` samplesheet column; when no sample of a patient passes the gate for a species, its extracted reads are pooled across the patient's non-control samples, re-gated, assembled, and checked for mixed strains (minor-allele sites per kb, `--mixed_*`); `MIXED_STRAINS` status; cohort TSV `level` and `contributing_samples` columns; pooled results shown as `<STATUS> (pooled, patient <id>)` under each contributing sample. No cohort-level pooling.
+- `assets/pathogen_panel.csv` (WHO-priority respiratory panel, tiers 1/2/3/D/R, with an optional `amrfinder_organism` column) and `assets/panel_references.tsv` (RefSeq reference genomes of panel species and confusables). `resolve_panel` resolves names to taxids (NCBI synonyms accepted with a warning; unknown names stop the run with suggestions).
+- `pathogens/report/pathogen_cohort.tsv` (exactly one status per sample x panel species) and `pathogens/report/html/<sample>.pathogens.html`; MultiQC QUAST, CheckM2 and "Pathogen status per sample" sections. Units lost before the coverage gate show as `LOW_COVERAGE` with a note; MOB-suite writes no file for plasmid-free assemblies.
+- `--build_databases` also prepares CheckM2, Bakta (`--bakta_db_type light|full`, default light), AMRFinderPlus, MOB-suite, the Medaka model, a record of the MLST schemes bundled in the mlst container and the panel reference genomes, all in `database_manifest.tsv`; `--db_dir` resolves them. `--skip_pathogen_download`, `--skip_mobsuite_download`.
+- Tests: public-data fixture generator (`tests/make_pathogen_fixture.py`: NCBI RefSeq genomes + seeded Badread reads), a committed 120-kb real-tool fixture for CI, contract snippets of real tool outputs, read-only + offline container tests (`tests/pathogen_readonly.config`), and slow real-database tests in `tests/pathogen/` (tag `pathogen_real`, `nf-test.pathogen.config`).
+
+### `Changed`
+
+- Pathogen candidates: `--pathogen_min_est_depth` (default 2.5) skips read extraction for a sample x species whose estimated depth (Kraken2 clade reads x mean read length / panel reference genome size) cannot reach the coverage gate, in the sample or pooled over the patient; reported `LOW_COVERAGE` with the estimate. On a 143-sample cohort the old 10-read floor alone sent ~950 candidates to extraction and gating, most of which failed the gate. `0` restores the old behaviour.
+
+- Validation round on a clinical ONT cohort (`docs/validation.md`):
+  - Every assembly is typed (MLST, AMRFinderPlus, ABRicate, Bakta, MOB-suite). One that fails species confirmation keeps its status and is reported under its best skani match (`typed_as`); AMRFinderPlus gets `--organism` only for confirmed genomes.
+  - `pathogen_cohort.tsv` gains `confirm_reason`, `typed_as`, `mimag_grade` (MIMAG-like, CheckM2 only) and `size_ratio` (assembly / panel reference). Purity and the read-back check are flags (notes), never gates.
+  - New status `NOT_RESOLVED_BY_ANI`: the best hit is a listed close relative within `--pathogen_ani_confusable_delta` (default 0.5) ANI points of the panel species (e.g. *E. coli* / *Shigella*).
+  - The read-back check (own reads mapped to the assembly, minor-allele sites per kb) runs for every assembly, not only confirmed patient-level ones.
+  - New `pathogens/report/pathogen_genes.tsv`: one row per AMR / VF / replicon hit with its contig and MOB-suite placement (chromosome or plasmid).
+  - Panel column `mlst_scheme` pins the MLST scheme per species; `none` marks species without one (previously *H. parainfluenzae* was typed with the *H. influenzae* scheme).
+  - Negative controls are detection only (`DETECTED_ONLY` with a note) unless `--pathogen_gate_controls`.
+  - `--meridian_random_effect_tests` defaults to `true` and applies only when `--meridian_random_effect` is set; turning it off with a random effect logs a warning.
+  - `taxonomy/bracken/bracken_skipped.tsv` lists samples without a Bracken table and why.
+  - MultiQC: "Pathogen reconstruction funnel" and "MERIDIAN failed stages" sections.
+  - `pipeline_info/database_manifest.tsv` also records path and sha256 of databases passed directly (`--kraken2_db`, `--taxdump`, `--host_index`).
+
+- MERIDIAN v1.3.1 (`--meridian_container`; adds the `shared_fraction`, `taxa_tree` and `daa_tree` stages; v1.3.1 fixes the `shared_fraction` and `network` failures seen on large cohorts), with three new pass-through options: `--meridian_random_effect_tests` (patient-aware permutation tests), `--meridian_control_match_cols` (negative controls matched per sample by run, else batch) and `--meridian_min_sample_reads` (beta-diversity read floor). Defaults keep the v1.1.0 behaviour.
+
+- `TAXONOMY` also emits the per-sample Bracken tables (`bracken_tsv`).
+- Re-running `--build_databases` into an existing `--db_outdir` keeps the manifest rows of databases not rebuilt.
+- `-profile test` uses `tests/data/pathogen_fixture/taxdump` (a superset of the Phase 1 test taxdump with the panel species).
+- Tube map: the planned pathogen lane is now an active line.
 
 ### `Removed`
 
 - The site-specific SGE cluster profile. On an HPC cluster use `-profile singularity` and pass the scheduler settings in your own config with `-c`; `docs/usage.md` has an SGE example (per-core memory, Kraken2 at 110 GB).
 
+### `Known issues`
+
+- Pathogen defaults (`--gate_min_depth`, `--gate_min_breadth`, `--flye_meta`, `--mixed_max_het_per_kb`, `--pathogen_min_reads`) are provisional until the Phase 3 spike-in validation.
+
 ## v0.2.2 - 2026-10-26
 
 ### `Fixed`
+
+- Host removal with a FASTA `--host_index`: the minimap2 index is built once (`HOSTILE_INDEX`) and shared by every sample. Before, hostile built its own `.mmi` (~7.7 GB for GRCh38) in every task's work dir, filling the disk on large cohorts. A `.mmi` is still used as given.
 
 - The run failed at the very end, after MERIDIAN had finished, with `while scanning a simple key ... END_VERSIONS` (SGE/Singularity HPC cluster, v0.2.1). A `"\n"` in the `MERIDIAN_RUN` script became a real newline at column 0, so Nextflow did not strip the script indent and the indented `END_VERSIONS` heredoc terminator was never matched: `versions.yml` was malformed. The R newline escape is now doubled, and the real-MERIDIAN test checks that every `versions.yml` it emits is a valid YAML map.
 

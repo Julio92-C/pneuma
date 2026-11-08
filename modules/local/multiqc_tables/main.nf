@@ -7,6 +7,8 @@ process MULTIQC_TABLES {
     path kraken_reports // *.kraken2.report.txt
     path abricate_csvs  // *_abricate.csv
     path rcf_stat       // pneuma_controls.rcf.stat.csv (optional: [] when there are no controls)
+    path pathogen_cohort // pathogen_cohort.tsv (optional: [] without --pathogens)
+    path stage_errors    // <comparison>.stage_errors.csv from MERIDIAN (optional: [])
 
     output:
     path "*_mqc.tsv"   , emit: tables
@@ -17,8 +19,10 @@ process MULTIQC_TABLES {
     def kraken   = kraken_reports ? "--kraken ${kraken_reports}"    : ''
     def abricate = abricate_csvs  ? "--abricate ${abricate_csvs}"   : ''
     def rcf      = rcf_stat       ? "--rcf-stat ${rcf_stat}"        : ''
+    def pathogen = pathogen_cohort ? "--pathogen-cohort ${pathogen_cohort}" : ''
+    def errors   = stage_errors   ? "--meridian-stage-errors ${stage_errors}" : ''
     """
-    make_mqc_tables.py ${hostile} ${kraken} ${abricate} ${rcf} --outdir .
+    make_mqc_tables.py ${hostile} ${kraken} ${abricate} ${rcf} ${pathogen} ${errors} --outdir .
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

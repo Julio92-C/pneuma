@@ -112,3 +112,48 @@ def test_check_metadata_two_levels_ok(tmp_path):
     p = tmp_path / "meta.csv"
     p.write_text("sample,g\nA,x\nB,y\nCTRL,z\n", encoding="utf-8")
     mm.check_metadata(p, "g", None, ["CTRL"])
+
+
+# MERIDIAN >= 1.2.0 options: control matching, patient-aware tests, beta read floor.
+def test_render_v12_defaults_keep_old_behaviour():
+    yaml = pytest.importorskip("yaml")
+    cfg = yaml.safe_load(mm.render(TEMPLATE, "lung", "m.csv", "sample_type", None, []))
+    assert cfg["metadata"]["control_match_cols"] == []
+    assert cfg["stats"]["random_effect_tests"] is False
+    assert cfg["beta_diversity"]["min_sample_reads"] == 0
+
+
+def test_render_v12_options():
+    yaml = pytest.importorskip("yaml")
+    cfg = yaml.safe_load(mm.render(TEMPLATE, "lung", "m.csv", "sample_type", "ID", [],
+                                   control_match_cols=["seq_run", "batch"],
+                                   random_effect_tests=True, min_sample_reads=100))
+    assert cfg["metadata"]["control_match_cols"] == ["seq_run", "batch"]
+    assert cfg["stats"]["random_effect_tests"] is True
+    assert cfg["beta_diversity"]["min_sample_reads"] == 100
+
+
+def test_check_metadata_match_col_missing():
+    with pytest.raises(ValueError, match="control-match column 'seq_run'"):
+        mm.check_metadata(DATA / "metadata_test.csv", "sample_type", "ID", [],
+                          control_match_cols=["seq_run"])
+
+
+def test_cli_v12_options(tmp_path):
+    yaml = pytest.importorskip("yaml")
+    out = tmp_path / "config.yaml"
+    mm.main(["--template", str(TPL_PATH), "--out", str(out), "--study-id", "lung",
+             "--metadata", str(DATA / "metadata_test.csv"), "--group", "sample_type",
+             "--random-effect", "ID", "--random-effect-tests",
+             "--control-match-cols", "ID", "--min-sample-reads", "100"])
+    cfg = yaml.safe_load(out.read_text(encoding="utf-8"))
+    assert cfg["metadata"]["control_match_cols"] == ["ID"]
+    assert cfg["stats"]["random_effect_tests"] is True
+    assert cfg["beta_diversity"]["min_sample_reads"] == 100
+
+
+def test_cli_random_effect_tests_need_random_effect(tmp_path):
+    with pytest.raises(ValueError, match="random_effect_tests needs"):
+        mm.main(["--template", str(TPL_PATH), "--out", str(tmp_path / "c.yaml"),
+                 "--study-id", "lung", "--metadata", str(DATA / "metadata_test.csv"),
+                 "--group", "sample_type", "--random-effect-tests"])

@@ -1,0 +1,40 @@
+// Real typing on the public TIGR4 genome: mlst ST must equal expected_st.tsv; AMRFinderPlus
+// (--organism Streptococcus_pneumoniae), Bakta light and MOB-suite run read-only + offline with the
+// databases from PNEUMA_TEST_DB_DIR. Run: see nf-test.pathogen.config.
+nextflow_workflow {
+    name "PATHOGEN_TYPING on TIGR4 with real databases"
+    script "subworkflows/local/pathogen_typing/main.nf"
+    workflow "PATHOGEN_TYPING"
+    config "../pathogen_readonly.config"
+    tag "pathogen_real"
+
+    test("TIGR4: correct ST, AMRFinderPlus/Bakta/MOB-suite outputs in the contract layout") {
+        when {
+            params {
+                outdir = "$outputDir"
+                run_mobsuite = true
+            }
+            workflow {
+                """
+                def db = System.getenv('PNEUMA_TEST_DB_DIR')
+                input[0] = channel.of([ [ id: 'PA1-S1.Streptococcus_pneumoniae', amr_organism: 'Streptococcus_pneumoniae' ],
+                                        file("${projectDir}/tests/data/pathogen_fixture/genomes/spn_tigr4.fna", checkIfExists: true) ])
+                input[1] = [ abricate_db: null, amrfinderplus_db: "\$db/amrfinderplus/amrfinderdb.tar.gz",
+                             bakta_db: file("\$db/bakta").listFiles().find { f -> f.name.startsWith('db') }.toString(),
+                             mobsuite_db: "\$db/mobsuite" ]
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def expectedSt = new File("${projectDir}/tests/data/pathogen_fixture/expected_st.tsv").readLines()
+                .find { l -> l.startsWith('spn_tigr4\t') }.split('\t')[2]
+            def outFile = { kind -> new File(workflow.out.files.find { item -> item[0] == kind }[1].toString()) }
+            assert outFile('mlst').text.split('\t')[2] == expectedSt
+            def amrHeader = outFile('amrfinderplus').readLines()[0]
+            assert amrHeader.contains('Element symbol') || amrHeader.contains('Gene symbol')
+            assert workflow.out.gff.size() == 1
+            assert workflow.out.files.any { item -> item[0] == 'mobsuite' } || new File("$outputDir/pathogens/typing/mobsuite/PA1-S1.Streptococcus_pneumoniae.contig_report.txt").exists()
+        }
+    }
+}

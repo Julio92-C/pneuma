@@ -49,6 +49,7 @@ lint:
   nf_test_content:
     - tests/main.nf.test
     - tests/meridian_integration.nf.test
+    - tests/multiqc_pathogens.nf.test
 
 template:
   org: Julio92-C

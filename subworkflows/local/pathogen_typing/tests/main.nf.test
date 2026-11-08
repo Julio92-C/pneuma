@@ -1,0 +1,35 @@
+nextflow_workflow {
+    name "Test PATHOGEN_TYPING (real mlst + ABRicate on the mini segment; read-only, offline)"
+    script "../main.nf"
+    workflow "PATHOGEN_TYPING"
+    config "../../../../tests/pathogen_mini.config"
+
+    test("mlst and ABRicate run; Bakta/AMRFinderPlus are switched off here") {
+        when {
+            params {
+                outdir = "$outputDir"
+                run_mobsuite = false
+                abricate_minid = 80
+                abricate_mincov = 80
+            }
+            workflow {
+                """
+                def db = "${projectDir}/tests/data/db_dir"
+                input[0] = channel.of([ [ id: 'MINI-S1.Streptococcus_pneumoniae', amr_organism: 'Streptococcus_pneumoniae' ],
+                                        file("${projectDir}/tests/data/pathogen_mini/ref/MINI-TIGR4-SEG.fna.gz", checkIfExists: true) ])
+                input[1] = [ abricate_db: null, amrfinderplus_db: "\$db/amrfinderplus/amrfinderdb.tar.gz", bakta_db: "\$db/bakta/db-light", mobsuite_db: null ]
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def kinds = workflow.out.files.collect { item -> item[0] }.sort()
+            assert kinds == ['abricate', 'abricate', 'mlst']
+            def mlst = new File(workflow.out.files.find { item -> item[0] == 'mlst' }[1].toString()).readLines()
+            assert mlst.size() == 1 && mlst[0].split('\t').size() >= 3      // FILE SCHEME ST [alleles]
+            workflow.out.files.findAll { item -> item[0] == 'abricate' }.each { item ->
+                assert new File(item[1].toString()).readLines()[0].startsWith('#FILE\tSEQUENCE\tSTART\tEND\tSTRAND\tGENE')
+            }
+        }
+    }
+}

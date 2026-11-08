@@ -82,7 +82,8 @@ nextflow_pipeline {
     }
 
     test("MultiQC summarises the whole pipeline") {
-        when { params { outdir = "$outputDir" } }
+        // pathogens are opt-in; switched on here so that the pathogen_status section is part of the contract
+        when { params { outdir = "$outputDir"; pathogens = true } }
         then {
             assert workflow.success
             def data = "$outputDir/multiqc/multiqc_data"
@@ -98,15 +99,16 @@ nextflow_pipeline {
              'multiqc_bracken_bracken.txt',        // Bracken
              'multiqc_recentrifuge_table.txt',     // Recentrifuge (custom content; test samplesheet has a control)
              'multiqc_abricate_hits_table.txt',    // ABRicate (custom content)
+             'multiqc_pathogen_status_table.txt',  // pathogen status (custom content; quast/checkm2 need assemblies, see multiqc_pathogens.nf.test)
              'multiqc_software_versions.txt'].each { f ->
                 assert new File("$data/$f").exists() : "missing MultiQC data file ${f}"
             }
-            ['nanostat', 'seqkit', 'nanoq', 'hostile', 'kraken', 'bracken', 'recentrifuge_stats', 'abricate_hits'].each { id ->
+            ['nanostat', 'seqkit', 'nanoq', 'hostile', 'kraken', 'bracken', 'recentrifuge_stats', 'abricate_hits', 'pathogen_status'].each { id ->
                 assert report.contains("mqc-section-${id}") : "missing MultiQC section ${id}"
             }
 
             // sections follow the pipeline flow
-            def order = ['nanostat', 'hostile', 'kraken', 'recentrifuge_stats', 'abricate_hits']
+            def order = ['nanostat', 'hostile', 'kraken', 'recentrifuge_stats', 'abricate_hits', 'pathogen_status']
                 .collect { id -> report.indexOf("id=\"mqc-section-wrapper-${id}") }
             assert order.every { i -> i > 0 }
             assert order == order.sort(false)
@@ -143,6 +145,40 @@ nextflow_pipeline {
             }
             def merged = path("$outputDir/functional/summary_reportClean.csv").readLines()
             assert merged.count { l -> l.startsWith('#FILE') } == 1
+        }
+    }
+
+    test("pathogens are off by default") {
+        when { params { outdir = "$outputDir" } }
+        then {
+            assert workflow.success
+            assert !path("$outputDir/pathogens").exists()
+        }
+    }
+
+    test("--pathogens: the sarscov2 test data has no panel species, every row is NOT_DETECTED") {
+        when { params { outdir = "$outputDir"; pathogens = true } }
+        then {
+            assert workflow.success
+            def cohort = path("$outputDir/pathogens/report/pathogen_cohort.tsv").readLines()
+            assert cohort[0].split('	')[0..4] == ['level', 'sample', 'patient', 'contributing_samples', 'species']
+            assert cohort.size() == 1 + 3 * 25
+            assert cohort.drop(1).every { l -> l.split('	')[9] == 'NOT_DETECTED' }
+            ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].each { s ->
+                assert path("$outputDir/pathogens/report/html/${s}.pathogens.html").exists()
+            }
+            assert path("$outputDir/pathogens/panel/panel_resolved.tsv").readLines().size() == 26
+            def top = new File("$outputDir").listFiles().findAll { f -> f.isDirectory() }.collect { f -> f.name }.sort()
+            assert top == ['contamination', 'functional', 'multiqc', 'pathogens', 'pipeline_info', 'preprocess', 'taxonomy']
+        }
+    }
+
+    test("without --pathogens the pathogen branch is left out") {
+        when { params { outdir = "$outputDir"; pathogens = false; checkm2_db = null; bakta_db = null } }
+        then {
+            assert workflow.success
+            assert !path("$outputDir/pathogens").exists()
+            assert !new File("$outputDir/multiqc/multiqc_data/multiqc_pathogen_status_table.txt").exists()
         }
     }
 }

@@ -1,0 +1,38 @@
+// Contract: MultiQC (pinned nf-core image) parses PNEUMA's QUAST table (pathogens_quast.tsv, matched
+// through the `sp.quast` pattern of assets/multiqc_config.yml) and the CheckM2 report layout.
+nextflow_process {
+    name "MultiQC parses the pathogen QC tables"
+    script "modules/nf-core/multiqc/main.nf"
+    process "MULTIQC"
+
+    test("quast and checkm2 sections are built") {
+        setup {
+            run("QUAST") {
+                script "modules/nf-core/quast/main.nf"
+                process {
+                    """
+                    input[0] = [ [ id: 'pathogens_quast' ], [ file("${projectDir}/tests/data/pathogen_mini/ref/MINI-TIGR4-SEG.fna.gz", checkIfExists: true) ] ]
+                    input[1] = [ [:], [] ]
+                    input[2] = [ [:], [] ]
+                    """
+                }
+            }
+        }
+        when {
+            process {
+                """
+                input[0] = QUAST.out.tsv.map { _meta, tsv ->
+                    [ [ id: 'pneuma' ],
+                      [ tsv, file("${projectDir}/tests/data/pathogen_contracts/checkm2_report.tsv", checkIfExists: true) ],
+                      file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true), [], [], [] ] }
+                """
+            }
+        }
+        then {
+            assert process.success
+            def html = path(process.out.report[0][1]).text
+            assert html.contains('mqc-section-quast')
+            assert html.contains('mqc-section-checkm2')
+        }
+    }
+}

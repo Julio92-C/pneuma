@@ -1,0 +1,79 @@
+nextflow_process {
+    name "Test PATHOGEN_CANDIDATES"
+    script "../main.nf"
+    process "PATHOGEN_CANDIDATES"
+
+    test("mini fixture: every MINI sample is a S. pneumoniae extraction candidate") {
+        setup {
+            run("RESOLVE_PANEL") {
+                script "../../resolve_panel/main.nf"
+                process {
+                    """
+                    input[0] = file("${projectDir}/tests/data/pathogen_mini/panel.csv", checkIfExists: true)
+                    input[1] = file("${projectDir}/tests/data/pathogen_mini/panel_references.tsv", checkIfExists: true)
+                    input[2] = file("${projectDir}/tests/data/pathogen_fixture/taxdump", checkIfExists: true)
+                    """
+                }
+            }
+        }
+        when {
+            params { pathogen_min_reads = 10 }
+            process {
+                """
+                def mini = "${projectDir}/tests/data/pathogen_mini"
+                input[0] = RESOLVE_PANEL.out.tsv
+                input[1] = file("\$mini/samples.tsv", checkIfExists: true)
+                input[2] = files("\$mini/*.kraken2.report.txt")
+                input[3] = files("\$mini/bracken/*.tsv")
+                input[4] = []                 // no seqkit stats: depth filter off
+                input[5] = file(mini)         // no <accession>.fna.gz here: genome sizes unknown
+                """
+            }
+        }
+        then {
+            assert process.success
+            def rows = path(process.out.candidates[0]).readLines()
+            def di = rows[0].split('\t').toList().indexOf('decision')
+            assert di >= 0 && rows[0].split('\t')[-1] == 'genome_size'
+            assert rows.drop(1).collect { r -> r.split('\t', -1)[di] } == ['extract', 'extract', 'extract']
+            assert path(process.out.samples[0]).readLines().size() == 4
+        }
+    }
+
+    test("single sample: one Kraken2 report and one Bracken table are staged as Paths") {
+        setup {
+            run("RESOLVE_PANEL") {
+                script "../../resolve_panel/main.nf"
+                process {
+                    """
+                    input[0] = file("${projectDir}/tests/data/pathogen_mini/panel.csv", checkIfExists: true)
+                    input[1] = file("${projectDir}/tests/data/pathogen_mini/panel_references.tsv", checkIfExists: true)
+                    input[2] = file("${projectDir}/tests/data/pathogen_fixture/taxdump", checkIfExists: true)
+                    """
+                }
+            }
+        }
+        when {
+            params { pathogen_min_reads = 10 }
+            process {
+                """
+                def mini = "${projectDir}/tests/data/pathogen_mini"
+                input[0] = RESOLVE_PANEL.out.tsv
+                input[1] = file("\$mini/samples_MINI-S1.tsv", checkIfExists: true)
+                input[2] = file("\$mini/MINI-S1.kraken2.report.txt", checkIfExists: true)
+                input[3] = file("\$mini/bracken/MINI-S1.tsv", checkIfExists: true)
+                input[4] = []                 // no seqkit stats: depth filter off
+                input[5] = file(mini)         // no <accession>.fna.gz here: genome sizes unknown
+                """
+            }
+        }
+        then {
+            assert process.success
+            def rows = path(process.out.candidates[0]).readLines().drop(1)
+            assert rows.size() == 1
+            assert rows[0].startsWith('MINI-S1	')
+            assert rows[0].split('	')[-1] == 'extract'
+            assert path(process.out.samples[0]).readLines().size() == 2
+        }
+    }
+}

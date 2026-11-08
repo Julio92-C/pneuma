@@ -1,0 +1,42 @@
+nextflow_workflow {
+    name "Test PATHOGEN_ASSEMBLY (real Flye, Medaka, QUAST on the mini fixture; read-only, offline)"
+    script "../main.nf"
+    workflow "PATHOGEN_ASSEMBLY"
+    config "../../../../tests/pathogen_mini.config"
+
+    test("MINI-S1 assembles and is polished with the staged bacterial model; 3 reads fail without failing the run") {
+        when {
+            params {
+                outdir = "$outputDir"
+                flye_mode = '--nano-hq'
+                flye_meta = true
+            }
+            workflow {
+                """
+                def mini = "${projectDir}/tests/data/pathogen_mini"
+                input[0] = channel.of(
+                    [ [ id: 'MINI-S1.Streptococcus_pneumoniae', single_end: true ], file("\$mini/MINI-S1.classified.fastq.gz") ],
+                    [ [ id: 'TINY.Streptococcus_pneumoniae', single_end: true ], file("${projectDir}/tests/data/pathogen_contracts/tiny_reads.fastq.gz") ]
+                )
+                input[1] = file('https://media.githubusercontent.com/media/nanoporetech/medaka/v2.2.2/medaka/data/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz', checkIfExists: true)
+                input[2] = file("${projectDir}/tests/data/db_dir/checkm2/checkm2_db_v3.dmnd", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert workflow.success                                    // Flye's failure on TINY is ignored, not fatal
+            def asm = workflow.out.assembly
+            assert asm.size() == 1 && asm[0][0].id == 'MINI-S1.Streptococcus_pneumoniae'
+            def fasta = new File(asm[0][1].toString())
+            assert fasta.name == 'MINI-S1.Streptococcus_pneumoniae.fasta'
+            def seqLen = fasta.readLines().findAll { l -> !l.startsWith('>') }.sum { l -> l.length() }
+            assert seqLen > 80000 && seqLen < 160000                   // ~120 kb segment
+            assert workflow.trace.failed().any { t -> t.name.contains('FLYE') && t.name.contains('TINY') }
+            // contract: QUAST report.tsv as consumed by bin/pathogen_report.py and MultiQC
+            def quast = new File(workflow.out.quast_tsv[0][1].toString()).readLines()
+            assert quast[0] == 'Assembly\tMINI-S1.Streptococcus_pneumoniae'
+            assert quast.any { l -> l.startsWith('# contigs\t') } && quast.any { l -> l.startsWith('N50\t') }
+            assert workflow.out.checkm2_tsv.size() == 0                // switched off in this config
+        }
+    }
+}

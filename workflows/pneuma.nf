@@ -7,13 +7,17 @@ include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_pneuma_pipeline'
+include { methodsDescriptionText; usedDatabaseRows } from '../subworkflows/local/utils_nfcore_pneuma_pipeline'
 include { PREPROCESS             } from '../subworkflows/local/preprocess/main'
 include { TAXONOMY               } from '../subworkflows/local/taxonomy/main'
 include { CONTAMINATION          } from '../subworkflows/local/contamination/main'
 include { FUNCTIONAL_READS       } from '../subworkflows/local/functional_reads/main'
 include { MERIDIAN               } from '../subworkflows/local/meridian/main'
+include { PATHOGEN_RECONSTRUCTION } from '../subworkflows/local/pathogen_reconstruction/main'
+include { PATHOGEN_REPORT         } from '../subworkflows/local/pathogen_report/main'
 include { MULTIQC_TABLES         } from '../modules/local/multiqc_tables/main'
+include { DATABASE_ROW as RECORD_DATABASE            } from '../modules/local/database_row/main'
+include { DATABASE_MANIFEST as RUN_DATABASE_MANIFEST } from '../modules/local/database_manifest/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,25 +45,35 @@ workflow PNEUMA {
     CONTAMINATION(TAXONOMY.out.assignments, databases.taxdump)
     FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
 
+    def ch_pathogen_cohort = channel.value([])
+    if (params.pathogens) {
+        PATHOGEN_RECONSTRUCTION(
+            PREPROCESS.out.reads.map { meta, _fq -> meta },
+            TAXONOMY.out.assignments,
+            TAXONOMY.out.classified,
+            TAXONOMY.out.reports,
+            TAXONOMY.out.bracken_tsv,
+            PREPROCESS.out.seqkit_stats,
+            databases
+        )
+        PATHOGEN_REPORT(
+            PATHOGEN_RECONSTRUCTION.out.panel_resolved,
+            PATHOGEN_RECONSTRUCTION.out.candidates,
+            PATHOGEN_RECONSTRUCTION.out.samples_tsv,
+            PATHOGEN_RECONSTRUCTION.out.units_tsv,
+            PATHOGEN_RECONSTRUCTION.out.report_files,
+            FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect().ifEmpty([]),
+            databases.database_manifest ? file(databases.database_manifest, checkIfExists: true) : []
+        )
+        ch_pathogen_cohort = PATHOGEN_REPORT.out.cohort
+        ch_multiqc_files = ch_multiqc_files.mix(PATHOGEN_RECONSTRUCTION.out.multiqc)
+    }
+
     ch_versions = ch_versions.mix(PREPROCESS.out.versions, TAXONOMY.out.versions,
                                   CONTAMINATION.out.versions, FUNCTIONAL_READS.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS.out.multiqc)
 
-    // Hostile, Kraken2 classification, ABRicate and Recentrifuge have no (usable) MultiQC module:
-    // summarise them as custom-content tables. Kraken2/Bracken reports go to MultiQC's kraken module as is.
-    MULTIQC_TABLES(
-        PREPROCESS.out.hostile_log.collect(),
-        TAXONOMY.out.reports.map { _meta, f -> f }.collect(),
-        FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect(),
-        CONTAMINATION.out.rcf_stat
-    )
-    ch_versions = ch_versions.mix(MULTIQC_TABLES.out.versions)
-    ch_multiqc_files = ch_multiqc_files.mix(
-        TAXONOMY.out.reports.map { _meta, f -> f },
-        TAXONOMY.out.bracken_reports.map { _meta, f -> f },
-        MULTIQC_TABLES.out.tables
-    )
-
+    def ch_stage_errors = channel.value([])
     if (!params.skip_meridian) {
         def ch_controls = ch_samplesheet
             .filter { meta, _fastqs -> meta.is_control }
@@ -70,12 +84,34 @@ workflow PNEUMA {
         MERIDIAN(ch_controls, ch_samples, FUNCTIONAL_READS.out.summary, TAXONOMY.out.kraken_combined,
                  TAXONOMY.out.bracken_arranged, CONTAMINATION.out.rcf_csv)
         ch_versions = ch_versions.mix(MERIDIAN.out.versions)
+        ch_stage_errors = MERIDIAN.out.stage_errors.collect().ifEmpty([])
     }
 
-    if (databases.database_manifest) {
-        channel.fromPath(databases.database_manifest, checkIfExists: true)
-            .collectFile(name: 'database_manifest.tsv', storeDir: "${outdir}/pipeline_info")
-    }
+    // Hostile, Kraken2 classification, ABRicate and Recentrifuge have no (usable) MultiQC module:
+    // summarise them as custom-content tables. Kraken2/Bracken reports go to MultiQC's kraken module as is.
+    MULTIQC_TABLES(
+        PREPROCESS.out.hostile_log.collect(),
+        TAXONOMY.out.reports.map { _meta, f -> f }.collect(),
+        FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect(),
+        CONTAMINATION.out.rcf_stat,
+        ch_pathogen_cohort,
+        ch_stage_errors
+    )
+    ch_versions = ch_versions.mix(MULTIQC_TABLES.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(
+        TAXONOMY.out.reports.map { _meta, f -> f },
+        TAXONOMY.out.bracken_reports.map { _meta, f -> f },
+        MULTIQC_TABLES.out.tables
+    )
+
+    // pipeline_info/database_manifest.tsv: the --db_dir manifest plus path + sha256 of databases
+    // passed directly (Kraken2, taxdump, host index), so every taxonomic result has its provenance
+    RECORD_DATABASE(channel.fromList(usedDatabaseRows(databases)))
+    RUN_DATABASE_MANIFEST(
+        RECORD_DATABASE.out.row.collect().ifEmpty([]),
+        channel.value(''),
+        databases.database_manifest ? file(databases.database_manifest, checkIfExists: true) : []
+    )
 
     //
     // Collate and save software versions

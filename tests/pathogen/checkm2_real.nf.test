@@ -1,0 +1,30 @@
+// Real CheckM2 (3 GB DIAMOND database from PNEUMA_TEST_DB_DIR) on two public complete genomes,
+// read-only + offline. Run: see nf-test.pathogen.config.
+nextflow_process {
+    name "CHECKM2_PREDICT on public genomes (real database)"
+    script "modules/nf-core/checkm2/predict/main.nf"
+    process "CHECKM2_PREDICT"
+    config "../pathogen_readonly.config"
+    tag "pathogen_real"
+
+    test("complete RefSeq genomes are >90% complete and <5% contaminated") {
+        when {
+            params { outdir = "$outputDir" }
+            process {
+                """
+                def g = "${projectDir}/tests/data/pathogen_fixture/genomes"
+                input[0] = [ [ id: 'pathogens' ], [ file("\$g/spn_tigr4.fna", checkIfExists: true), file("\$g/hin_rd.fna", checkIfExists: true) ] ]
+                input[1] = [ [ id: 'checkm2_db' ], file(System.getenv('PNEUMA_TEST_DB_DIR') + '/checkm2').listFiles().find { f -> f.name.endsWith('.dmnd') } ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            def lines = path(process.out.checkm2_tsv[0][1]).readLines()
+            assert lines[0].startsWith('Name\tCompleteness\tContamination\tCompleteness_Model_Used\tTranslation_Table_Used')
+            def rows = lines.drop(1).collect { l -> l.split('\t') }
+            assert rows*.getAt(0).sort() == ['hin_rd', 'spn_tigr4']
+            rows.each { r -> assert (r[1] as Double) > 90 && (r[2] as Double) < 5 }
+        }
+    }
+}

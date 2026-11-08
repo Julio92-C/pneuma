@@ -15,6 +15,12 @@
       "run_id": { "type": "string", "pattern": "^\\S+$", "errorMessage": "run_id must be non-empty, no spaces", "meta": ["run_id"] },
       "batch":  { "type": "string", "pattern": "^\\S+$", "errorMessage": "batch must be non-empty, no spaces", "meta": ["batch"] },
       "site":   { "type": "string", "meta": ["site"] },
+      "patient": {
+        "type": "string",
+        "pattern": "^([A-Za-z0-9][A-Za-z0-9-]*)?$",
+        "errorMessage": "patient must be empty or match ^[A-Za-z0-9][A-Za-z0-9-]*$ (letters, digits, '-')",
+        "meta": ["patient"]
+      },
       "fastq": {
         "type": "string",
         "format": "file-path",

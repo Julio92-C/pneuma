@@ -23,6 +23,11 @@ nextflow_workflow {
             def header = path(workflow.out.bracken_arranged[0]).readLines()[0]
             assert header == '#perc,tot_all,EBF0-0001,SPF0-0001,taxid,name'
             assert workflow.out.assignments.size() == 2
+            // contract with bin/pathogen_candidates.py (Bracken table header)
+            def btsv = workflow.out.bracken_tsv
+            assert btsv.size() > 0
+            assert path(btsv[0][1]).readLines()[0] ==
+                'name\ttaxonomy_id\ttaxonomy_lvl\tkraken_assigned_reads\tadded_reads\tnew_est_reads\tfraction_total_reads'
         }
     }
 

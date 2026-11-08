@@ -1,0 +1,2 @@
+#FILE	SEQUENCE	START	END	STRAND	GENE	COVERAGE	COVERAGE_MAP	GAPS	%COVERAGE	%IDENTITY	DATABASE	ACCESSION	PRODUCT	RESISTANCE
+PA1-S1.Streptococcus_pneumoniae.vfdb.fasta	NC_003028.3	73761	79331	+	zmpC	1-5571/5571	===============	0/0	100.00	100.00	vfdb	NP_344620	(zmpC) immunoglobulin A1 protease [IgA1 protease (VF0147)] [Streptococcus pneumoniae TIGR4]

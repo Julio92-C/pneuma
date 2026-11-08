@@ -1,0 +1,12 @@
+  7.61	7	7	U	0	unclassified
+ 92.39	85	0	R	1	root
+ 92.39	85	0	R1	131567	  cellular organisms
+ 92.39	85	0	D	2	    Bacteria
+ 92.39	85	0	K	1783272	      Bacillati
+ 92.39	85	0	P	1239	        Bacillota
+ 92.39	85	0	C	91061	          Bacilli
+ 92.39	85	0	O	186826	            Lactobacillales
+ 92.39	85	0	F	1300	              Streptococcaceae
+ 92.39	85	15	G	1301	                Streptococcus
+ 76.09	70	58	S	1313	                  Streptococcus pneumoniae
+ 13.04	12	12	S1	170187	                    Streptococcus pneumoniae TIGR4

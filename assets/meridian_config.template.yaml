@@ -19,6 +19,7 @@ metadata:
   fixed_effects:
     - {{GROUP_COL}}
   controls: {{CONTROLS}}
+  control_match_cols: {{CONTROL_MATCH_COLS}}
 taxid_fixes_file: ~
 alpha_diversity:
   source: computed
@@ -45,6 +46,9 @@ stats:
   aldex_mc_samples:       128
   alpha: 0.05
   padjust_method: BH
+  random_effect_tests: {{RANDOM_EFFECT_TESTS}}
+beta_diversity:
+  min_sample_reads: {{MIN_SAMPLE_READS}}
 report:
   top_n_taxa:              25
   rank_taxa_by:            prevalence_x_abundance
