@@ -115,6 +115,7 @@ workflow PIPELINE_INITIALISATION {
     def ch_samplesheet = channel.empty()
     if (!params.build_databases) {
         def rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+            .collect { row -> [ subjectMeta(row[0]) ] + row.drop(1) }
         warnRunsWithoutControls(rows)
         notePatients(rows)
 
@@ -302,10 +303,10 @@ def panelReferencesPath(p) {
 // Resolve the database parameters for analysis mode. Explicit parameters always win; the rest
 // is filled from --db_dir (database_manifest.tsv + the layout written by --build_databases).
 // Returns [kraken2_db:, taxdump:, host_index:, abricate_db:, database_manifest:, checkm2_db:, bakta_db:,
-// amrfinderplus_db:, mobsuite_db:, medaka_model_path:, panel_references_dir:] as strings or null.
+// amrfinderplus_db:, mobsuite_db:, medaka_model_path:, panel_references_dir:, genomad_db:] as strings or null.
 // Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory; with
-// --pathogens, so are checkm2_db, bakta_db, amrfinderplus_db, medaka_model_path and
-// panel_references_dir (mobsuite_db only with --run_mobsuite).
+// --genomic_context (on by default), so is genomad_db; with --pathogens, so are checkm2_db, bakta_db,
+// amrfinderplus_db, medaka_model_path and panel_references_dir (mobsuite_db only with --run_mobsuite).
 //
 def resolveDatabases(p) {
     def res = [
@@ -320,6 +321,7 @@ def resolveDatabases(p) {
         mobsuite_db          : p.mobsuite_db ?: null,
         medaka_model_path    : p.medaka_model_path ?: null,
         panel_references_dir : p.panel_references_dir ?: null,
+        genomad_db           : p.genomad_db ?: null,
     ]
     def problems = []
 
@@ -384,6 +386,14 @@ def resolveDatabases(p) {
         if (!res.abricate_db && !root.resolve('abricate').isDirectory()) {
             log.warn "No abricate/ folder in --db_dir '${p.db_dir}' and no --abricate_db: ABRicate will use the databases bundled in the container (2021-Mar-27)"
         }
+        if (p.genomic_context && !res.genomad_db && root.resolve('genomad_db').isDirectory()) {
+            def g = root.resolve('genomad_db')
+            if (g.resolve('version.txt').exists()) {
+                res.genomad_db = g.toString()
+            } else {
+                problems.add("--genomad_db: ${g} has no version.txt (rebuild with --build_databases)")
+            }
+        }
         if (p.pathogens) {
             resolvePathogenDatabases(p, root, res, problems, hint)
         }
@@ -393,6 +403,9 @@ def resolveDatabases(p) {
         if (!res[k] && !problems.any { it.contains("--${k}") }) {
             problems.add("--${k} is required: pass it or provide --db_dir containing it")
         }
+    }
+    if (p.genomic_context && !res.genomad_db && !problems.any { pr -> pr.contains('--genomad_db') }) {
+        problems.add("--genomad_db is required for the genomic context analysis (on by default): pass it, provide --db_dir containing genomad_db/, or run with --genomic_context false")
     }
     if (p.pathogens) {
         def needed = ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'medaka_model_path', 'panel_references_dir'] +
@@ -458,6 +471,19 @@ def checkPanelReferences(dir, references, problems) {
 //
 def metaText(value) {
     return value in [null, []] ? '' : value.toString()
+}
+
+//
+// `subject` is the general name of the grouping unit (patient, animal, pen, ...); `patient` stays as its alias.
+// Both feed meta.patient, which the pathogen subject-level pooling reads; they must agree when both are given.
+//
+def subjectMeta(meta) {
+    def subject = metaText(meta.subject)
+    def patient = metaText(meta.patient)
+    if (subject && patient && subject != patient) {
+        error("Sample '${meta.id}' has subject '${subject}' and patient '${patient}': give one of them, or the same value")
+    }
+    return meta.findAll { k, _v -> k != 'subject' } + [ patient: subject ?: patient ]
 }
 
 //

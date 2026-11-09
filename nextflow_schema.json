@@ -252,6 +252,67 @@
                 }
             }
         },
+        "genomic_context_options": {
+            "title": "Genomic context options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Where each ARG / VF / replicon hit sits: plasmid, chromosomal mobile element, chromosome or unresolved (geNomad + plasmid evidence).",
+            "properties": {
+                "genomic_context": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run the genomic-context analysis (needs the geNomad database). false skips it.",
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "context_databases": {
+                    "type": "string",
+                    "default": "card,vfdb,plasmidfinder",
+                    "pattern": "^[a-z0-9_]+(,[a-z0-9_]+)*$",
+                    "description": "ABRicate databases whose hits are placed (a subset of --abricate_dbs)."
+                },
+                "context_min_flank": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 0,
+                    "description": "Bases needed on both sides of a gene on a read to classify it."
+                },
+                "context_mge_window": {
+                    "type": "integer",
+                    "default": 10000,
+                    "minimum": 0,
+                    "description": "Bases around a gene searched for integrase / transposase genes."
+                },
+                "context_plasmid_min": {
+                    "type": "number",
+                    "default": 0.7,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "geNomad plasmid score cut-off."
+                },
+                "context_chrom_min": {
+                    "type": "number",
+                    "default": 0.7,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "geNomad chromosome score cut-off."
+                },
+                "genomad_db": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "geNomad database directory. Default: genomad_db/ in --db_dir."
+                },
+                "genomad_splits": {
+                    "type": "integer",
+                    "default": 8,
+                    "minimum": 1,
+                    "description": "geNomad --splits (lower memory per MMseqs2 search)."
+                },
+                "skip_genomad_download": {
+                    "type": "boolean",
+                    "description": "--build_databases: skip the geNomad database."
+                }
+            }
+        },
         "meridian_options": {
             "title": "MERIDIAN options",
             "type": "object",
@@ -654,6 +715,9 @@
         },
         {
             "$ref": "#/$defs/functional_options"
+        },
+        {
+            "$ref": "#/$defs/genomic_context_options"
         },
         {
             "$ref": "#/$defs/meridian_options"

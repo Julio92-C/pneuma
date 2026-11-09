@@ -1,0 +1,3 @@
+seq_name	chromosome_score	plasmid_score	virus_score
+S1__p	0.02	0.95	0.03
+S1__c	0.93	0.04	0.03

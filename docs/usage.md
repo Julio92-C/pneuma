@@ -27,6 +27,7 @@ Results are copied (`publishDir` mode `copy`) into `--db_outdir`:
       taxdump_<YYYY-MM>/              nodes.dmp, names.dmp
       hostile/                        human-t2t-hla.mmi (+ the .fa.gz it was built from)
       abricate/                       card/, vfdb/, plasmidfinder/ (with BLAST indexes)
+      genomad_db/                     geNomad database (genomad download-database; version.txt)
       database_manifest.tsv
 
 `database_manifest.tsv` has the columns `name`, `version`, `path`, `sha256`, one row per database;
@@ -36,7 +37,7 @@ Kraken2 and the taxdump the sha256 is that of the downloaded archive, and for Ho
 (its checksum stays in the manifest).
 
 Skip a database you already have with `--skip_kraken_download`, `--skip_taxdump_download`,
-`--skip_hostile_download` or `--skip_abricate_download`; skipped databases are not downloaded and have
+`--skip_hostile_download`, `--skip_abricate_download` or `--skip_genomad_download`; skipped databases are not downloaded and have
 no manifest row. `--kraken_release` / `--taxdump_month` are only required for databases that are not
 skipped. The download processes request little memory and a long time limit (`process_single`,
 `process_low_memory`, `process_long`, with retries); the Hostile step builds a minimap2 index and uses
@@ -47,7 +48,7 @@ skipped. The download processes request little memory and a long time limit (`pr
     nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \
       --input samplesheet.csv --outdir results --db_dir /scratch/pneuma_db ...
 
-`--db_dir` fills `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db` and
+`--db_dir` fills `--kraken2_db`, `--taxdump`, `--host_index`, `--abricate_db`, `--genomad_db` and
 `--database_manifest` from that folder, using `database_manifest.tsv` (versions) and the layout
 above. Parameters you pass explicitly override it, for example `--kraken2_db /path/to/existing/db`
 or `--host_index my_host.fasta`. The required files are checked at start-up (`hash.k2d`, `opts.k2d`,
@@ -101,6 +102,7 @@ typed parameters, either put such parameters in a `-params-file` (YAML/JSON keep
 | NCBI taxdump | 70 MB | under 1 GB | negligible |
 | Hostile `human-t2t-hla` | 1 GB | a few GB | a few GB |
 | ABRicate (3 DBs) | tens of MB | under 1 GB | negligible |
+| geNomad | about 1.4 GB | a few GB | runs in 16 GB with `--genomad_splits 8` |
 
 Sizes are approximate (Kraken2 figures from the Kraken2 index list for PlusPF, others from the
 download URLs). Kraken2 loads the whole index into RAM, so it needs about the index size; on a
@@ -155,6 +157,10 @@ with an existing Kraken2 database:
 `sample,run_id,batch,site,fastq,is_control,patient` has one row per sample × run. A sample sequenced on
 several flow cells gets several rows with the same `sample`, and their reads are concatenated.
 `sample` and `patient` must match `^[A-Za-z0-9][A-Za-z0-9-]*$`.
+
+`subject` is the general name of this column: the host unit a sample belongs to (a patient, an animal,
+a pen, a cage...). A samplesheet may use either `subject` or `patient` (if both are present on a row they
+must agree); below, "patient" means either. Outputs keep the name `patient`.
 
 `patient` is optional and may be empty (negative controls, or no patient information). It is used
 for one thing only, the **patient-level fallback** of pathogen reconstruction (which is opt-in, see
@@ -231,6 +237,26 @@ clone use `nextflow run . -profile ...`.
 When set (or taken from `--db_dir`), the directory is staged into each `ABRICATE_READS` task and passed as
 `abricate --datadir`. When unset, the databases bundled in the container are used.
 `--abricate_dbs` (default `card,vfdb,plasmidfinder`) is the comma-separated list of database *names* searched inside that directory.
+
+### Genomic context
+
+On by default (`--genomic_context true`): every ABRicate hit on a Kraken2-classified read is placed as
+`plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`. The reads carrying a hit are pooled and
+classified with geNomad 1.13.0 (`GENOMAD_ENDTOEND`), then each hit gets a call (`ARG_CONTEXT`):
+
+- **plasmid**: geNomad plasmid score >= `--context_plasmid_min` (0.7) **and** plasmid evidence on the
+  read: a plasmid hallmark or conjugation gene (geNomad gene table) or a replicon (a PlasmidFinder hit on
+  the same read, or MOB-suite). A plasmid score without evidence is `unresolved` (`plasmid_score_only`).
+- **chromosomal_mge**: inside a provirus, or a chromosome call with an integrase / transposase gene
+  within `--context_mge_window` (10 kb).
+- **chromosome**: geNomad chromosome score >= `--context_chrom_min` (0.7).
+- **unresolved**: everything else, including reads with less than `--context_min_flank` (1 kb) on
+  either side of the gene.
+
+It needs the geNomad database: built by `--build_databases` (into `<db_outdir>/genomad_db`), taken from
+`--db_dir`, or passed with `--genomad_db`. Without it the run stops at start-up and says so; run with
+`--genomic_context false` to skip the analysis. `--context_databases` (default `card,vfdb,plasmidfinder`)
+chooses which ABRicate databases' hits are placed; `--genomad_splits` (default 8) lowers geNomad's memory.
 
 ### Pathogen reconstruction
 

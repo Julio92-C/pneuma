@@ -1,0 +1,46 @@
+// GENOMIC_CONTEXT with the real geNomad database on public chicken reads (tag context_real; slow, not in CI).
+// Fixture:  bash tests/make_context_fixture.sh
+// Database: nextflow run . -profile docker --build_databases --db_outdir ~/pneuma_test_db \
+//             --skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download \
+//             --skip_pathogen_download            (or: genomad download-database ~/pneuma_test_db)
+// Run:      PNEUMA_GENOMAD_DB=~/pneuma_test_db/genomad_db \
+//             nf-test test tests/context/ -c nf-test.pathogen.config --tag context_real --profile docker,test
+nextflow_workflow {
+    name "GENOMIC_CONTEXT on real reads with the real geNomad database"
+    script "subworkflows/local/genomic_context/main.nf"
+    workflow "GENOMIC_CONTEXT"
+    tag "context_real"
+
+    test("every hit gets one of the four categories; replicons are never chromosome") {
+        when {
+            params { context_databases = 'card,vfdb,plasmidfinder'; genomad_splits = 8; context_min_flank = 1000;
+                     context_mge_window = 10000; context_plasmid_min = 0.7; context_chrom_min = 0.7 }
+            workflow {
+                """
+                def d = "${projectDir}/tests/data/context_real"
+                input[0] = channel.of([ [id:'S1'], file("\$d/S1_kraken2ID_PFP.fasta", checkIfExists: true) ])
+                input[1] = channel.of([ [id:'S1'], file("\$d/S1_abricate.csv", checkIfExists: true) ])
+                input[2] = System.getenv('PNEUMA_GENOMAD_DB')
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def cats = ['plasmid', 'chromosomal_mge', 'chromosome', 'unresolved'] as Set
+            def calls = { db ->
+                def f = workflow.out.loci.find { it[1] == db }[2]
+                def rows = path(f).readLines()
+                def head = rows[0].split('\t') as List
+                rows.drop(1).collect { r -> r.split('\t', -1)[head.indexOf('category')] }
+            }
+            def card = calls('card')
+            assert card.size() > 0
+            assert card.every { it in cats }
+            assert card.any { it != 'unresolved' }                  // geNomad scored the reads
+            assert !('chromosome' in calls('plasmidfinder'))
+            def genomad = workflow.out.genomad[0]
+            assert path(genomad[0]).readLines()[0].startsWith('seq_name\tchromosome_score\tplasmid_score\tvirus_score')
+            assert path(genomad[3]).readLines()[0].split('\t').toList().containsAll(['gene', 'start', 'end', 'plasmid_hallmark', 'annotation_conjscan'])
+        }
+    }
+}

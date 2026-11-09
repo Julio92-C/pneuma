@@ -10,6 +10,7 @@ include { PREPARE_MOBSUITE_DB       } from '../../../modules/local/prepare_mobsu
 include { PREPARE_MEDAKA_MODEL      } from '../../../modules/local/prepare_medaka_model/main'
 include { PREPARE_MLST_SCHEMES      } from '../../../modules/local/prepare_mlst_schemes/main'
 include { PREPARE_PANEL_REFERENCES  } from '../../../modules/local/prepare_panel_references/main'
+include { PREPARE_GENOMAD_DB        } from '../../../modules/local/prepare_genomad_db/main'
 include { DATABASE_MANIFEST         } from '../../../modules/local/database_manifest/main'
 include { panelReferencesPath       } from '../utils_nfcore_pneuma_pipeline/main'
 
@@ -67,6 +68,11 @@ workflow PREPARE_DATABASES {
             PREPARE_MOBSUITE_DB()
             ch_rows = ch_rows.mix(PREPARE_MOBSUITE_DB.out.row)
         }
+    }
+
+    if (!params.skip_genomad_download) {
+        PREPARE_GENOMAD_DB()
+        ch_rows = ch_rows.mix(PREPARE_GENOMAD_DB.out.row)
     }
 
     def existing = file("${db_root}/database_manifest.tsv")

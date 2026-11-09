@@ -3,6 +3,16 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.4.0 - unreleased
+
+### `Added`
+
+- Samplesheet column `subject` (the host unit samples are grouped by: patient, animal, pen...); `patient` stays as its alias and outputs keep the name `patient`.
+- `bin/arg_context.py`, `bin/arg_context_summary.py`, `bin/bin_recovery.py` (prototype, not yet wired into the workflow): genomic context of ARGs (plasmid / chromosomal MGE / chromosome / unresolved) from reads and from community contigs, and community bins with read-vote species and depth/breadth across a subject's samples.
+- Genomic context, layer 1 (`GENOMIC_CONTEXT`, on by default; `--genomic_context false` skips it): the reads carrying an ABRicate hit are pooled and classified with geNomad 1.13.0, and every hit is placed as plasmid / chromosomal_mge / chromosome / unresolved (`context/reads/loci_reads_<db>.tsv`). A plasmid call needs plasmid evidence on the read: a hallmark or conjugation gene in geNomad's gene table, or a PlasmidFinder / MOB-suite replicon. Parameters `--context_databases`, `--context_min_flank`, `--context_mge_window`, `--context_plasmid_min`, `--context_chrom_min`, `--genomad_splits`.
+- geNomad database in `--build_databases` (`genomad_db/`, `--skip_genomad_download`) and `--db_dir`; `--genomad_db` for an existing one.
+- `bin/hit_reads.py`; `bin/arg_context.py` reads plasmid evidence from geNomad's gene table, counts a PlasmidFinder hit on the same read as a replicon, and reports `gc_gene` / `gc_seq` / `gc_delta`.
+
 ## v0.3.0 - 2026-11-08
 
 Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pathogens` (default `false`) turns it on, so a run without it needs no pathogen database and behaves as in v0.2.x.

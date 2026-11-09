@@ -15,7 +15,7 @@ import sys
 ORDER = ["kraken2_pluspf", "ncbi_taxdump", "hostile_index",
          "abricate_card", "abricate_vfdb", "abricate_plasmidfinder",
          "checkm2_db", "bakta_db", "amrfinderplus_db", "mobsuite_db",
-         "medaka_model", "mlst_schemes", "panel_references"]
+         "medaka_model", "mlst_schemes", "panel_references", "genomad_db"]
 
 
 def rank(name):

@@ -1,0 +1,23 @@
+nextflow_process {
+    name "Test HIT_READS"
+    script "../main.nf"
+    process "HIT_READS"
+
+    test("one hit read kept, renamed with the sample prefix") {
+        when {
+            process {
+                """
+                input[0] = [ [id:'S1'], file("${projectDir}/tests/data/context/S1_kraken2ID_PFP.fasta", checkIfExists: true),
+                             file("${projectDir}/tests/data/context/S1_abricate.csv", checkIfExists: true) ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.fasta[0][1]).readLines() == ['>S1__r1', 'ACGTACGTAC']
+            assert path(process.out.lengths[0][1]).readLines() == ["S1__r1\t10"]
+            assert path(process.out.taxa[0][1]).readLines() == ["S1__r1\t562"]
+            assert path(process.out.hits[0][1]).readLines().size() == 2
+        }
+    }
+}

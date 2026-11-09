@@ -12,6 +12,7 @@ include { PREPROCESS             } from '../subworkflows/local/preprocess/main'
 include { TAXONOMY               } from '../subworkflows/local/taxonomy/main'
 include { CONTAMINATION          } from '../subworkflows/local/contamination/main'
 include { FUNCTIONAL_READS       } from '../subworkflows/local/functional_reads/main'
+include { GENOMIC_CONTEXT        } from '../subworkflows/local/genomic_context/main'
 include { MERIDIAN               } from '../subworkflows/local/meridian/main'
 include { PATHOGEN_RECONSTRUCTION } from '../subworkflows/local/pathogen_reconstruction/main'
 include { PATHOGEN_REPORT         } from '../subworkflows/local/pathogen_report/main'
@@ -44,6 +45,9 @@ workflow PNEUMA {
     TAXONOMY(PREPROCESS.out.reads, databases.kraken2_db)
     CONTAMINATION(TAXONOMY.out.assignments, databases.taxdump)
     FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
+    if (params.genomic_context) {
+        GENOMIC_CONTEXT(FUNCTIONAL_READS.out.tagged, FUNCTIONAL_READS.out.per_sample, databases.genomad_db)
+    }
 
     def ch_pathogen_cohort = channel.value([])
     if (params.pathogens) {

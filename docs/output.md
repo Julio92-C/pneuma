@@ -12,6 +12,7 @@ Per-sample file names start with the sample name from the samplesheet (`SAMPLE-0
 - [`taxonomy/`](#taxonomy): Kraken2, Bracken, combined reports, Krona
 - [`contamination/`](#contamination): Recentrifuge
 - [`functional/`](#functional): ABRicate on taxid-tagged reads
+- [`context/`](#genomic-context): genomic context of every ABRicate hit (on by default, `--genomic_context`)
 - [`pathogens/`](#pathogens): priority-pathogen reconstruction and the pathogen report (opt-in, `--pathogens`)
 - [`meridian/`](#meridian): MERIDIAN config and results
 - [`multiqc/`](#multiqc): one report for all stages
@@ -77,6 +78,24 @@ Classification uses the Kraken2 PlusPF index (`--kraken2_db`, `--kraken2_confide
 </details>
 
 The tagged read FASTA files that feed ABRicate are intermediate and not published.
+
+### Genomic context
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `context/reads/`
+  - `loci_reads_<db>.tsv` (one per database in `--context_databases`): one row per ABRicate hit, with its call.
+    - `sample`, `route` (`reads`), `seq` (`<sample>__<read id>`), `seq_len`, `gene`, `drug_class`, `start`, `end`.
+    - `category`: `plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`.
+    - `reason`: the evidence behind the call (`genomad`, `genomad+mobsuite`, `mobsuite`, `provirus`, `mge_genes_nearby`) or why it is unresolved (`short_flank`, `plasmid_score_only`, `low_scores`, `no_scores`, `conflict_mob_plasmid_genomad_chromosome`).
+    - `plasmid_score`, `chromosome_score`, `virus_score`: geNomad scores of the read.
+    - `in_provirus`, `mge_genes` (integrase / transposase genes within `--context_mge_window`), `mob_molecule`, `mob_detail` (replicons on the read).
+    - `gc_gene`, `gc_seq`, `gc_delta`: GC content of the gene, of the read and their difference (a horizontal-transfer signal).
+  - `loci_reads_<db>_score_only.tsv`: the same calls from geNomad scores alone (no plasmid-evidence rule), for comparison.
+  - `genomad/hit_reads_*.tsv`: geNomad's aggregated scores, virus and plasmid summaries and gene table for the pooled hit reads.
+
+</details>
 
 ### Pathogens
 
