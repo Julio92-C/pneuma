@@ -28,7 +28,7 @@ nextflow_process {
             process {
                 """
                 def f = file("\${workDir}/S1.contigs.fa")
-                f.text = '>S1__contig_1\nACGTACGTAC\n>S1__contig_2\nGGGCCC\n'
+                f.text = '>S1__contig_1\\nACGTACGTAC\\n>S1__contig_2\\nGGGCCC\\n'
                 input[0] = [ f ]
                 input[1] = []
                 """
