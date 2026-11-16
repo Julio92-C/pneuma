@@ -7,12 +7,19 @@ nextflow_workflow {
     test("stub run gives one loci table per context database") {
         when {
             params { context_databases = 'card,plasmidfinder'; genomad_splits = 8; context_min_flank = 1000; context_mge_window = 10000;
-                     context_plasmid_min = 0.7; context_chrom_min = 0.7 }
+                     context_plasmid_min = 0.7; context_chrom_min = 0.7
+                     context_local_assembly = true; mobilome = true; polish_plasmids = true; context_recruit_min_aln = 1000
+                     context_is_window = 500; plasmid_unit_min_identity = 0.95; flye_mode = '--nano-hq'
+                     abricate_minid = 80; abricate_mincov = 80 }
             workflow {
                 """
                 input[0] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1_kraken2ID_PFP.fasta", checkIfExists: true) ])
                 input[1] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1_abricate.csv", checkIfExists: true) ])
-                input[2] = "${projectDir}/tests/data/db_dir/genomad_db"
+                input[2] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1.fastq", checkIfExists: true) ])
+                input[3] = "${projectDir}/tests/data/db_dir/genomad_db"
+                input[4] = null
+                input[5] = "${projectDir}/tests/data/db_dir/mobsuite"
+                input[6] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
                 """
             }
         }
@@ -21,6 +28,36 @@ nextflow_workflow {
             assert workflow.out.loci.size() == 2
             assert workflow.out.loci.collect { it[1] }.sort() == ['card', 'plasmidfinder']
             assert path(workflow.out.taxa[0]).readLines() == ["S1__r1\t562"]
+            assert workflow.out.contig_loci.collect { it[1] }.sort() == ['card', 'plasmidfinder']
+            assert workflow.out.hit_context.collect { it[0] }.sort() == ['card', 'plasmidfinder']
+            assert workflow.out.plasmid_units.size() == 1
+            assert workflow.out.is_flanks.size() == 1
+        }
+    }
+
+    test("--context_local_assembly false runs layer 1 only") {
+        when {
+            params { context_databases = 'card,plasmidfinder'; genomad_splits = 8; context_min_flank = 1000; context_mge_window = 10000;
+                     context_plasmid_min = 0.7; context_chrom_min = 0.7
+                     context_local_assembly = false; mobilome = true; polish_plasmids = true; context_recruit_min_aln = 1000
+                     context_is_window = 500; plasmid_unit_min_identity = 0.95; flye_mode = '--nano-hq'
+                     abricate_minid = 80; abricate_mincov = 80 }
+            workflow {
+                """
+                input[0] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1_kraken2ID_PFP.fasta", checkIfExists: true) ])
+                input[1] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1_abricate.csv", checkIfExists: true) ])
+                input[2] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/S1.fastq", checkIfExists: true) ])
+                input[3] = "${projectDir}/tests/data/db_dir/genomad_db"
+                input[4] = null
+                input[5] = "${projectDir}/tests/data/db_dir/mobsuite"
+                input[6] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.loci.size() == 2
+            assert workflow.out.hit_context.size() == 0
         }
     }
 }
