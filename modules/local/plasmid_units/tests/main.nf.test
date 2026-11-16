@@ -1,0 +1,26 @@
+nextflow_process {
+    name "Test PLASMID_UNITS"
+    script "../main.nf"
+    process "PLASMID_UNITS"
+
+    test("the same plasmid in two samples is one unit") {
+        when {
+            params { plasmid_unit_min_identity = 0.95 }
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = file("\$d/circular_plasmid_candidates.tsv", checkIfExists: true)
+                input[1] = file("\$d/circles.fa", checkIfExists: true)
+                input[2] = file("\$d/isescan.tsv", checkIfExists: true)
+                input[3] = [ file("\$d/S1.r1.recruit.tsv", checkIfExists: true), file("\$d/S2.r1.recruit.tsv", checkIfExists: true) ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            def units = path(process.out.units[0]).readLines()
+            assert units.size() == 3
+            assert units[1].startsWith('PU001\t2\tS1,S2\t2\tS1__contig_1')
+        }
+    }
+}

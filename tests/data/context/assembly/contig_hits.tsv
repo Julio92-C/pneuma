@@ -1,0 +1,5 @@
+#FILE	SEQUENCE	START	END	STRAND	GENE	COVERAGE	COVERAGE_MAP	GAPS	%COVERAGE	%IDENTITY	DATABASE	ACCESSION	PRODUCT	RESISTANCE
+c.fa	S1__contig_1	5000	6000	+	aph(3')-Ia	1-1/1	===	0/0	100	99	card	X	p	r
+c.fa	S1__contig_2	5000	6000	+	tet(M)	1-1/1	===	0/0	100	99	card	X	p	r
+c.fa	S1__contig_3	5000	6000	+	ErmB	1-1/1	===	0/0	100	99	card	X	p	r
+c.fa	S1__contig_1	100	400	+	repA	1-1/1	===	0/0	100	99	plasmidfinder	X	p	r

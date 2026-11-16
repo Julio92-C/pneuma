@@ -1,0 +1,28 @@
+nextflow_process {
+    name "Test CIRCULAR_PLASMIDS"
+    script "../main.nf"
+    process "CIRCULAR_PLASMIDS"
+
+    test("no contigs: header-only table, no per-sample FASTA") {
+        when {
+            process {
+                """
+                def e = file("\${workDir}/empty.tsv"); e.text = ''
+                input[0] = []
+                input[1] = file("${projectDir}/tests/data/context/assembly/contig_hits.tsv", checkIfExists: true)
+                input[2] = e
+                input[3] = e
+                input[4] = e
+                input[5] = []
+                input[6] = []
+                input[7] = []
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.tsv[0]).readLines().size() == 1
+            assert process.out.per_sample.size() == 0
+        }
+    }
+}

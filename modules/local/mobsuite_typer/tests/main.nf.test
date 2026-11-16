@@ -1,0 +1,21 @@
+nextflow_process {
+    name "Test MOBSUITE_TYPER"
+    script "../main.nf"
+    process "MOBSUITE_TYPER"
+
+    test("empty FASTA: header-only table, mob_typer not run") {
+        when {
+            process {
+                """
+                def f = file("\${workDir}/hit_contigs.fa"); f.text = ''
+                input[0] = f
+                input[1] = file("${projectDir}/tests/data/db_dir/mobsuite", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.results[0]).readLines() == ['sample_id\trep_type(s)\trelaxase_type(s)\tmpf_type\tpredicted_mobility']
+        }
+    }
+}

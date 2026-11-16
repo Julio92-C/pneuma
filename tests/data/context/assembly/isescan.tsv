@@ -1,0 +1,7 @@
+seqID	family	cluster	isBegin	isEnd	isLen	strand	type
+S1__contig_1	IS6	IS26	10	900	891	+	c
+S1__contig_1	IS6	IS26	3800	4800	1001	+	c
+S1__contig_1	IS6	IS26	6300	7100	801	-	c
+S1__contig_2	IS6	IS26	3800	4800	1001	+	c
+S1__contig_2	IS6	IS26	6300	7100	801	+	c
+S1__contig_3	IS3	IS3	1000	2000	1001	+	c

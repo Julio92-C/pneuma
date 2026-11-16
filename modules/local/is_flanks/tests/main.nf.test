@@ -1,0 +1,28 @@
+nextflow_process {
+    name "Test IS_FLANKS"
+    script "../main.nf"
+    process "IS_FLANKS"
+
+    test("IS flanks of card hits and composite transposons") {
+        when {
+            params { context_is_window = 500 }
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = file("\$d/isescan.tsv", checkIfExists: true)
+                input[1] = file("\$d/contig_hits.tsv", checkIfExists: true)
+                """
+            }
+        }
+        then {
+            assert process.success
+            def lines = path(process.out.tsv[0]).readLines()
+            assert lines.size() == 4                                  // header + 3 card hits
+            def header = lines[0].split('\t', -1) as List
+            def rows = lines[1..-1].collect { l -> [header, l.split('\t', -1) as List].transpose().collectEntries { k, v -> [(k): v] } }
+            def s1 = rows.find { r -> r.contig == 'S1__contig_1' }
+            assert s1.composite_transposon == 'yes'
+            assert s1.orientation == 'inverted'
+        }
+    }
+}
