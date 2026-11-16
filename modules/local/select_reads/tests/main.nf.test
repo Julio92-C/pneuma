@@ -1,0 +1,41 @@
+nextflow_process {
+    name "Test SELECT_READS"
+    script "../main.nf"
+    process "SELECT_READS"
+
+    test("keeps reads aligned over --context_recruit_min_aln bp and counts the sample") {
+        when {
+            params { context_recruit_min_aln = 1000 }
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = [ [id:'S1'], file("\$d/S1.fastq", checkIfExists: true), file("\$d/S1.paf", checkIfExists: true) ]
+                input[1] = 1
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.reads[0][1]).linesGzip.findAll { it.startsWith('@') } == ['@r1']
+            assert path(process.out.counts[0][1]).readLines() == ['sample\tround\trecruited\ttotal_reads', 'S1\t1\t1\t2']
+        }
+    }
+
+    test("nothing recruited: no reads output, counts still written") {
+        when {
+            params { context_recruit_min_aln = 100000 }
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = [ [id:'S1'], file("\$d/S1.fastq", checkIfExists: true), file("\$d/S1.paf", checkIfExists: true) ]
+                input[1] = 2
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert process.out.reads.size() == 0
+            assert path(process.out.counts[0][1]).readLines()[1] == 'S1\t2\t0\tNA'
+        }
+    }
+}

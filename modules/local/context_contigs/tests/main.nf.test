@@ -1,0 +1,21 @@
+nextflow_process {
+    name "Test CONTEXT_CONTIGS"
+    script "../main.nf"
+    process "CONTEXT_CONTIGS"
+
+    test("renames contigs with the sample prefix") {
+        when {
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = [ [id:'S1'], file("\$d/S1.assembly.fasta", checkIfExists: true), file("\$d/S1.assembly_info.txt", checkIfExists: true) ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.fasta[0][1]).readLines().findAll { it.startsWith('>') } == ['>S1__contig_1', '>S1__contig_2']
+            assert path(process.out.info[0][1]).readLines()[1] == 'S1\tS1__contig_1\t10\t30\tyes'
+        }
+    }
+}

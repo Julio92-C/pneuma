@@ -1,0 +1,4 @@
+sample	route	seq	seq_len	gene	drug_class	start	end	category	reason
+S1	reads	S1__r1	9000	tet(L)	tetracycline	3001	4000	unresolved	short_flank
+S1	reads	S1__r2	9000	Bifidobacterium_adolescentis_rpoB_mutants_conferring_resistance_to_rifampicin	rifamycin	100	900	chromosome	genomad
+S1	reads	S1__r3	9000	tet(W)	tetracycline	100	900	plasmid	genomad
