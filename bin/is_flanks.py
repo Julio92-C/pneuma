@@ -3,8 +3,8 @@
 
 For every ABRicate hit of --db (card) on a contig: the nearest ISEScan element on each side within --window bp
 (distance between the gene and the element; 0 when they overlap). A composite transposon is called when the same
-IS family flanks the gene on both sides in inverted orientation (opposite transposase strands; CUPID, Microbial
-Genomics 2026). Wrap-around on circular contigs is not considered.
+IS family flanks the gene on both sides in any orientation. Orientation is reported as: inverted (opposite strands),
+direct (same strand), or unknown (incomplete strand data).
 """
 import argparse
 import csv
@@ -13,7 +13,8 @@ import sys
 from collections import defaultdict
 
 COLUMNS = ["sample", "contig", "gene", "start", "end", "strand", "left_is", "left_family", "left_strand",
-           "left_distance", "right_is", "right_family", "right_strand", "right_distance", "composite_transposon"]
+           "left_distance", "right_is", "right_family", "right_strand", "right_distance", "composite_transposon",
+           "orientation"]
 
 
 def read_tsv(path):
@@ -66,13 +67,27 @@ def flanks(hits, elements, window=500):
         ise = elements.get(g["contig"], [])
         left = closest([(g["start"] - e["end"], e) for e in ise if e["start"] < g["start"] and e["end"] < g["end"]], window)
         right = closest([(e["start"] - g["end"], e) for e in ise if e["start"] > g["start"] and e["end"] > g["end"]], window)
-        composite = bool(left and right and left[1]["family"] == right[1]["family"]
-                         and left[1]["strand"] != right[1]["strand"])
+        composite = bool(left and right and left[1]["family"] == right[1]["family"] and left[1]["family"] != "")
+
+        # Determine orientation for composite transposons
+        orientation = ""
+        if composite:
+            left_strand = left[1]["strand"]
+            right_strand = right[1]["strand"]
+            if left_strand in ("+", "-") and right_strand in ("+", "-"):
+                if left_strand == right_strand:
+                    orientation = "direct"
+                else:
+                    orientation = "inverted"
+            else:
+                orientation = "unknown"
+
         row = {"sample": g["contig"].split("__", 1)[0], "contig": g["contig"], "gene": g["gene"], "start": g["start"],
                "end": g["end"], "strand": g["strand"]}
         row.update(side("left", left))
         row.update(side("right", right))
         row["composite_transposon"] = "yes" if composite else "no"
+        row["orientation"] = orientation
         rows.append(row)
     return rows
 
