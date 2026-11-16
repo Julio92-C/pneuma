@@ -135,4 +135,56 @@ nextflow_function {
             assert function.stdout.join('\n').contains('--genomic_context false')
         }
     }
+
+    test("the mobilome resolves MOB-suite and Medaka from --db_dir without --pathogens") {
+        when {
+            function {
+                """
+                input[0] = [ db_dir: "${projectDir}/tests/data/db_dir", abricate_dbs: 'card,vfdb,plasmidfinder', pathogens: false,
+                             genomic_context: true, context_local_assembly: true, mobilome: true, polish_plasmids: true,
+                             medaka_model: 'r1041_e82_400bps_bacterial_methylation' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            def root = "${projectDir}/tests/data/db_dir"
+            assert function.result.mobsuite_db == "$root/mobsuite"
+            assert function.result.medaka_model_path == "$root/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+        }
+    }
+
+    test("the mobilome without MOB-suite / Medaka fails with the ways out") {
+        when {
+            function {
+                """
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fasta', genomad_db: '/g', abricate_dbs: 'card',
+                             pathogens: false, genomic_context: true, context_local_assembly: true, mobilome: true,
+                             polish_plasmids: true ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+            def err = function.stdout.join('\n')
+            assert err.contains('--mobsuite_db is required for the mobilome branch')
+            assert err.contains('--mobilome false')
+            assert err.contains('--polish_plasmids false')
+        }
+    }
+
+    test("--polish_plasmids false drops the Medaka requirement") {
+        when {
+            function {
+                """
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fasta', genomad_db: '/g', mobsuite_db: '/m',
+                             abricate_dbs: 'card', pathogens: false, genomic_context: true, context_local_assembly: true,
+                             mobilome: true, polish_plasmids: false ]
+                """
+            }
+        }
+        then {
+            assert function.success
+        }
+    }
 }
