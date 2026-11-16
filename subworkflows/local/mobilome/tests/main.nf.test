@@ -14,7 +14,7 @@ nextflow_workflow {
                 input[2] = channel.value(file("${projectDir}/tests/data/context/assembly/S1.assembly.fasta", checkIfExists: true))
                 input[3] = channel.value(file("${projectDir}/tests/data/context/assembly/S1.assembly.fasta", checkIfExists: true))
                 input[4] = channel.value(file("${projectDir}/tests/data/context/agg.tsv", checkIfExists: true))
-                input[5] = channel.value(file("${projectDir}/tests/data/context/agg.tsv", checkIfExists: true))
+                input[5] = channel.value(file("${projectDir}/tests/data/context/genes.tsv", checkIfExists: true))
                 input[6] = []
                 input[7] = []
                 input[8] = channel.value(file("${projectDir}/tests/data/context/taxa.tsv", checkIfExists: true))
