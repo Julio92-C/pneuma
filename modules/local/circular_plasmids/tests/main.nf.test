@@ -7,9 +7,9 @@ nextflow_process {
         when {
             process {
                 """
-                def fasta = file("${workDir}/contigs.fa"); fasta.text = ''
-                def scores = file("${workDir}/scores.tsv"); scores.text = ''
-                def plasmids = file("${workDir}/plasmids.tsv"); plasmids.text = ''
+                def fasta = file("\${workDir}/contigs.fa"); fasta.text = ''
+                def scores = file("\${workDir}/scores.tsv"); scores.text = ''
+                def plasmids = file("\${workDir}/plasmids.tsv"); plasmids.text = ''
                 input[0] = []
                 input[1] = file("${projectDir}/tests/data/context/assembly/contig_hits.tsv", checkIfExists: true)
                 input[2] = fasta
