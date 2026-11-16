@@ -16,7 +16,8 @@ process ARG_CONTEXT {
     tuple val("${task.process}"), val('python'), eval("python --version | sed 's/Python //'"), topic: versions, emit: versions_python
 
     script:
-    def mob_arg = mob ? (route == 'reads' ? "--mob-typer ${mob}" : "--mob-contigs ${mob}") : ''
+    // mob_recon contig reports and mob_typer --multi tables are told apart by name (both routes may carry either)
+    def mob_arg = !mob ? '' : (mob.name.endsWith('contig_report.txt') ? "--mob-contigs ${mob}" : "--mob-typer ${mob}")
     def flank = route == 'reads' ? params.context_min_flank : 0
     def common = "--route ${route} --abricate ${hits} --abricate-db ${db} --lengths ${lengths} --fasta ${fasta} " +
                  "--genomad-scores ${scores} --genomad-virus ${virus} --genomad-genes ${genes} ${mob_arg} " +
