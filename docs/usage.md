@@ -58,8 +58,11 @@ or `--host_index my_host.fasta`. The required files are checked at start-up (`ha
 
 ### Pathogen databases and `--pathogens`
 
-Pathogen reconstruction is opt-in: `--pathogens` defaults to `false`, and a run without it needs no
-pathogen database and behaves as in v0.2.x. With `--pathogens` the analysis run needs the
+Pathogen reconstruction is opt-in: `--pathogens` defaults to `false`. A run without it needs none of the
+pathogen-reconstruction databases below, except two used by the mobilome branch (on by default, see
+[Mobilome](#mobilome)): `--mobsuite_db` and `--medaka_model_path`. `--build_databases` builds both only without
+`--skip_pathogen_download` (and the MOB-suite database only without `--skip_mobsuite_download`); otherwise pass them,
+or run with `--mobilome false` (or `--polish_plasmids false` to drop only the Medaka model). With `--pathogens` the analysis run needs the
 Phase 2 databases: `--checkm2_db`, `--bakta_db`, `--amrfinderplus_db`, `--medaka_model_path` and
 `--panel_references_dir` (plus `--mobsuite_db` with `--run_mobsuite`). `--build_databases` builds them (CheckM2, Bakta
 `--bakta_db_type light|full`, AMRFinderPlus, the Medaka model, an MLST scheme record, the panel
@@ -288,6 +291,10 @@ The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--med
 with `--mobilome false` (or `--polish_plasmids false`) to go on without. For R9.4.1 data use `--flye_mode --nano-raw`
 and an R9.4.1 `--medaka_model`.
 
+**Upgrading from v0.3.x.** Default runs now need `--mobsuite_db` and `--medaka_model_path`, even without
+`--pathogens`. A database folder built with `--skip_pathogen_download` (or `--skip_mobsuite_download`) lacks them:
+rebuild it without those flags, pass existing copies explicitly, or run with `--mobilome false`.
+
 | Parameter | Default | Purpose |
 | --- | --- | --- |
 | `--context_local_assembly` | `true` | recruit reads around the hit reads and assemble them (layer 2) |
@@ -299,7 +306,9 @@ and an R9.4.1 `--medaka_model`.
 
 ### Pathogen reconstruction
 
-Off by default: a run without it needs no pathogen database and behaves as in v0.2.x. Turn it on with
+Off by default: a run without it skips pathogen reconstruction and needs no CheckM2, Bakta, AMRFinderPlus or panel
+reference database (the mobilome, on by default, still needs `--mobsuite_db` and `--medaka_model_path`; see
+[Mobilome](#mobilome)). Turn it on with
 `--pathogens`:
 
     nextflow run Julio92-C/pneuma -r v0.3.0 -profile <docker|singularity> \

@@ -686,14 +686,14 @@
                     "type": "string",
                     "format": "directory-path",
                     "exists": true,
-                    "description": "MOB-suite database directory (mob_init). Default: mobsuite/ in --db_dir. Needed with --run_mobsuite.",
+                    "description": "MOB-suite database directory (mob_init). Default: mobsuite/ in --db_dir. Needed by the mobilome branch (on by default; not with --mobilome false) and with --run_mobsuite.",
                     "fa_icon": "fas fa-database"
                 },
                 "medaka_model_path": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "description": "Medaka model file (<model>_model_pt.tar.gz). Default: medaka/<--medaka_model>_model_pt.tar.gz in --db_dir.",
+                    "description": "Medaka model file (<model>_model_pt.tar.gz). Default: medaka/<--medaka_model>_model_pt.tar.gz in --db_dir. Needed by the mobilome branch (on by default; not with --mobilome false or --polish_plasmids false) and with --pathogens.",
                     "fa_icon": "fas fa-database"
                 },
                 "panel_references_dir": {

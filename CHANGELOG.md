@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Genomic context layer 2 (`--context_local_assembly`, default on): per sample, the reads overlapping the hit reads (`--context_recruit_min_aln`, two rounds) are assembled with Flye `--meta`; ABRicate, geNomad and MOB-suite type the contigs and each read hit is mapped to its contig. Final call per read hit in `context/hit_context_<db>.tsv` (`contig_context`, `final_context`, `context_source`); a contig call replaces the read call only when resolved. CARD protein-variant models are flagged `intrinsic_variant`. A sample whose Flye run fails keeps its read-level calls, and the run logs a warning naming those samples.
 - Mobilome branch (`--mobilome`, default on; needs `--mobsuite_db`, and `--medaka_model_path` unless `--polish_plasmids false`): circular hit contigs as plasmid drafts (`context/plasmid_drafts/`), Medaka polishing (a failed sample keeps its unpolished draft, with a warning), MOB-suite typing, ISEScan IS flanks around each ARG with composite-transposon calls (same IS family on both sides within `--context_is_window`, in any orientation; `orientation` column), and plasmid units across samples by MinHash identity (`--plasmid_unit_min_identity`) in `mobilome/`.
 
+### `Changed`
+
+- Default runs now need `--mobsuite_db` and `--medaka_model_path` (built by `--build_databases` without `--skip_pathogen_download`), or `--mobilome false`.
+
 ## v0.3.0 - 2026-11-08
 
 Phase 2: priority-pathogen reconstruction and the pathogen report. Opt-in: `--pathogens` (default `false`) turns it on, so a run without it needs no pathogen database and behaves as in v0.2.x.

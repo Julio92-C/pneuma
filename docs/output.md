@@ -109,11 +109,13 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
   - `mobsuite/hit_contigs.mobtyper.txt`: MOB-suite typing of those contigs.
   - `loci_contigs_<db>.tsv`, `loci_contigs_<db>_score_only.tsv`: the contig calls (same columns as `loci_reads_<db>.tsv`).
 - `context/plasmid_drafts/` (mobilome)
-  - `circular_plasmid_candidates.tsv`: circular contigs with a hit, one row each: `contig`, `sample`, `length`, `coverage`, `reads`, `plasmid_score`, `chromosome_score`, `hallmarks`, `conjugation`, `replicons`, `mob_rep`, `relaxase`, `mpf`, `mobility`, `ARGs`, `VFs`, `read_taxa`.
+  - `circular_plasmid_candidates.tsv`: circular contigs with a hit, one row each: `contig`, `sample`, `length`, `coverage`, `reads`, `plasmid_score`, `chromosome_score`, `hallmarks`, `conjugation`, `replicons`, `mob_rep`, `relaxase`, `mpf`, `mobility`, `ARGs`, `VFs`, `read_taxa`. `reads` counts the recruited reads whose best alignment is on the contig.
+  - `circular_plasmid_candidates.fa`: the sequences of those drafts (unpolished), with `sample`, `length`, `replicons` and `ARGs` in the header.
+  - `per_sample/<sample>.circles.fa`: the same drafts split by sample (the Medaka input).
   - `polished/<sample>.circles.polished.fasta`: the Medaka-polished drafts (when `--polish_plasmids`; a sample whose polishing failed keeps its unpolished draft).
 - `mobilome/`
-  - `plasmid_units.tsv`: one row per plasmid unit (drafts from any sample with MinHash identity >= `--plasmid_unit_min_identity`): `unit`, `n_samples`, `samples`, `n_contigs`, `representative`, `length`, the union of `replicons`, `mob_rep`, `relaxase`, `mpf`, then `mobility`, `ARGs`, `VFs`, `IS_families`, `read_taxa`, `mean_rpm` (mean over samples of reads per million on the unit's drafts).
-  - `plasmid_unit_members.tsv`: one row per draft in a unit: `unit`, `contig`, `sample`, `length`, `coverage`, `reads`, `rpm`.
+  - `plasmid_units.tsv`: one row per plasmid unit (drafts from any sample with MinHash identity >= `--plasmid_unit_min_identity`): `unit`, `n_samples`, `samples`, `n_contigs`, `representative`, `length`, the union of `replicons`, `mob_rep`, `relaxase`, `mpf`, then `mobility`, `ARGs`, `VFs`, `IS_families`, `read_taxa`, `mean_rpm`: recruited reads (best alignment on the draft) per million clean reads, summed over a sample's drafts in the unit and averaged over the samples that have a draft in it. Units are built from the unpolished drafts (`circular_plasmid_candidates.fa`), not the Medaka-polished ones.
+  - `plasmid_unit_members.tsv`: one row per draft in a unit: `unit`, `contig`, `sample`, `length`, `coverage`, `reads`, `rpm` (that draft's reads per million clean reads of its sample).
   - `is_flanks.tsv`: one row per CARD hit on a contig: `sample`, `contig`, `gene`, `start`, `end`, `strand`, then `left_is` / `left_family` / `left_strand` / `left_distance` and the same four for `right_`, `composite_transposon` (`yes` when the same IS family flanks the gene on both sides within `--context_is_window`, in any orientation) and `orientation` (`inverted`, `direct` or `unknown`; empty when not composite).
   - `isescan/hit_contigs.isescan.tsv`: ISEScan's IS table for the hit contigs (header only when it found none).
 
