@@ -3,7 +3,10 @@
 
 Coloured transit lines with stations, 45-degree branch / merge bends and a
 wider interchange at Kraken2 and MERIDIAN; small uppercase stage labels
-replace the old boxed blocks. Standard library only; output is
+replace the old boxed blocks. Below the trunk, a sky-blue Genomic context
+line branches off the functional line after ABRicate (read layer, local
+assembly, contig typing, extend context) with a dashed Mobilome branch that
+splits off after the contig steps; the opt-in pathogen lane sits below both. Standard library only; output is
 deterministic, so re-running must leave the committed SVG unchanged:
 
     python docs/images/make_metro_map.py
@@ -21,13 +24,15 @@ C_QC, C_AB, C_CO = "#0072B2", "#009E73", "#D55E00"
 C_FN, C_DS = "#9B3FA8", "#D4A017"
 C_MQ = "#57606a"
 C_PA = "#CC79A7"     # pathogens (Okabe-Ito reddish purple)
+C_GC = "#56B4E9"     # genomic context (Okabe-Ito sky blue; mobilome = same colour, dashed)
 
-W, H = 1380, 486
+W, H = 1380, 646
 LW = 6                      # line width
 
 # lane geometry
 Y0 = 240                    # trunk / functional / downstream line
-YA, YC, YR = 96, 150, 350  # abundance, contamination, pathogen lanes
+YA, YC, YR = 96, 150, 510  # abundance, contamination, pathogen lanes
+YG, YM = 340, 396           # genomic context lane, mobilome branch lane
 
 out = []
 
@@ -104,7 +109,13 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "Kraken2 interchange which branches into Abundance (Bracken, KrakenTools "
     "combine, Krona), Contamination (Recentrifuge), Functional profiling (Tag "
     "reads, ABRicate, CARD, VFDB, PlasmidFinder) and a Pathogen reconstruction "
-    "line. The first three end at a vertical junction interchange, "
+    "line. A sky-blue Genomic context line, on by default, branches from the "
+    "Functional line after ABRicate and runs below it: hit reads, geNomad, ARG "
+    "context (read calls), then local assembly (read recruitment, Flye meta, "
+    "contig typing with ABRicate, geNomad and MOB-suite, extend context) and ends "
+    "at the context tables. A dashed sky-blue Mobilome branch splits off after "
+    "contig typing: plasmid drafts, Medaka, ISEScan with IS flanks and composite "
+    "transposons, and plasmid units clustered across samples. The first three end at a vertical junction interchange, "
     "from which the downstream line (MERIDIAN, then the Report) and a grey exit to "
     "MultiQC (report of all steps) leave; filled stops mark the stations whose "
     "output MultiQC reports. The pathogen line is an opt-in line that runs per "
@@ -112,7 +123,8 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "pooling when no sample passes), Flye and Medaka, CheckM2 and QUAST, skani "
     "species confirmation, MLST, AMRFinderPlus, ABRicate and Bakta (MOB-suite "
     "optional), ending in the Pathogen report; QUAST, CheckM2 and the pathogen "
-    "status are reported in MultiQC.</desc>")
+    "status are reported in MultiQC. None of the genomic context stations is "
+    "reported in MultiQC yet.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
 text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
@@ -147,6 +159,12 @@ line([(KX, Y0), (FX0, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 - SP), (FX1, Y0 - SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX0 + SP, Y0 + SP), (FX1, Y0 + SP), (FX1 + SP, Y0)], C_FN)
 line([(FX0, Y0), (FX1 + SP, Y0), (JX, Y0)], C_FN)
+# genomic context (sky blue): branches after ABRicate, runs below the functional line;
+# the mobilome (dashed, same colour) splits off after contig typing
+BX = 772                              # branch corner on the functional line
+GX1, GXS = 1130, 1055                 # context terminus, mobilome split corner
+line([(BX, Y0), (BX + YG - Y0, YG), (GX1, YG)], C_GC)
+line([(GXS, YG), (GXS + YM - YG, YM), (1340, YM)], C_GC, dashed=True)
 # MultiQC exit (neutral grey): straight out of the junction, below the main axis
 line([(JX, MQY), (MQX, MQY)], C_MQ)
 # downstream (gold)
@@ -214,9 +232,45 @@ terminus(RX, Y0, C_DS)
 text(RX, Y0 - 20, ["Report"], size=12, weight="700")
 stage(MX, Y0 - 44, "DOWNSTREAM", anchor="middle")
 
+# ---------------------------------------------------------------- genomic context
+# read layer (on the diagonal) + local assembly (lane); all unfilled: no step is reported in MultiQC yet
+sq = lambda y: BX + y - Y0            # x on the branch diagonal at height y
+for name, (x, y), (lx, ly, anc) in [
+        ("Hit reads", (sq(284), 284), (sq(284) - 12, 288, "end")),
+        ("geNomad", (sq(318), 318), (sq(318) - 12, 322, "end"))]:
+    station(x, y)
+    text(lx, ly, [name], anchor=anc, size=12, weight="700")
+for lines, x, side in [(["ARG", "context"], 896, 1), (["Read recruitment"], 940, -1),
+                       (["Flye", "--meta"], 984, 1), (["Contig", "typing"], 1028, -1),
+                       (["Extend", "context"], 1082, -1)]:
+    station(x, YG)
+    if side > 0:
+        text(x, YG + 22, lines, size=12, weight="700")
+    else:
+        text(x, YG - 14 - 13 * (len(lines) - 1), lines, size=12, weight="700")
+terminus(GX1, YG, C_GC)
+text(GX1 + 18, YG + 4, ["Context tables"], anchor="start", size=12, weight="700")
+text(984, YG + 52, ["local assembly: --context_local_assembly"], size=10, fill=MUTED,
+     style="italic")
+stage(740, YG + 32, "GENOMIC CONTEXT")
+
+# mobilome branch (dashed): labels alternate below / above the lane
+for k, (lines, side) in enumerate([(["Plasmid", "drafts"], 1), (["Medaka"], -1),
+                                   (["ISEScan"], 1), (["IS flanks +", "composite Tn"], -1),
+                                   (["Plasmid", "units"], 1)]):
+    x = 1130 + k * 42
+    station(x, YM)
+    if side > 0:
+        text(x, YM + 22, lines, size=12, weight="700")
+    else:
+        text(x, YM - 14 - 13 * (len(lines) - 1), lines, size=12, weight="700")
+terminus(1340, YM, C_GC)
+text(1340, YM - 14 - 13, ["Mobilome", "tables"], size=12, weight="700")
+stage(1100, YM + 26, "MOBILOME", anchor="end")
+
 # ---------------------------------------------------------------- pathogen reconstruction
 # labels alternate above / below the lane (as on the QC trunk); the filled stop is reported in MultiQC
-PX0, PDX = 720, 92
+PX0, PDX = 860, 72
 for k, (lines, kind, filled) in enumerate([
         (["Extract", "reads"], "", False), (["Coverage", "gate"], "", False),
         (["Flye", "Medaka"], "", False), (["CheckM2", "QUAST"], "", True),
@@ -231,15 +285,16 @@ for k, (lines, kind, filled) in enumerate([
 text(PX0 + PDX, YR + 22 + 13 + 14, ["patient-level pooling"], size=10, fill=MUTED, style="italic")
 terminus(PTX, YR, C_PA)
 text(PTX, YR + 28, ["Pathogen", "report"], size=12, weight="700")
-stage(700, YR - 52, "PATHOGEN RECONSTRUCTION")
+stage(PX0 - 20, YR - 52, "PATHOGEN RECONSTRUCTION")
 
 # ---------------------------------------------------------------- legend
-LY = 424
+LY = YR + 74
 stage(30, LY - 18, "LEGEND")
 lines_leg = [("QC &amp; taxonomy", C_QC, False), ("Abundance", C_AB, False),
              ("Contamination", C_CO, False), ("Functional (AMR / VF / MGE)", C_FN, False),
+             ("Genomic context", C_GC, False), ("Mobilome branch", C_GC, True),
              ("Downstream", C_DS, False), ("Pathogens (opt-in)", C_PA, False)]
-xs = [30, 190, 320, 470, 700, 840]
+xs = [30, 190, 320, 470, 700, 860, 1030, 1170]
 for (lab, col, dashed), x in zip(lines_leg, xs):
     dash = ' stroke-dasharray="8 6"' if dashed else ""
     add(f'<line x1="{x}" y1="{LY}" x2="{x + 34}" y2="{LY}" stroke="{col}" '
