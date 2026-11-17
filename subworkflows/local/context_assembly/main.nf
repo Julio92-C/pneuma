@@ -21,6 +21,24 @@ def joinById(ch_a, ch_b) {
 }
 
 //
+// Warn about samples whose process failed (errorStrategy 'ignore'): attempted ids vs ids that produced output.
+//
+def warnFailedSamples(ch_attempted, ch_done, label, fallback) {
+    def ch_a = ch_attempted.map { meta, _f -> meta.id }.collect().ifEmpty([]).map { ids -> ids.sort().join(',') }
+    def ch_d = ch_done.map { meta, _f -> meta.id }.collect().ifEmpty([]).map { ids -> ids.sort().join(',') }
+    ch_a.combine(ch_d).subscribe { attempted, done ->
+        def att  = attempted ? attempted.tokenize(',') : []
+        def ok   = done ? done.tokenize(',') : []
+        def lost = att.findAll { id -> !(id in ok) }
+        if (att && !ok) {
+            log.warn "PNEUMA: ${label} failed for every attempted sample (${lost.join(', ')}); ${fallback}. A configuration problem (--flye_mode, --medaka_model_path, memory) is more likely than biology: check the task logs."
+        } else if (lost) {
+            log.warn "PNEUMA: ${label} failed for ${lost.size()} of ${att.size()} sample(s): ${lost.join(', ')}; ${fallback}."
+        }
+    }
+}
+
+//
 // Layer 2 of the genomic-context analysis: per sample, reads overlapping a hit read (round 1) and reads overlapping
 // those (round 2, walks out along a plasmid backbone) are assembled with Flye --meta; ABRicate, geNomad and
 // MOB-suite on the pooled contigs give contig calls, which EXTEND_CONTEXT carries back to each read hit.
@@ -47,6 +65,7 @@ workflow CONTEXT_ASSEMBLY {
     SELECT_R2(joinById(ch_reads, RECRUIT_R2.out.paf), 2)
 
     FLYE_CONTEXT(SELECT_R2.out.reads, params.flye_mode)
+    warnFailedSamples(SELECT_R2.out.reads, FLYE_CONTEXT.out.fasta, 'local assembly (Flye)', 'their read-level context calls were used')
     CONTEXT_CONTIGS(joinById(FLYE_CONTEXT.out.fasta, FLYE_CONTEXT.out.txt))
 
     def ch_abricate_db = abricate_db ? channel.value(file(abricate_db, checkIfExists: true, type: 'dir')) : channel.value([])

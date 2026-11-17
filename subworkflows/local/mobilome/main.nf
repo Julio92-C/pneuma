@@ -5,6 +5,24 @@ include { IS_FLANKS                           } from '../../../modules/local/is_
 include { PLASMID_UNITS                       } from '../../../modules/local/plasmid_units/main'
 
 //
+// Warn about samples whose process failed (errorStrategy 'ignore'): attempted ids vs ids that produced output.
+//
+def warnFailedSamples(ch_attempted, ch_done, label, fallback) {
+    def ch_a = ch_attempted.map { meta, _f -> meta.id }.collect().ifEmpty([]).map { ids -> ids.sort().join(',') }
+    def ch_d = ch_done.map { meta, _f -> meta.id }.collect().ifEmpty([]).map { ids -> ids.sort().join(',') }
+    ch_a.combine(ch_d).subscribe { attempted, done ->
+        def att  = attempted ? attempted.tokenize(',') : []
+        def ok   = done ? done.tokenize(',') : []
+        def lost = att.findAll { id -> !(id in ok) }
+        if (att && !ok) {
+            log.warn "PNEUMA: ${label} failed for every attempted sample (${lost.join(', ')}); ${fallback}. A configuration problem (--flye_mode, --medaka_model_path, memory) is more likely than biology: check the task logs."
+        } else if (lost) {
+            log.warn "PNEUMA: ${label} failed for ${lost.size()} of ${att.size()} sample(s): ${lost.join(', ')}; ${fallback}."
+        }
+    }
+}
+
+//
 // Plasmids in their own right: circular local-assembly contigs carrying a hit become plasmid drafts (Medaka-
 // polished with the sample's recruited reads), ISEScan on the hit contigs gives the IS elements next to each ARG
 // (composite transposons), and the drafts of all samples are grouped into plasmid units.
@@ -38,6 +56,7 @@ workflow MOBILOME {
             .join(ch_circles)
             .map { _id, meta, reads, circles -> [ meta, reads, circles ] }
         MEDAKA_PLASMIDS(ch_polish, file(medaka_model, checkIfExists: true))
+        warnFailedSamples(ch_polish.map { meta, _reads, circles -> [ meta, circles ] }, MEDAKA_PLASMIDS.out.assembly, 'plasmid polishing (Medaka)', 'their unpolished plasmid drafts were used')
     }
 
     emit:

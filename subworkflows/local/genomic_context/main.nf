@@ -62,7 +62,7 @@ workflow GENOMIC_CONTEXT {
     emit:
     loci       = ARG_CONTEXT.out.loci            // [ 'reads', db, loci_reads_<db>.tsv ]
     score_only = ARG_CONTEXT.out.score_only
-    hit_reads  = ch_fa                           // pooled hit reads (Plan B: local assembly seeds)
+    hit_reads  = ch_fa                           // pooled hit reads (geNomad input; local assembly is seeded by the per-sample HIT_READS.out.fasta)
     taxa       = ch_taxa                         // read id -> Kraken2 taxid
     contig_loci        = ch_contig_loci    // [ 'contigs', db, loci_contigs_<db>.tsv ]
     hit_context        = ch_hit_context    // [ db, hit_context_<db>.tsv ]

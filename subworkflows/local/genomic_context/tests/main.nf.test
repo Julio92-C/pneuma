@@ -58,6 +58,10 @@ nextflow_workflow {
             assert workflow.success
             assert workflow.out.loci.size() == 2
             assert workflow.out.hit_context.size() == 0
+            assert workflow.out.contig_loci.size() == 0
+            assert workflow.out.plasmid_candidates.size() == 0
+            assert workflow.out.plasmid_units.size() == 0
+            assert workflow.out.is_flanks.size() == 0
         }
     }
 }
