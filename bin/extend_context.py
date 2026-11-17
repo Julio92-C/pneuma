@@ -2,12 +2,14 @@
 """Carry the genomic context of locally assembled contigs back to each read hit (genomic context, layer 2).
 
 A read hit takes the call of a contig hit of the same database at the gene's projected position: of the read's
-alignments to its own sample's contigs, the one whose query block overlaps the gene most (ties: more matches) carries
-the gene's read coordinates onto the contig (strand-aware); no alignment over the gene means no contig match. Among
-contig hits within --pad bp of the projected span, the hit of the same gene wins, then the largest overlap (or the
-nearest), then a resolved call over an unresolved one. The contig call becomes the final call when it is resolved;
-otherwise (no contig match, or an unresolved contig) the read call is kept. CARD protein-variant / mutation models
-are flagged intrinsic_variant = yes: ABRicate finds the gene but cannot check the resistance mutation.
+alignments to its own sample's contigs with identity (matches / block length) >= --min-identity (0.8), the one whose
+query block overlaps the gene most (ties: more matches) carries the gene's read coordinates onto the contig
+(strand-aware); no such alignment over the gene means no contig match. A contig hit of the same gene matches within
+--pad bp of the projected span; a hit of a different gene only when it overlaps the span. Among matching hits, the
+same gene wins, then the largest overlap (or the nearest), then a resolved call over an unresolved one. The
+contig call becomes the final call when it is resolved; otherwise (no contig match, or an unresolved contig) the read
+call is kept. CARD protein-variant / mutation models are flagged intrinsic_variant = yes: ABRicate finds the gene but
+cannot check the resistance mutation.
 """
 import argparse
 import csv
@@ -51,7 +53,7 @@ def read_best_alignments(paths):
 
 def read_alignments(paths):
     """PAFs of recruited reads vs their sample's contigs -> {"<sample>__<read>": [(contig, ts, te, qs, qe, strand,
-    matches), ...]}, every alignment of the read (primary, secondary and supplementary) in file order."""
+    matches, block), ...]}, every alignment of the read (primary, secondary and supplementary) in file order."""
     alns = defaultdict(list)
     for path in paths:
         with open(path) as fh:
@@ -60,7 +62,7 @@ def read_alignments(paths):
                 if len(f) < 12:
                     continue
                 alns[sample_of(f[5]) + "__" + f[0]].append(
-                    (f[5], int(f[7]), int(f[8]), int(f[2]), int(f[3]), f[4], int(f[9])))
+                    (f[5], int(f[7]), int(f[8]), int(f[2]), int(f[3]), f[4], int(f[9]), int(f[10])))
     return dict(alns)
 
 
@@ -69,10 +71,18 @@ def overlap(a0, a1, b0, b1):
     return min(a1, b1) - max(a0, b0) + 1
 
 
-def gene_alignment(start, end, alns):
-    """The alignment whose query block [qs, qe) overlaps the gene (1-based start..end) most, ties on matches."""
+def identity(aln):
+    """Residue matches / alignment block length (PAF columns 10 / 11)."""
+    return aln[6] / aln[7] if aln[7] else 0.0
+
+
+def gene_alignment(start, end, alns, min_identity=0.8):
+    """Of the alignments with identity >= min_identity, the one whose query block [qs, qe) overlaps the gene
+    (1-based start..end) most, ties on matches."""
     best, key = None, None
     for aln in alns:
+        if identity(aln) < min_identity:
+            continue
         ov = min(aln[4], end) - max(aln[3], start - 1)
         if ov > 0 and (key is None or (ov, aln[6]) > key):
             best, key = aln, (ov, aln[6])
@@ -81,21 +91,23 @@ def gene_alignment(start, end, alns):
 
 def project(start, end, aln):
     """Gene span on the read -> span on the contig through the alignment (start of the aligned block as anchor)."""
-    _t, ts, te, qs, _qe, strand, _m = aln
+    ts, te, qs, strand = aln[1], aln[2], aln[3], aln[5]
     a, b = start - qs, end - qs
     return (ts + a, ts + b) if strand == "+" else (te - b, te - a)
 
 
 def contig_match(gene, lo, hi, hits, pad):
-    """Contig hit for a gene projected to lo..hi: same gene, then largest overlap / nearest, then resolved first."""
-    near = [c for c in hits if overlap(int(c["start"]), int(c["end"]), lo - pad, hi + pad) > 0]
+    """Contig hit for a gene projected to lo..hi: the same gene within pad bp, a different gene only when it overlaps
+    lo..hi; then same gene first, largest overlap / nearest, resolved first."""
+    near = [c for c in hits if overlap(int(c["start"]), int(c["end"]), lo - (0 if c["gene"] != gene else pad),
+                                       hi + (0 if c["gene"] != gene else pad)) > 0]
     if not near:
         return None
     return min(near, key=lambda c: (c["gene"] != gene, -overlap(int(c["start"]), int(c["end"]), lo, hi),
                                     c["category"] not in RESOLVED))
 
 
-def extend(read_rows, contig_rows, alignments, db, pad=500):
+def extend(read_rows, contig_rows, alignments, db, pad=500, min_identity=0.8):
     by_contig = defaultdict(list)
     for c in contig_rows:
         by_contig[c["seq"]].append(c)
@@ -103,7 +115,7 @@ def extend(read_rows, contig_rows, alignments, db, pad=500):
     for r in read_rows:
         hit = {"contig": "", "contig_len": "", "contig_gene": "", "contig_context": "no_contig_match",
                "contig_reason": ""}
-        aln = gene_alignment(int(r["start"]), int(r["end"]), alignments.get(r["seq"], []))
+        aln = gene_alignment(int(r["start"]), int(r["end"]), alignments.get(r["seq"], []), min_identity)
         if aln:
             lo, hi = project(int(r["start"]), int(r["end"]), aln)
             c = None
@@ -130,10 +142,13 @@ def main(argv=None):
     ap.add_argument("--read-loci", required=True, help="loci_reads_<db>.tsv (arg_context.py --route reads)")
     ap.add_argument("--contig-loci", required=True, help="loci_contigs_<db>.tsv (arg_context.py --route contigs)")
     ap.add_argument("--paf", nargs="*", default=[], help="recruited reads -> their sample's contigs (minimap2 PAF)")
-    ap.add_argument("--pad", type=int, default=500, help="bp tolerance around the projected gene span")
+    ap.add_argument("--pad", type=int, default=500, help="bp tolerance around the projected gene span (same gene)")
+    ap.add_argument("--min-identity", type=float, default=0.8,
+                    help="minimum alignment identity (matches / block length) of a read alignment used")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
-    rows = extend(read_tsv(a.read_loci), read_tsv(a.contig_loci), read_alignments(a.paf), a.db.lower(), a.pad)
+    rows = extend(read_tsv(a.read_loci), read_tsv(a.contig_loci), read_alignments(a.paf), a.db.lower(), a.pad,
+                  a.min_identity)
     with open(a.out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=COLUMNS, delimiter="\t", lineterminator="\n")
         w.writeheader()

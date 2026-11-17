@@ -43,8 +43,8 @@ def test_project_on_both_strands():
 def test_read_alignments_keeps_every_alignment_with_its_query_block(tmp_path):
     p = write(tmp_path / "a.paf", paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500)
               + paf("r1", 0, 5000, "-", "S1__contig_2", 0, 5000, 4000))
-    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500),
-                                                  ("S1__contig_2", 0, 5000, 0, 5000, "-", 4000)]}
+    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000),
+                                                  ("S1__contig_2", 0, 5000, 0, 5000, "-", 4000, 5000)]}
 
 
 def alns(tmp_path, text):
@@ -131,3 +131,55 @@ def test_cli_with_no_contigs_writes_the_header(tmp_path):
     rl, cl, out = write(tmp_path / "r.tsv", LOCI_HEAD), write(tmp_path / "c.tsv", LOCI_HEAD), tmp_path / "o.tsv"
     assert ec.main(["--db", "card", "--read-loci", rl, "--contig-loci", cl, "--paf", "--out", str(out)]) == 0
     assert out.read_text().splitlines() == ["\t".join(ec.COLUMNS)]
+
+
+def test_extend_weak_alignment_over_the_gene_is_no_contig_match(tmp_path):
+    # covers the gene but identity 5000 / 9000 = 0.56 < 0.8: ignored, the read call stays
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 5000))
+    hits = contig_hits(("S1__contig_5", "tet(L)", 1001, 1800, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 1001, 1800), hits, al, "card")
+    assert (r["contig_context"], r["final_context"], r["context_source"]) == ("no_contig_match", "unresolved", "read")
+    # the floor is a parameter
+    (r,) = ec.extend(one_read("tet(L)", 1001, 1800), hits, al, "card", min_identity=0.5)
+    assert (r["contig_context"], r["context_source"]) == ("plasmid", "contig")
+
+
+def test_extend_weak_best_alignment_is_skipped_for_a_passing_one(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 6000)
+              + paf("r1", 500, 2500, "+", "S1__contig_7", 0, 2000, 1900))
+    hits = contig_hits(("S1__contig_5", "tet(L)", 1001, 1800, "chromosome"),
+                       ("S1__contig_7", "tet(L)", 501, 1300, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 1001, 1800), hits, al, "card")
+    assert (r["contig"], r["contig_context"]) == ("S1__contig_7", "plasmid")
+
+
+def test_extend_different_gene_near_but_not_overlapping_is_no_match(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 8800))
+    hits = contig_hits(("S1__contig_5", "qacEdelta1", 1901, 2300, "plasmid"))   # 100 bp past the gene, within pad
+    (r,) = ec.extend(one_read("sul1", 1001, 1800), hits, al, "card")
+    assert (r["contig_context"], r["final_context"], r["context_source"]) == ("no_contig_match", "unresolved", "read")
+
+
+def test_extend_same_gene_near_but_not_overlapping_matches(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 8800))
+    hits = contig_hits(("S1__contig_5", "sul1", 1901, 2700, "plasmid"))
+    (r,) = ec.extend(one_read("sul1", 1001, 1800), hits, al, "card")
+    assert (r["contig_gene"], r["contig_context"]) == ("sul1", "plasmid")
+
+
+def test_extend_different_gene_overlapping_the_projection_matches(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 8800))
+    hits = contig_hits(("S1__contig_5", "qacEdelta1", 1701, 2100, "plasmid"))
+    (r,) = ec.extend(one_read("sul1", 1001, 1800), hits, al, "card")
+    assert (r["contig_gene"], r["contig_context"], r["context_source"]) == ("qacEdelta1", "plasmid", "contig")
+
+
+def test_cli_min_identity_flag(tmp_path):
+    rl = write(tmp_path / "r.tsv", LOCI_HEAD + "S1\treads\tS1__r1\t9000\ttet(L)\tx\t1001\t1800\tunresolved\tf\n")
+    cl = write(tmp_path / "c.tsv", LOCI_HEAD + "S1\tcontigs\tS1__contig_5\t50000\ttet(L)\tx\t1001\t1800\tplasmid\tr\n")
+    p = write(tmp_path / "a.paf", paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 6300))   # identity 0.70
+    for flag, want in ((["--min-identity", "0.6"], "contig"), ([], "read")):
+        out = tmp_path / "o.tsv"
+        args = ["--db", "card", "--read-loci", rl, "--contig-loci", cl, "--paf", p, "--out", str(out)]
+        assert ec.main(args + flag) == 0
+        assert rows(out.read_text())[0]["context_source"] == want

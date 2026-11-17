@@ -269,7 +269,9 @@ so per sample the clean reads are mapped (minimap2) to the hit reads and the rea
 out along a plasmid backbone. The recruited reads are assembled with Flye `--meta` (`--flye_mode`, default
 `--nano-hq`). ABRicate, geNomad and MOB-suite type the pooled contigs, and the contig call is carried back to each
 read hit by mapping the recruited reads to the contigs of the same sample: the result is `final_context` in
-`context/hit_context_<db>.tsv`. A contig call replaces the read call only when it is resolved; an `unresolved` contig
+`context/hit_context_<db>.tsv`. Only alignments with identity (matches / block length) >= 80% place a read hit on a
+contig, through the one that covers the gene best; there the contig hit of the same gene is taken (within 500 bp), or a
+hit of a different gene only when it overlaps the projected gene. A contig call replaces the read call only when it is resolved; an `unresolved` contig
 call never overrides a resolved read call. Samples without hit reads are skipped. If Flye fails for a sample the run
 continues with that sample's read-level calls and logs a warning naming the samples (a stronger one if it failed for
 every sample, which usually points to a configuration problem such as `--flye_mode` or memory). Turn the whole layer
