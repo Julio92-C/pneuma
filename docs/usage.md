@@ -284,7 +284,7 @@ IS26); the `orientation` column says `inverted`, `direct` or `unknown`. Drafts f
 into plasmid units by MinHash identity >= `--plasmid_unit_min_identity` (0.95; rotation- and strand-invariant).
 
 The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--medaka_model_path`; both are built by
-`--build_databases` (without `--skip_pathogen_download`). Without them the run stops at start-up and says so; run
+`--build_databases` (`--skip_pathogen_download` leaves out both; `--skip_mobsuite_download` leaves out the MOB-suite database). Without them the run stops at start-up and says so; run
 with `--mobilome false` (or `--polish_plasmids false`) to go on without. For R9.4.1 data use `--flye_mode --nano-raw`
 and an R9.4.1 `--medaka_model`.
 

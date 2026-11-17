@@ -3,6 +3,7 @@
 // Database: nextflow run . -profile docker --build_databases --db_outdir ~/pneuma_test_db \
 //             --skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download \
 //             (geNomad, MOB-suite and the Medaka model; or: genomad download-database ~/pneuma_test_db)
+//             Note: without --skip_pathogen_download this also downloads the large pathogen databases (CheckM2, Bakta, AMRFinderPlus).
 // Run:      PNEUMA_GENOMAD_DB=~/pneuma_test_db/genomad_db PNEUMA_MOBSUITE_DB=~/pneuma_test_db/mobsuite \
 //             PNEUMA_MEDAKA_MODEL=~/pneuma_test_db/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz \
 //             nf-test test tests/context/ -c nf-test.pathogen.config --tag context_real --profile docker,test

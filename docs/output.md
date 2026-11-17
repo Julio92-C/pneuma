@@ -103,8 +103,11 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
   - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`.
 - `context/local_assembly/`
   - `recruitment/<sample>.r1.recruit.tsv`, `<sample>.r2.recruit.tsv`: `sample`, `round`, `recruited`, `total_reads` for each recruitment round.
-  - `contigs/`: the Flye `--meta` contigs of each sample (`<sample>.contigs.fa`, `<sample>.assembly_info.tsv`). `all_contigs.fa`, `contig_hits.tsv`: pooled contigs and the ABRicate hits on them.
-  - `genomad/`, `mobsuite/` (`hit_contigs.mobtyper.txt`): geNomad scores and MOB-suite typing of the contigs that carry a hit. `loci_contigs_<db>.tsv`: the contig calls (same columns as `loci_reads_<db>.tsv`).
+  - `contigs/`: the Flye `--meta` contigs of each sample (`<sample>.contigs.fa`, `<sample>.assembly_info.tsv`).
+  - `all_contigs.fa`, `contig_hits.tsv`: the pooled contigs and the ABRicate hits on them.
+  - `genomad/*.tsv`: geNomad scores, virus and plasmid summaries and gene table of the contigs that carry a hit.
+  - `mobsuite/hit_contigs.mobtyper.txt`: MOB-suite typing of those contigs.
+  - `loci_contigs_<db>.tsv`, `loci_contigs_<db>_score_only.tsv`: the contig calls (same columns as `loci_reads_<db>.tsv`).
 - `context/plasmid_drafts/` (mobilome)
   - `circular_plasmid_candidates.tsv`: circular contigs with a hit, one row each: `contig`, `sample`, `length`, `coverage`, `reads`, `plasmid_score`, `chromosome_score`, `hallmarks`, `conjugation`, `replicons`, `mob_rep`, `relaxase`, `mpf`, `mobility`, `ARGs`, `VFs`, `read_taxa`.
   - `polished/<sample>.circles.polished.fasta`: the Medaka-polished drafts (when `--polish_plasmids`; a sample whose polishing failed keeps its unpolished draft).
