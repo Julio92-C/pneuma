@@ -97,7 +97,7 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
 - `context/hit_context_<db>.tsv` (one per database in `--context_databases`; local assembly): one row per read hit, with the final call.
   - `sample`, `seq`, `database`, `gene`, `drug_class`, `read_len`, `start`, `end`.
   - `read_context`, `read_reason`: the read-level call and its evidence (same values as `category` / `reason` above).
-  - `contig`, `contig_len`, `contig_gene`, `contig_context`, `contig_reason`: the contig the read maps to (same sample only), the matching gene on it and the contig's call. `contig_context` is `no_contig_match` when the read is on no contig.
+  - `contig`, `contig_len`, `contig_gene`, `contig_context`, `contig_reason`: the contig the read maps to (same sample only), the matching gene on it and the contig's call. The gene is carried onto the contig through the read alignment that covers it best; among contig hits near that position, the same gene wins, then the largest overlap, then a resolved call. `contig_context` is `no_contig_match` when no alignment of the read covers the gene or no contig hit lies near it.
   - `final_context`: `plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`. The contig call replaces the read call only when it is resolved.
   - `context_source`: where `final_context` comes from (`read` or `contig`).
   - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`.

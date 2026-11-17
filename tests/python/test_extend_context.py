@@ -36,20 +36,89 @@ def test_best_alignment_is_keyed_by_the_contig_sample(tmp_path):
 
 
 def test_project_on_both_strands():
-    assert ec.project(3001, 4000, ("c", 1000, 10000, 0, "+", 1)) == (4001, 5000)
-    assert ec.project(3001, 4000, ("c", 1000, 10000, 0, "-", 1)) == (6000, 6999)
+    assert ec.project(3001, 4000, ("c", 1000, 10000, 0, 9000, "+", 1)) == (4001, 5000)
+    assert ec.project(3001, 4000, ("c", 1000, 10000, 0, 9000, "-", 1)) == (6000, 6999)
 
 
-def test_extend_takes_a_resolved_contig_call_at_the_projected_position():
-    best = {"S1__r1": ("S1__contig_1", 1000, 10000, 0, "+", 8500),
-            "S1__r3": ("S1__contig_9", 0, 9000, 0, "+", 8500)}
-    by = {r["seq"]: r for r in ec.extend(rows(READ_LOCI), rows(CONTIG_LOCI), best, "card", pad=500)}
+def test_read_alignments_keeps_every_alignment_with_its_query_block(tmp_path):
+    p = write(tmp_path / "a.paf", paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500)
+              + paf("r1", 0, 5000, "-", "S1__contig_2", 0, 5000, 4000))
+    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500),
+                                                  ("S1__contig_2", 0, 5000, 0, 5000, "-", 4000)]}
+
+
+def alns(tmp_path, text):
+    return ec.read_alignments([write(tmp_path / "x.paf", text)])
+
+
+def test_extend_takes_a_resolved_contig_call_at_the_projected_position(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500)
+              + paf("r3", 0, 9000, "+", "S1__contig_9", 0, 9000, 8500))
+    by = {r["seq"]: r for r in ec.extend(rows(READ_LOCI), rows(CONTIG_LOCI), al, "card", pad=500)}
     assert (by["S1__r1"]["contig"], by["S1__r1"]["contig_context"]) == ("S1__contig_1", "plasmid")
     assert (by["S1__r1"]["final_context"], by["S1__r1"]["context_source"]) == ("plasmid", "contig")
     assert (by["S1__r2"]["contig_context"], by["S1__r2"]["final_context"]) == ("no_contig_match", "chromosome")
     # an unresolved contig never overrides a resolved read call
     assert by["S1__r3"]["contig_context"] == "unresolved"
     assert (by["S1__r3"]["final_context"], by["S1__r3"]["context_source"]) == ("plasmid", "read")
+
+
+def one_read(gene, start, end):
+    return rows(LOCI_HEAD + "S1\treads\tS1__r1\t9000\t%s\tx\t%d\t%d\tunresolved\tshort_flank\n" % (gene, start, end))
+
+
+def contig_hits(*hits):
+    return rows(LOCI_HEAD + "".join("S1\tcontigs\t%s\t50000\t%s\tx\t%d\t%d\t%s\tr\n" % h for h in hits))
+
+
+def test_extend_minus_strand_alignment(tmp_path):
+    # gene at read 3001-4000, read on the minus strand of contig 1000-10000 -> contig 6000-6999
+    al = alns(tmp_path, paf("r1", 0, 9000, "-", "S1__contig_2", 1000, 10000, 8500))
+    hits = contig_hits(("S1__contig_2", "tet(L)", 4001, 5000, "chromosome"),
+                       ("S1__contig_2", "tet(L)", 6001, 7000, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 3001, 4000), hits, al, "card")
+    assert (r["contig"], r["contig_context"], r["final_context"]) == ("S1__contig_2", "plasmid", "plasmid")
+
+
+def test_extend_uses_the_alignment_that_covers_the_gene_not_the_best_one(tmp_path):
+    # best alignment (most matches) covers read 0-6000; the gene (7001-8000) is only in the supplementary block
+    al = alns(tmp_path, paf("r1", 0, 6000, "+", "S1__contig_3", 0, 6000, 5900)
+              + paf("r1", 6500, 9000, "+", "S1__contig_4", 100, 2600, 2400))
+    hits = contig_hits(("S1__contig_3", "tet(L)", 7001, 8000, "chromosome"),
+                       ("S1__contig_4", "tet(L)", 601, 1600, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 7001, 8000), hits, al, "card")
+    assert (r["contig"], r["contig_context"], r["context_source"]) == ("S1__contig_4", "plasmid", "contig")
+
+
+def test_extend_no_alignment_covering_the_gene_is_no_contig_match(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 6000, "+", "S1__contig_3", 0, 6000, 5900))
+    hits = contig_hits(("S1__contig_3", "tet(L)", 7001, 8000, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 7001, 8000), hits, al, "card")
+    assert (r["contig_context"], r["final_context"], r["context_source"]) == ("no_contig_match", "unresolved", "read")
+
+
+def test_extend_tandem_genes_same_gene_wins_over_a_nearer_one(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 8800))
+    hits = contig_hits(("S1__contig_5", "qacEdelta1", 1001, 1800, "plasmid"),
+                       ("S1__contig_5", "sul1", 1201, 2000, "chromosomal_mge"))
+    (r,) = ec.extend(one_read("sul1", 1001, 1800), hits, al, "card")
+    assert (r["contig_gene"], r["contig_context"]) == ("sul1", "chromosomal_mge")
+
+
+def test_extend_larger_overlap_wins_among_other_genes(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 8800))
+    hits = contig_hits(("S1__contig_5", "geneA", 1601, 2400, "chromosome"),
+                       ("S1__contig_5", "geneB", 1101, 1900, "plasmid"))
+    (r,) = ec.extend(one_read("sul1", 1001, 1800), hits, al, "card")
+    assert (r["contig_gene"], r["contig_context"]) == ("geneB", "plasmid")
+
+
+def test_extend_resolved_beats_unresolved_at_equal_overlap(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_6", 0, 9000, 8800))
+    hits = contig_hits(("S1__contig_6", "tet(L)", 1001, 2000, "unresolved"),
+                       ("S1__contig_6", "tet(L)", 1001, 2000, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 1001, 2000), hits, al, "card")
+    assert (r["contig_context"], r["final_context"], r["context_source"]) == ("plasmid", "plasmid", "contig")
 
 
 def test_card_variant_models_are_flagged_only_for_card():
