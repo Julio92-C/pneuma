@@ -22,7 +22,13 @@ process ISESCAN {
     if [ -s ${fasta} ]; then
         isescan.py --seqfile ${fasta} --output isescan --nthread ${task.cpus}
     fi
-    if [ -s isescan/${fasta}.tsv ]; then cp isescan/${fasta}.tsv hit_contigs.isescan.tsv; else printf '${header}\n' > hit_contigs.isescan.tsv; fi
+    if [ -s isescan/${fasta}.tsv ]; then
+        cp isescan/${fasta}.tsv hit_contigs.isescan.tsv
+    else
+        if [ -s ${fasta} ]; then echo "WARNING: ISEScan produced no isescan/${fasta}.tsv; writing a header-only table" >&2; fi
+        printf '${header}
+' > hit_contigs.isescan.tsv
+    fi
     """
 
     stub:

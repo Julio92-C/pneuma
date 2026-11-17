@@ -90,10 +90,11 @@ def gene_alignment(start, end, alns, min_identity=0.8):
 
 
 def project(start, end, aln):
-    """Gene span on the read -> span on the contig through the alignment (start of the aligned block as anchor)."""
+    """Gene span on the read -> span on the contig through the alignment (start of the aligned block as anchor).
+    Gene coordinates are 1-based inclusive, the PAF block is 0-based half-open, so the minus-strand image is shifted by 1."""
     ts, te, qs, strand = aln[1], aln[2], aln[3], aln[5]
     a, b = start - qs, end - qs
-    return (ts + a, ts + b) if strand == "+" else (te - b, te - a)
+    return (ts + a, ts + b) if strand == "+" else (te - b + 1, te - a + 1)
 
 
 def contig_match(gene, lo, hi, hits, pad):

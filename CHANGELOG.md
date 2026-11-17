@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Changed`
 
-- Default runs now need `--mobsuite_db` and `--medaka_model_path` (built by `--build_databases` without `--skip_pathogen_download`), or `--mobilome false`.
+- Default runs now need `--mobsuite_db` and `--medaka_model_path` (built by `--build_databases` without `--skip_pathogen_download`, and MOB-suite without `--skip_mobsuite_download`), or `--mobilome false`.
 
 ## v0.3.0 - 2026-11-08
 

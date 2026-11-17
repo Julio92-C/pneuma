@@ -37,7 +37,11 @@ def test_best_alignment_is_keyed_by_the_contig_sample(tmp_path):
 
 def test_project_on_both_strands():
     assert ec.project(3001, 4000, ("c", 1000, 10000, 0, 9000, "+", 1)) == (4001, 5000)
-    assert ec.project(3001, 4000, ("c", 1000, 10000, 0, 9000, "-", 1)) == (6000, 6999)
+    assert ec.project(3001, 4000, ("c", 1000, 10000, 0, 9000, "-", 1)) == (6001, 7000)
+    # worked 1-based examples: read 3001-4000 (block [0,9000) -> contig [1000,10000))
+    assert ec.project(1, 1, ("c", 1000, 10000, 0, 9000, "+", 1)) == (1001, 1001)
+    assert ec.project(1, 1, ("c", 1000, 10000, 0, 9000, "-", 1)) == (10000, 10000)
+    assert ec.project(9000, 9000, ("c", 1000, 10000, 0, 9000, "-", 1)) == (1001, 1001)
 
 
 def test_read_alignments_keeps_every_alignment_with_its_query_block(tmp_path):
