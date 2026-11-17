@@ -17,13 +17,12 @@ process ISESCAN {
     def header = ['seqID', 'family', 'cluster', 'isBegin', 'isEnd', 'isLen', 'ncopy4is', 'start1', 'end1', 'start2', 'end2',
                   'score', 'irId', 'irLen', 'nGaps', 'orfBegin', 'orfEnd', 'strand', 'orfLen', 'E-value', 'E-value4copy',
                   'type', 'ov', 'tir'].join('\t')
+    // ISEScan 1.7.3 writes <output>/<seqfile path>.tsv: isescan/<staged fasta name>.tsv
     """
-    tsv=''
     if [ -s ${fasta} ]; then
         isescan.py --seqfile ${fasta} --output isescan --nthread ${task.cpus}
-        tsv=\$(find isescan -name '*.tsv' | head -n 1)
     fi
-    if [ -n "\$tsv" ]; then cp "\$tsv" hit_contigs.isescan.tsv; else printf '${header}\n' > hit_contigs.isescan.tsv; fi
+    if [ -s isescan/${fasta}.tsv ]; then cp isescan/${fasta}.tsv hit_contigs.isescan.tsv; else printf '${header}\n' > hit_contigs.isescan.tsv; fi
     """
 
     stub:
