@@ -53,3 +53,13 @@ def test_no_inputs_header_only(tmp_path):
                     "--genomad-plasmids", empty, "--paf", "--out-prefix", str(prefix)]) == 0
     assert open(str(prefix) + ".tsv").read() == "\t".join(ci.COLUMNS) + "\n"
     assert open(str(prefix) + ".fa").read() == ""
+
+
+def test_na_inside_a_gene_name_is_kept():
+    info = [{"contig": "S1__contig_1", "sample": "S1", "length": "4000", "coverage": "9", "circular": "yes"}]
+    hits = {"S1__contig_1": {"ARGs": {"tet(L)"}, "VFs": set(), "replicons": set()}}
+    plasmids = {"S1__contig_1": {"conjugation_genes": "TraNA;MOB_NAx"}}
+    (r,) = ci.candidates(info, hits, {}, plasmids, {}, {}, {})
+    assert r["conjugation"] == "TraNA;MOB_NAx"
+    plasmids = {"S1__contig_1": {"conjugation_genes": "NA"}}
+    assert ci.candidates(info, hits, {}, plasmids, {}, {}, {})[0]["conjugation"] == ""

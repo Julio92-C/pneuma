@@ -97,10 +97,11 @@ def candidates(info, hits, scores, plasmids, mob, best, taxa):
         if r["circular"] != "yes" or c not in hits:
             continue
         s, p, m, h = scores.get(c, {}), plasmids.get(c, {}), mob.get(c, {}), hits[c]
+        conj = clean(p.get("conjugation_genes", ""))
         rows.append({"contig": c, "sample": r["sample"], "length": int(r["length"]), "coverage": r["coverage"],
                      "reads": reads[c], "plasmid_score": s.get("plasmid_score", ""),
                      "chromosome_score": s.get("chromosome_score", ""), "hallmarks": p.get("n_hallmarks", ""),
-                     "conjugation": clean(p.get("conjugation_genes", "")).replace("NA", ""),
+                     "conjugation": "" if conj == "NA" else conj,
                      "replicons": joined(h["replicons"]), "mob_rep": clean(m.get("rep_type(s)")),
                      "relaxase": clean(m.get("relaxase_type(s)")), "mpf": clean(m.get("mpf_type")),
                      "mobility": clean(m.get("predicted_mobility")), "ARGs": joined(h["ARGs"]), "VFs": joined(h["VFs"]),
