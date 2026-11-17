@@ -183,3 +183,13 @@ def test_cli_min_identity_flag(tmp_path):
         args = ["--db", "card", "--read-loci", rl, "--contig-loci", cl, "--paf", p, "--out", str(out)]
         assert ec.main(args + flag) == 0
         assert rows(out.read_text())[0]["context_source"] == want
+
+
+def test_paf_optional_tags_are_ignored(tmp_path):
+    # minimap2 -c adds tags (NM, cg, ...) after column 12; only columns 1-12 are read
+    line = paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500).rstrip("
+") + "	tp:A:P	NM:i:500	cg:Z:9000M
+"
+    p = write(tmp_path / "a.paf", line)
+    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000)]}
+    assert ec.read_best_alignments([p]) == {"S1__r1": ("S1__contig_1", 1000, 10000, 0, "+", 8500)}
