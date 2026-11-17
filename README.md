@@ -269,6 +269,8 @@ Results are written under `--outdir`:
 | `taxonomy/` | Kraken2 reports and per-read assignments, Bracken, combined reports, `bracken_arranged.csv`, Krona |
 | `contamination/` | `pneuma.rcf.data.csv`, `pneuma.rcf.html`, `pneuma_controls.rcf.*` (when controls are present) |
 | `functional/` | per-sample ABRicate tables and `summary_reportClean.csv` |
+| `context/` | genomic context of every ABRicate hit (`--genomic_context`); `hit_context_<db>.tsv` is the final per-hit call after local assembly (`--context_local_assembly`, default on), plus plasmid drafts. See [docs/usage.md](docs/usage.md) |
+| `mobilome/` | (on by default, `--mobilome`; needs `--mobsuite_db` and `--medaka_model_path`) plasmid units, IS flanks and composite transposons, ISEScan table |
 | `pathogens/` | (only with `--pathogens`) panel, candidates, coverage gate, assemblies, CheckM2/QUAST, skani, typing, `report/pathogen_cohort.tsv` and per-sample HTML |
 | `meridian/` | MERIDIAN `config.yaml`, `Datasets/`, `Figures/`, `Reports/` |
 | `multiqc/` | MultiQC report of the whole pipeline, plus its custom tables |

@@ -4,9 +4,9 @@
 #   tests/data/context_real/S1_kraken2ID_PFP.fasta   reads >= 3 kb, ids tagged "_kraken:taxid|0"
 #   tests/data/context_real/S1.fastq.gz   the same reads as FASTQ (local assembly input)
 #   tests/data/context_real/S1_abricate.csv          ABRicate card, vfdb, plasmidfinder (80/80) on those reads
-# Needs curl, gzip, awk and Docker. Usage: bash tests/make_context_fixture.sh [n_reads]   (default 4000)
+# Needs curl, gzip, awk and Docker. Usage: bash tests/make_context_fixture.sh [n_reads]   (default 40000: every read >= 3 kb of the run, about 14000; 4000 reads were too shallow for Flye to assemble the ARG loci)
 set -euo pipefail
-N=${1:-4000}
+N=${1:-40000}
 OUT=tests/data/context_real
 URL=https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR372/070/SRR37217670/SRR37217670_1.fastq.gz
 mkdir -p "$OUT"

@@ -258,6 +258,45 @@ It needs the geNomad database: built by `--build_databases` (into `<db_outdir>/g
 `--genomic_context false` to skip the analysis. `--context_databases` (default `card,vfdb,plasmidfinder`)
 chooses which ABRicate databases' hits are placed; `--genomad_splits` (default 8) lowers geNomad's memory.
 
+#### Local assembly
+
+On by default (`--context_local_assembly true`). A single read often ends before it shows what surrounds a gene,
+so per sample the clean reads are mapped (minimap2) to the hit reads and the reads overlapping them by at least
+`--context_recruit_min_aln` bp (1000) are recruited; a second round recruits the reads overlapping those, which walks
+out along a plasmid backbone. The recruited reads are assembled with Flye `--meta` (`--flye_mode`, default
+`--nano-hq`). ABRicate, geNomad and MOB-suite type the pooled contigs, and the contig call is carried back to each
+read hit by mapping the recruited reads to the contigs of the same sample: the result is `final_context` in
+`context/hit_context_<db>.tsv`. A contig call replaces the read call only when it is resolved; an `unresolved` contig
+call never overrides a resolved read call. Samples without hit reads are skipped. If Flye fails for a sample the run
+continues with that sample's read-level calls and logs a warning naming the samples (a stronger one if it failed for
+every sample, which usually points to a configuration problem such as `--flye_mode` or memory). Turn the whole layer
+off with `--context_local_assembly false`.
+
+#### Mobilome
+
+On by default (`--mobilome true`, needs `--context_local_assembly`). Circular contigs that carry a hit are written as
+plasmid-draft candidates (`context/plasmid_drafts/`) and polished with Medaka (`--polish_plasmids`, default true;
+failed samples keep the unpolished draft, with a warning naming them and a stronger one if every sample failed).
+ISEScan finds insertion sequences on the hit contigs, and `is_flanks.tsv` lists the IS elements within
+`--context_is_window` bp (500) of each ARG. A **composite transposon** is called when the same IS family flanks the
+ARG on both sides within that window, in any orientation (inverted pairs as in Tn9 / IS1, and direct repeats as for
+IS26); the `orientation` column says `inverted`, `direct` or `unknown`. Drafts from different samples are grouped
+into plasmid units by MinHash identity >= `--plasmid_unit_min_identity` (0.95; rotation- and strand-invariant).
+
+The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--medaka_model_path`; both are built by
+`--build_databases` (without `--skip_pathogen_download`). Without them the run stops at start-up and says so; run
+with `--mobilome false` (or `--polish_plasmids false`) to go on without. For R9.4.1 data use `--flye_mode --nano-raw`
+and an R9.4.1 `--medaka_model`.
+
+| Parameter | Default | Purpose |
+| --- | --- | --- |
+| `--context_local_assembly` | `true` | recruit reads around the hit reads and assemble them (layer 2) |
+| `--context_recruit_min_aln` | `1000` | bp a read must align to a hit read (round 1) or a recruited read (round 2) |
+| `--mobilome` | `true` | plasmid drafts, MOB-suite typing, IS flanks and plasmid units |
+| `--polish_plasmids` | `true` | Medaka polishing of the circular drafts |
+| `--context_is_window` | `500` | bp from an ARG searched for IS elements |
+| `--plasmid_unit_min_identity` | `0.95` | MinHash identity for two drafts to be one plasmid unit |
+
 ### Pathogen reconstruction
 
 Off by default: a run without it needs no pathogen database and behaves as in v0.2.x. Turn it on with

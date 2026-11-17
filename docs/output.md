@@ -12,7 +12,7 @@ Per-sample file names start with the sample name from the samplesheet (`SAMPLE-0
 - [`taxonomy/`](#taxonomy): Kraken2, Bracken, combined reports, Krona
 - [`contamination/`](#contamination): Recentrifuge
 - [`functional/`](#functional): ABRicate on taxid-tagged reads
-- [`context/`](#genomic-context): genomic context of every ABRicate hit (on by default, `--genomic_context`)
+- [`context/`](#genomic-context): genomic context of every ABRicate hit (on by default, `--genomic_context`); mobilome in [`mobilome/`](#genomic-context)
 - [`pathogens/`](#pathogens): priority-pathogen reconstruction and the pathogen report (opt-in, `--pathogens`)
 - [`meridian/`](#meridian): MERIDIAN config and results
 - [`multiqc/`](#multiqc): one report for all stages
@@ -94,6 +94,25 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
     - `gc_gene`, `gc_seq`, `gc_delta`: GC content of the gene, of the read and their difference (a horizontal-transfer signal).
   - `loci_reads_<db>_score_only.tsv`: the same calls from geNomad scores alone (no plasmid-evidence rule), for comparison.
   - `genomad/hit_reads_*.tsv`: geNomad's aggregated scores, virus and plasmid summaries and gene table for the pooled hit reads.
+- `context/hit_context_<db>.tsv` (one per database in `--context_databases`; local assembly): one row per read hit, with the final call.
+  - `sample`, `seq`, `database`, `gene`, `drug_class`, `read_len`, `start`, `end`.
+  - `read_context`, `read_reason`: the read-level call and its evidence (same values as `category` / `reason` above).
+  - `contig`, `contig_len`, `contig_gene`, `contig_context`, `contig_reason`: the contig the read maps to (same sample only), the matching gene on it and the contig's call. `contig_context` is `no_contig_match` when the read is on no contig.
+  - `final_context`: `plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`. The contig call replaces the read call only when it is resolved.
+  - `context_source`: where `final_context` comes from (`read` or `contig`).
+  - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`.
+- `context/local_assembly/`
+  - `recruitment/<sample>.r1.recruit.tsv`, `<sample>.r2.recruit.tsv`: `sample`, `round`, `recruited`, `total_reads` for each recruitment round.
+  - `contigs/`: the Flye `--meta` contigs of each sample (`<sample>.contigs.fa`, `<sample>.assembly_info.tsv`). `all_contigs.fa`, `contig_hits.tsv`: pooled contigs and the ABRicate hits on them.
+  - `genomad/`, `mobsuite/` (`hit_contigs.mobtyper.txt`): geNomad scores and MOB-suite typing of the contigs that carry a hit. `loci_contigs_<db>.tsv`: the contig calls (same columns as `loci_reads_<db>.tsv`).
+- `context/plasmid_drafts/` (mobilome)
+  - `circular_plasmid_candidates.tsv`: circular contigs with a hit, one row each: `contig`, `sample`, `length`, `coverage`, `reads`, `plasmid_score`, `chromosome_score`, `hallmarks`, `conjugation`, `replicons`, `mob_rep`, `relaxase`, `mpf`, `mobility`, `ARGs`, `VFs`, `read_taxa`.
+  - `polished/<sample>.circles.polished.fasta`: the Medaka-polished drafts (when `--polish_plasmids`; a sample whose polishing failed keeps its unpolished draft).
+- `mobilome/`
+  - `plasmid_units.tsv`: one row per plasmid unit (drafts from any sample with MinHash identity >= `--plasmid_unit_min_identity`): `unit`, `n_samples`, `samples`, `n_contigs`, `representative`, `length`, the union of `replicons`, `mob_rep`, `relaxase`, `mpf`, then `mobility`, `ARGs`, `VFs`, `IS_families`, `read_taxa`, `mean_rpm` (mean over samples of reads per million on the unit's drafts).
+  - `plasmid_unit_members.tsv`: one row per draft in a unit: `unit`, `contig`, `sample`, `length`, `coverage`, `reads`, `rpm`.
+  - `is_flanks.tsv`: one row per CARD hit on a contig: `sample`, `contig`, `gene`, `start`, `end`, `strand`, then `left_is` / `left_family` / `left_strand` / `left_distance` and the same four for `right_`, `composite_transposon` (`yes` when the same IS family flanks the gene on both sides within `--context_is_window`, in any orientation) and `orientation` (`inverted`, `direct` or `unknown`; empty when not composite).
+  - `isescan/hit_contigs.isescan.tsv`: ISEScan's IS table for the hit contigs (header only when it found none).
 
 </details>
 
