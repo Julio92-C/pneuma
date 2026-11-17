@@ -187,9 +187,7 @@ def test_cli_min_identity_flag(tmp_path):
 
 def test_paf_optional_tags_are_ignored(tmp_path):
     # minimap2 -c adds tags (NM, cg, ...) after column 12; only columns 1-12 are read
-    line = paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500).rstrip("
-") + "	tp:A:P	NM:i:500	cg:Z:9000M
-"
+    line = paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500).rstrip("\n") + "\ttp:A:P\tNM:i:500\tcg:Z:9000M\n"
     p = write(tmp_path / "a.paf", line)
     assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000)]}
     assert ec.read_best_alignments([p]) == {"S1__r1": ("S1__contig_1", 1000, 10000, 0, "+", 8500)}
