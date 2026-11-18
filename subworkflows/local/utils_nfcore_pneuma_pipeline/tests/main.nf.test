@@ -193,14 +193,14 @@ nextflow_workflow {
         }
     }
 
-    test("default (no --pathogens): no pathogen database is needed") {
+    // The mobilome (on by default) still needs MOB-suite and the Medaka model; only the pathogen-only databases are optional
+    test("default (no --pathogens): pathogen-only databases are not needed") {
         when {
             params {
                 outdir = "$outputDir"
                 checkm2_db = null
                 bakta_db = null
                 amrfinderplus_db = null
-                medaka_model_path = null
                 panel_references_dir = null
             }
             workflow {
