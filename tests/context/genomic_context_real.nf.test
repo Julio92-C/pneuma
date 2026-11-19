@@ -1,9 +1,8 @@
 // GENOMIC_CONTEXT with the real geNomad database on public chicken reads (tag context_real; slow, not in CI).
 // Fixture:  bash tests/make_context_fixture.sh
 // Database: nextflow run . -profile docker --build_databases --db_outdir ~/pneuma_test_db \
-//             --skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download \
-//             (geNomad, MOB-suite and the Medaka model; or: genomad download-database ~/pneuma_test_db)
-//             Note: without --skip_pathogen_download this also downloads the large pathogen databases (CheckM2, Bakta, AMRFinderPlus).
+//             --skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download --skip_pathogen_download
+//             (geNomad, MOB-suite and the Medaka model only; or: genomad download-database ~/pneuma_test_db)
 // Run:      PNEUMA_GENOMAD_DB=~/pneuma_test_db/genomad_db PNEUMA_MOBSUITE_DB=~/pneuma_test_db/mobsuite \
 //             PNEUMA_MEDAKA_MODEL=~/pneuma_test_db/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz \
 //             nf-test test tests/context/ -c nf-test.pathogen.config --tag context_real --profile docker,test
@@ -60,6 +59,14 @@ nextflow_workflow {
             assert rows.any { it[h.indexOf('contig_context')] != 'no_contig_match' }   // reads placed on contigs
             assert path(workflow.out.plasmid_units[0]).readLines()[0].startsWith('unit\tn_samples')
             assert path(workflow.out.is_flanks[0]).readLines()[0].startsWith('sample\tcontig\tgene')
+
+            def all = path(workflow.out.hit_table[0]).readLines()
+            def ah = all[0].split('\t') as List
+            assert ah.containsAll(['element', 'final_context', 'context_conflict', 'kraken_taxid', 'taxon_level', 'weak_vote'])
+            assert all.size() - 1 == ['card', 'vfdb', 'plasmidfinder'].sum { db -> calls(db).size() }   // every read hit once
+            assert all.drop(1).every { it.split('\t', -1)[ah.indexOf('weak_vote')] in ['yes', 'no', 'NA'] }
+            assert workflow.out.summary[0].collect { p -> p.toString().tokenize('/').last() }.sort() ==
+                ['arg_context_by_class.tsv', 'arg_context_by_sample.tsv', 'gene_context.tsv', 'taxon_resolution.tsv']
         }
     }
 }
