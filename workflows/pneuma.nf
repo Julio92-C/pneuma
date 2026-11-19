@@ -45,10 +45,16 @@ workflow PNEUMA {
     TAXONOMY(PREPROCESS.out.reads, databases.kraken2_db)
     CONTAMINATION(TAXONOMY.out.assignments, databases.taxdump)
     FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
+    def ch_ctx_hits  = channel.value([])
+    def ch_ctx_units = channel.value([])
+    def ch_ctx_loci  = channel.value([])
     if (params.genomic_context) {
         GENOMIC_CONTEXT(FUNCTIONAL_READS.out.tagged, FUNCTIONAL_READS.out.per_sample, PREPROCESS.out.reads,
                         databases.genomad_db, databases.abricate_db, databases.mobsuite_db, databases.medaka_model_path,
                         databases.taxdump)
+        ch_ctx_hits  = GENOMIC_CONTEXT.out.hit_table
+        ch_ctx_units = GENOMIC_CONTEXT.out.plasmid_units.ifEmpty([])
+        ch_ctx_loci  = GENOMIC_CONTEXT.out.loci.mix(GENOMIC_CONTEXT.out.score_only).map { _route, _db, f -> f }.collect().ifEmpty([])
     }
 
     def ch_pathogen_cohort = channel.value([])
@@ -93,7 +99,7 @@ workflow PNEUMA {
         ch_stage_errors = MERIDIAN.out.stage_errors.collect().ifEmpty([])
     }
 
-    // Hostile, Kraken2 classification, ABRicate and Recentrifuge have no (usable) MultiQC module:
+    // Hostile, Kraken2 classification, ABRicate, Recentrifuge and the genomic context have no (usable) MultiQC module:
     // summarise them as custom-content tables. Kraken2/Bracken reports go to MultiQC's kraken module as is.
     MULTIQC_TABLES(
         PREPROCESS.out.hostile_log.collect(),
@@ -101,7 +107,10 @@ workflow PNEUMA {
         FUNCTIONAL_READS.out.per_sample.map { _meta, f -> f }.collect(),
         CONTAMINATION.out.rcf_stat,
         ch_pathogen_cohort,
-        ch_stage_errors
+        ch_stage_errors,
+        ch_ctx_hits,
+        ch_ctx_units,
+        ch_ctx_loci
     )
     ch_versions = ch_versions.mix(MULTIQC_TABLES.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(

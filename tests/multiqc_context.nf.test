@@ -1,0 +1,46 @@
+// Contract: MultiQC (pinned nf-core image) renders PNEUMA's genomic-context custom content (bin/make_mqc_tables.py).
+nextflow_process {
+    name "MultiQC renders the genomic context sections"
+    script "modules/nf-core/multiqc/main.nf"
+    process "MULTIQC"
+
+    test("context bars, plasmid-evidence table and plasmid units are built") {
+        setup {
+            run("MULTIQC_TABLES") {
+                script "modules/local/multiqc_tables/main.nf"
+                process {
+                    """
+                    def d = "${projectDir}/tests/data/context/mqc"
+                    input[0] = []
+                    input[1] = []
+                    input[2] = []
+                    input[3] = []
+                    input[4] = []
+                    input[5] = []
+                    input[6] = file("\$d/hit_context.tsv", checkIfExists: true)
+                    input[7] = file("\$d/plasmid_units.tsv", checkIfExists: true)
+                    input[8] = [ file("\$d/loci_reads_card.tsv", checkIfExists: true), file("\$d/loci_reads_card_score_only.tsv", checkIfExists: true) ]
+                    """
+                }
+            }
+        }
+        when {
+            process {
+                """
+                input[0] = MULTIQC_TABLES.out.tables.map { tables ->
+                    [ [ id: 'pneuma' ], tables, file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true), [], [], [] ] }
+                """
+            }
+        }
+        then {
+            assert process.success
+            def html = path(process.out.report[0][1]).text
+            ['genomic_context_card', 'genomic_context_vfdb', 'genomic_context_evidence', 'plasmid_units'].each { id ->
+                assert html.contains("mqc-section-${id}") : "missing MultiQC section ${id}"
+            }
+            def order = ['genomic_context_card', 'genomic_context_evidence', 'plasmid_units']
+                .collect { id -> html.indexOf("id=\"mqc-section-wrapper-${id}") }
+            assert order.every { i -> i > 0 } && order == order.sort(false)
+        }
+    }
+}

@@ -1,0 +1,5 @@
+sample	route	seq	seq_len	gene	drug_class	start	end	category	reason
+S1	reads	S1__r0	9000	g	x	1	2	plasmid	r
+S1	reads	S1__r1	9000	g	x	1	2	plasmid	r
+S1	reads	S1__r2	9000	g	x	1	2	plasmid	r
+S1	reads	S1__r3	9000	g	x	1	2	chromosome	r
