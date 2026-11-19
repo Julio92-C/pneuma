@@ -30,7 +30,7 @@ nextflow_process {
         then {
             assert process.success
             assert path(process.out.fasta[0][1]).readLines().findAll { it.startsWith('>') } == ['>S1__contig_1']
-            assert (process.stderr + process.stdout).join('\n').contains('1 of 2 circular drafts found')
+            assert path(process.out.fasta[0][1]).toRealPath().parent.resolve('.command.err').toFile().text.contains('1 of 2 circular drafts found')
         }
     }
 }
