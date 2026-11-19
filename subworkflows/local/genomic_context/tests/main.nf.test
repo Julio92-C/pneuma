@@ -20,6 +20,7 @@ nextflow_workflow {
                 input[4] = null
                 input[5] = "${projectDir}/tests/data/db_dir/mobsuite"
                 input[6] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+                input[7] = "${projectDir}/tests/data/pathogen_fixture/taxdump"
                 """
             }
         }
@@ -51,6 +52,7 @@ nextflow_workflow {
                 input[4] = null
                 input[5] = "${projectDir}/tests/data/db_dir/mobsuite"
                 input[6] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+                input[7] = "${projectDir}/tests/data/pathogen_fixture/taxdump"
                 """
             }
         }

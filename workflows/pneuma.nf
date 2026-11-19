@@ -47,7 +47,8 @@ workflow PNEUMA {
     FUNCTIONAL_READS(TAXONOMY.out.classified, databases.abricate_db)
     if (params.genomic_context) {
         GENOMIC_CONTEXT(FUNCTIONAL_READS.out.tagged, FUNCTIONAL_READS.out.per_sample, PREPROCESS.out.reads,
-                        databases.genomad_db, databases.abricate_db, databases.mobsuite_db, databases.medaka_model_path)
+                        databases.genomad_db, databases.abricate_db, databases.mobsuite_db, databases.medaka_model_path,
+                        databases.taxdump)
     }
 
     def ch_pathogen_cohort = channel.value([])

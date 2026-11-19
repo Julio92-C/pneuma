@@ -21,6 +21,7 @@ nextflow_workflow {
                 input[9] = channel.empty()
                 input[10] = channel.empty()
                 input[11] = null
+                input[12] = null
                 """
             }
         }

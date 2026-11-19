@@ -19,6 +19,7 @@ workflow GENOMIC_CONTEXT {
     abricate_db     // string or null: ABRicate databases (null = bundled)
     mobsuite_db     // string or null: MOB-suite database (required by the mobilome)
     medaka_model    // string or null: Medaka model (plasmid draft polishing)
+    taxdump         // string: NCBI taxdump directory (taxon names)
 
     main:
     HIT_READS(ch_tagged.join(ch_abricate))
@@ -52,7 +53,7 @@ workflow GENOMIC_CONTEXT {
             MOBILOME(CONTEXT_ASSEMBLY.out.info, CONTEXT_ASSEMBLY.out.contig_hits, CONTEXT_ASSEMBLY.out.contig_fasta,
                      CONTEXT_ASSEMBLY.out.hit_contigs, CONTEXT_ASSEMBLY.out.genomad_scores,
                      CONTEXT_ASSEMBLY.out.genomad_plasmid, CONTEXT_ASSEMBLY.out.mobtyper, CONTEXT_ASSEMBLY.out.pafs,
-                     ch_taxa, CONTEXT_ASSEMBLY.out.recruited, CONTEXT_ASSEMBLY.out.recruit_counts, medaka_model)
+                     ch_taxa, CONTEXT_ASSEMBLY.out.recruited, CONTEXT_ASSEMBLY.out.recruit_counts, medaka_model, taxdump)
             ch_candidates = MOBILOME.out.candidates
             ch_units      = MOBILOME.out.units
             ch_is_flanks  = MOBILOME.out.is_flanks

@@ -41,6 +41,7 @@ workflow MOBILOME {
     ch_recruited     // [ meta, <id>.r2.fastq.gz ]
     ch_recruit_counts// [ meta, <id>.r<n>.recruit.tsv ]
     medaka_model     // string or null
+    taxdump          // string or null: directory with names.dmp (plasmid-unit read taxa by name)
 
     main:
     ISESCAN(hit_contigs)
@@ -48,7 +49,8 @@ workflow MOBILOME {
                       genomad_plasmids, mobtyper, ch_pafs, hit_taxa.ifEmpty([]))
     IS_FLANKS(ISESCAN.out.tsv, contig_hits)
     PLASMID_UNITS(CIRCULAR_PLASMIDS.out.tsv, CIRCULAR_PLASMIDS.out.fasta, ISESCAN.out.tsv,
-                  ch_recruit_counts.map { _meta, f -> f }.collect().ifEmpty([]))
+                  ch_recruit_counts.map { _meta, f -> f }.collect().ifEmpty([]),
+                  taxdump ? file(taxdump, checkIfExists: true, type: 'dir') : [])
 
     if (params.polish_plasmids && medaka_model) {
         def ch_circles = CIRCULAR_PLASMIDS.out.per_sample.flatten().map { f -> [ f.name.replaceAll(/\.circles\.fa$/, ''), f ] }

@@ -30,6 +30,7 @@ nextflow_workflow {
                 input[4] = null
                 input[5] = System.getenv('PNEUMA_MOBSUITE_DB')
                 input[6] = System.getenv('PNEUMA_MEDAKA_MODEL')
+                input[7] = "${projectDir}/tests/data/pathogen_fixture/taxdump"
                 """
             }
         }

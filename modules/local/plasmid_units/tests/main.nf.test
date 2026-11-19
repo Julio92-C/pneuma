@@ -13,6 +13,7 @@ nextflow_process {
                 input[1] = file("\$d/circles.fa", checkIfExists: true)
                 input[2] = file("\$d/isescan.tsv", checkIfExists: true)
                 input[3] = [ file("\$d/S1.r1.recruit.tsv", checkIfExists: true), file("\$d/S2.r1.recruit.tsv", checkIfExists: true) ]
+                input[4] = file("${projectDir}/tests/data/pathogen_fixture/taxdump", checkIfExists: true, type: 'dir')
                 """
             }
         }
@@ -21,6 +22,7 @@ nextflow_process {
             def units = path(process.out.units[0]).readLines()
             assert units.size() == 3
             assert units[1].startsWith('PU001\t2\tS1,S2\t2\tS1__contig_1')
+            assert units[0].split('\t').toList().containsAll(['repeat', 'read_taxids'])
         }
     }
 }

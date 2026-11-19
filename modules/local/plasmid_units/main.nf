@@ -11,6 +11,7 @@ process PLASMID_UNITS {
     path fasta
     path isescan
     path(recruit, stageAs: 'recruit/*')
+    path taxdump          // directory with nodes.dmp + names.dmp, or [] (read taxa stay taxids)
 
     output:
     path 'plasmid_units.tsv'       , emit: units
@@ -18,8 +19,9 @@ process PLASMID_UNITS {
     tuple val("${task.process}"), val('python'), eval("python --version | sed 's/Python //'"), topic: versions, emit: versions_python
 
     script:
+    def tx = taxdump ? "--taxdump ${taxdump}" : ''
     """
-    plasmid_units.py --candidates ${candidates} --fasta ${fasta} --isescan ${isescan} --recruit ${recruit} \
+    plasmid_units.py --candidates ${candidates} --fasta ${fasta} --isescan ${isescan} --recruit ${recruit} ${tx} \
         --min-identity ${params.plasmid_unit_min_identity} --out-prefix plasmid_units
     mv plasmid_units_members.tsv plasmid_unit_members.tsv
     """

@@ -33,3 +33,14 @@ def test_empty_assembly_gives_header_only(tmp_path):
     assert cc.main(["--sample", "S1", "--fasta", str(fa), "--info", str(info), "--out-prefix", str(tmp_path / "S1")]) == 0
     assert (tmp_path / "S1.contigs.fa").read_text() == ""
     assert (tmp_path / "S1.assembly_info.tsv").read_text() == "\t".join(cc.INFO_COLUMNS) + "\n"
+
+
+def test_repeat_flag(tmp_path):
+    fa, info = tmp_path / "S1.fasta", tmp_path / "S1.txt"
+    fa.write_text(">contig_1\nACGT\n>contig_2\nGGCC\n")
+    info.write_text("#seq_name\tlength\tcov.\tcirc.\trepeat\tmult.\talt_group\tgraph_path\n"
+                    "contig_1\t4\t30\tY\tN\t1\t*\t1\ncontig_2\t4\t90\tN\tY\t3\t*\t2\n")
+    assert cc.main(["--sample", "S1", "--fasta", str(fa), "--info", str(info), "--out-prefix", str(tmp_path / "S1")]) == 0
+    rows = list(csv.DictReader(open(tmp_path / "S1.assembly_info.tsv"), delimiter="\t"))
+    assert cc.INFO_COLUMNS == ["sample", "contig", "length", "coverage", "circular", "repeat"]
+    assert [(r["contig"], r["repeat"]) for r in rows] == [("S1__contig_1", "no"), ("S1__contig_2", "yes")]
