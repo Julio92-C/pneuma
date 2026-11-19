@@ -47,6 +47,7 @@ workflow GENOMIC_CONTEXT {
     def ch_candidates  = channel.empty()
     def ch_units       = channel.empty()
     def ch_is_flanks   = channel.empty()
+    def ch_polished    = channel.empty()
     if (params.context_local_assembly) {
         CONTEXT_ASSEMBLY(ch_reads, HIT_READS.out.seeds, ARG_CONTEXT.out.loci, abricate_db, genomad_db, mobsuite_db)
         ch_contig_loci = CONTEXT_ASSEMBLY.out.contig_loci
@@ -55,10 +56,12 @@ workflow GENOMIC_CONTEXT {
             MOBILOME(CONTEXT_ASSEMBLY.out.info, CONTEXT_ASSEMBLY.out.contig_hits, CONTEXT_ASSEMBLY.out.contig_fasta,
                      CONTEXT_ASSEMBLY.out.hit_contigs, CONTEXT_ASSEMBLY.out.genomad_scores,
                      CONTEXT_ASSEMBLY.out.genomad_plasmid, CONTEXT_ASSEMBLY.out.mobtyper, CONTEXT_ASSEMBLY.out.pafs,
-                     ch_taxa, CONTEXT_ASSEMBLY.out.recruited, CONTEXT_ASSEMBLY.out.recruit_counts, medaka_model, taxdump)
+                     ch_taxa, CONTEXT_ASSEMBLY.out.recruited, CONTEXT_ASSEMBLY.out.recruit_counts, medaka_model, taxdump,
+                     CONTEXT_ASSEMBLY.out.sample_contigs)
             ch_candidates = MOBILOME.out.candidates
             ch_units      = MOBILOME.out.units
             ch_is_flanks  = MOBILOME.out.is_flanks
+            ch_polished   = MOBILOME.out.polished
         }
     }
 
@@ -78,6 +81,7 @@ workflow GENOMIC_CONTEXT {
     plasmid_candidates = ch_candidates
     plasmid_units      = ch_units
     is_flanks          = ch_is_flanks
+    plasmid_polished   = ch_polished
     hit_table          = CONTEXT_SUMMARY.out.hit_context   // context/hit_context.tsv
     summary            = CONTEXT_SUMMARY.out.summary       // [ summary/*.tsv ]
     genomad    = GENOMAD_ENDTOEND.out.scores.map { _m, f -> f }

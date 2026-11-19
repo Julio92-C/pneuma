@@ -1,0 +1,61 @@
+nextflow_function {
+    name "Test utils_context functions"
+    script "../main.nf"
+
+    test("some samples lost: count, names, fallback and hint") {
+        function "failedSamplesMessage"
+        when {
+            function {
+                """
+                input[0] = ['S1', 'S2', 'S3']
+                input[1] = ['S2']
+                input[2] = 'local assembly (Flye)'
+                input[3] = 'their read-level context calls were used'
+                input[4] = 'HINT'
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == 'PNEUMA: local assembly (Flye) produced no output for 2 of 3 sample(s): S1, S3; their read-level context calls were used. HINT'
+        }
+    }
+
+    test("every sample lost") {
+        function "failedSamplesMessage"
+        when {
+            function {
+                """
+                input[0] = ['S1']
+                input[1] = []
+                input[2] = 'plasmid polishing (Medaka)'
+                input[3] = 'their unpolished plasmid drafts were used'
+                input[4] = 'HINT'
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == 'PNEUMA: plasmid polishing (Medaka) produced no output for every attempted sample (S1); their unpolished plasmid drafts were used. HINT'
+        }
+    }
+
+    test("nothing lost: no message") {
+        function "failedSamplesMessage"
+        when {
+            function {
+                """
+                input[0] = ['S1', 'S2']
+                input[1] = ['S2', 'S1']
+                input[2] = 'x'
+                input[3] = 'y'
+                input[4] = 'z'
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == null
+        }
+    }
+}

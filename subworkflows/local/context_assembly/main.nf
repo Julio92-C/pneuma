@@ -10,6 +10,7 @@ include { GENOMAD_ENDTOEND as GENOMAD_CONTIGS } from '../../../modules/local/gen
 include { MOBSUITE_TYPER                      } from '../../../modules/local/mobsuite_typer/main'
 include { ARG_CONTEXT as ARG_CONTEXT_CONTIGS  } from '../../../modules/local/arg_context/main'
 include { EXTEND_CONTEXT                      } from '../../../modules/local/extend_context/main'
+include { warnFailedSamples                   } from '../utils_context/main'
 
 //
 // [ meta, a ] and [ meta, b ] joined on meta.id -> [ meta, a, b ]
@@ -18,24 +19,6 @@ def joinById(ch_a, ch_b) {
     return ch_a.map { meta, a -> [ meta.id, meta, a ] }
         .join(ch_b.map { meta, b -> [ meta.id, b ] })
         .map { _id, meta, a, b -> [ meta, a, b ] }
-}
-
-//
-// Warn about samples whose process failed (errorStrategy 'ignore'): attempted ids vs ids that produced output.
-//
-def warnFailedSamples(ch_attempted, ch_done, label, fallback) {
-    def ch_a = ch_attempted.map { meta, _f -> meta.id }.collect().ifEmpty([]).map { ids -> ids.sort().join(',') }
-    def ch_d = ch_done.map { meta, _f -> meta.id }.collect().ifEmpty([]).map { ids -> ids.sort().join(',') }
-    ch_a.combine(ch_d).subscribe { attempted, done ->
-        def att  = attempted ? attempted.tokenize(',') : []
-        def ok   = done ? done.tokenize(',') : []
-        def lost = att.findAll { id -> !(id in ok) }
-        if (att && !ok) {
-            log.warn "PNEUMA: ${label} failed for every attempted sample (${lost.join(', ')}); ${fallback}. A configuration problem (--flye_mode, --medaka_model_path, memory) is more likely than biology: check the task logs."
-        } else if (lost) {
-            log.warn "PNEUMA: ${label} failed for ${lost.size()} of ${att.size()} sample(s): ${lost.join(', ')}; ${fallback}."
-        }
-    }
 }
 
 //
@@ -65,7 +48,8 @@ workflow CONTEXT_ASSEMBLY {
     SELECT_R2(joinById(ch_reads, RECRUIT_R2.out.paf), 2)
 
     FLYE_CONTEXT(SELECT_R2.out.reads, params.flye_mode)
-    warnFailedSamples(SELECT_R2.out.reads, FLYE_CONTEXT.out.fasta, 'local assembly (Flye)', 'their read-level context calls were used')
+    warnFailedSamples(SELECT_R2.out.reads, FLYE_CONTEXT.out.fasta, 'local assembly (Flye)', 'their read-level context calls were used',
+                      'Too few recruited reads for Flye to assemble is the usual cause; if these samples have many hits, check --flye_mode (--nano-raw for R9.4.1 reads) and the memory in the task logs.')
     CONTEXT_CONTIGS(joinById(FLYE_CONTEXT.out.fasta, FLYE_CONTEXT.out.txt))
 
     def ch_abricate_db = abricate_db ? channel.value(file(abricate_db, checkIfExists: true, type: 'dir')) : channel.value([])
@@ -106,6 +90,7 @@ workflow CONTEXT_ASSEMBLY {
     recruited       = SELECT_R2.out.reads                  // [ meta, <id>.r2.fastq.gz ]
     recruit_counts  = SELECT_R1.out.counts.mix(SELECT_R2.out.counts)
     info            = CONTEXT_CONTIGS.out.info             // [ meta, <id>.assembly_info.tsv ]
+    sample_contigs  = CONTEXT_CONTIGS.out.fasta            // [ meta, <id>.contigs.fa ]
     contig_fasta    = ABRICATE_CONTIGS.out.fasta
     contig_hits     = ABRICATE_CONTIGS.out.hits
     hit_contigs     = ABRICATE_CONTIGS.out.hit_fasta

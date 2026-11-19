@@ -32,7 +32,9 @@ process CIRCULAR_PLASMIDS {
 
     stub:
     """
-    printf 'contig\tsample\tlength\n' > circular_plasmid_candidates.tsv
+    printf 'contig\\tsample\\tlength\\n' > circular_plasmid_candidates.tsv
     : > circular_plasmid_candidates.fa
+    mkdir -p per_sample
+    for f in ${infos}; do s=\$(basename "\$f"); s=\${s%%.*}; printf '>%s__contig_1\\nACGT\\n' "\$s" > "per_sample/\$s.circles.fa"; done
     """
 }
