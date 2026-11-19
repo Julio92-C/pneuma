@@ -27,7 +27,7 @@ nextflow_function {
                 """
                 def m = new File("$outputDir/database_manifest.tsv")
                 m.parentFile.mkdirs()
-                m.text = 'name\tversion\tpath\tsha256\ngenomad_db\t1.11\t${projectDir}/tests/data/db_dir/genomad_db\t' + 'a' * 64 + '\n'
+                m.text = 'name\\tversion\\tpath\\tsha256\\ngenomad_db\\t1.11\\t${projectDir}/tests/data/db_dir/genomad_db\\t' + 'a' * 64 + '\\n'
                 input[0] = [ kraken2_db: null, taxdump: null, host_index: null, database_manifest: m.toString(),
                              genomad_db: "${projectDir}/tests/data/db_dir/genomad_db" ]
                 """

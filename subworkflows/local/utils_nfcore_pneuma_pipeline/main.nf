@@ -228,13 +228,13 @@ def readDatabaseManifest(manifest) {
 
 //
 // Databases used by this run that database_manifest.tsv does not already record at the same path
-// (e.g. --kraken2_db / --host_index passed directly): [name, order, version, path, file] rows for
+// (e.g. --kraken2_db / --host_index / --genomad_db passed directly): [name, order, version, path, file] rows for
 // DATABASE_ROW, so pipeline_info/database_manifest.tsv carries their path and sha256 (validation V8).
 //
 def usedDatabaseRows(Map databases) {
     def manifest = databases.database_manifest ? readDatabaseManifest(file(databases.database_manifest)) : [:]
     def used = [ [ 'kraken2_pluspf', 'kraken2_db', '01' ], [ 'ncbi_taxdump', 'taxdump', '02' ],
-                 [ 'hostile_index', 'host_index', '03' ] ]
+                 [ 'hostile_index', 'host_index', '03' ], [ 'genomad_db', 'genomad_db', '14' ] ]
     return used.findAll { name, key, _order -> databases[key] && manifest[name]?.path != databaseLocation(databases[key].toString()) }
         .collect { name, key, order ->
             def p = databases[key].toString()
@@ -411,15 +411,6 @@ def resolveDatabases(p) {
     if (p.genomic_context && !res.genomad_db && !problems.any { pr -> pr.contains('--genomad_db') }) {
         problems.add("--genomad_db is required for the genomic context analysis (on by default): pass it, provide --db_dir containing genomad_db/, or run with --genomic_context false")
     }
-    if (mobilomeOn(p)) {
-        def needed = ['mobsuite_db'] + (p.polish_plasmids ? ['medaka_model_path'] : [])
-        needed.each { k ->
-            if (!res[k] && !problems.any { pr -> pr.contains("--${k}") }) {
-                problems.add("--${k} is required for the mobilome branch (on by default): pass it, provide --db_dir containing it, or run with --mobilome false" +
-                             (k == 'medaka_model_path' ? ' (or --polish_plasmids false)' : ''))
-            }
-        }
-    }
     if (p.pathogens) {
         def needed = ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'medaka_model_path', 'panel_references_dir'] +
                      (p.run_mobsuite ? ['mobsuite_db'] : [])
@@ -430,6 +421,15 @@ def resolveDatabases(p) {
         }
         if (res.panel_references_dir) {
             checkPanelReferences(file(res.panel_references_dir), file(panelReferencesPath(p)), problems)
+        }
+    }
+    if (mobilomeOn(p)) {
+        def needed = ['mobsuite_db'] + (p.polish_plasmids ? ['medaka_model_path'] : [])
+        needed.each { k ->
+            if (!res[k] && !problems.any { pr -> pr.contains("--${k}") }) {
+                problems.add("--${k} is required for the mobilome branch (on by default): pass it, provide --db_dir containing it, or run with --mobilome false" +
+                             (k == 'medaka_model_path' ? ' (or --polish_plasmids false)' : ''))
+            }
         }
     }
     if (problems) {
