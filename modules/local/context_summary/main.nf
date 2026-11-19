@@ -21,8 +21,8 @@ process CONTEXT_SUMMARY {
 
     script:
     def files   = tables instanceof List ? tables : [tables]
-    def hc      = files.findAll { f -> f.name.startsWith('hit_context_') }
-    def rl      = files.findAll { f -> f.name.startsWith('loci_reads_') }
+    def hc      = files.findAll { f -> f.toString().tokenize('/').last().startsWith('hit_context_') }
+    def rl      = files.findAll { f -> f.toString().tokenize('/').last().startsWith('loci_reads_') }
     def groups  = params.meridian_group ? params.meridian_group.toString().split(',').collect { g -> g.trim() }.findAll { g -> g }.join(',') : ''
     def hcArg   = hc ? "--hit-context ${hc.join(' ')}" : ''
     def rlArg   = rl ? "--read-loci ${rl.join(' ')}" : ''
