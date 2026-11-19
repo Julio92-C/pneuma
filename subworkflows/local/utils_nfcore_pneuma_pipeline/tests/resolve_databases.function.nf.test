@@ -187,4 +187,24 @@ nextflow_function {
             assert function.success
         }
     }
+
+    test("--pathogens with the mobilome: a shared missing database is reported once, as a pathogen database") {
+        when {
+            function {
+                """
+                input[0] = [ kraken2_db: '/k', taxdump: '/t', host_index: '/h.fasta', genomad_db: '/g', abricate_dbs: 'card',
+                             pathogens: true, run_mobsuite: false, checkm2_db: '/c.dmnd', bakta_db: '/b', amrfinderplus_db: '/a.tar.gz',
+                             genomic_context: true, context_local_assembly: true, mobilome: true, polish_plasmids: true ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+            def err = function.stdout.join('
+')
+            assert err.contains('--medaka_model_path is required for pathogen reconstruction')
+            assert err.count('--medaka_model_path is required') == 1
+            assert err.contains('--mobsuite_db is required for the mobilome branch')
+        }
+    }
 }

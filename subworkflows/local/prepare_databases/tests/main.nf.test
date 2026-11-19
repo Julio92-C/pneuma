@@ -74,9 +74,64 @@ nextflow_workflow {
         then {
             assert workflow.success
             def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('\t')[0] }
-            assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
+            // the mobilome is on by default, so MOB-suite and the Medaka model are built despite --skip_pathogen_download
+            assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder', 'mobsuite_db', 'medaka_model']
+            assert path("$outputDir/db/mobsuite").exists()
+            assert !path("$outputDir/db/checkm2").exists()
             assert !path("$outputDir/db/hostile").exists()
             assert !path("$outputDir/db/kraken2_pluspf_20250402").exists()
+        }
+    }
+
+    test("stub: --mobilome false with --skip_pathogen_download builds neither MOB-suite nor Medaka") {
+        options "-stub"
+        when {
+            params {
+                db_outdir = "$outputDir/db"
+                skip_kraken_download = true
+                skip_hostile_download = true
+                skip_pathogen_download = true
+                skip_genomad_download = true
+                mobilome = false
+            }
+            workflow {
+                """
+                input[0] = null
+                input[1] = '2025-04'
+                input[2] = "$outputDir/db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('	')[0] }
+            assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
+        }
+    }
+
+    test("stub: --skip_mobsuite_download still leaves MOB-suite out when the mobilome is on") {
+        options "-stub"
+        when {
+            params {
+                db_outdir = "$outputDir/db"
+                skip_kraken_download = true
+                skip_hostile_download = true
+                skip_pathogen_download = true
+                skip_genomad_download = true
+                skip_mobsuite_download = true
+            }
+            workflow {
+                """
+                input[0] = null
+                input[1] = '2025-04'
+                input[2] = "$outputDir/db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('	')[0] }
+            assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder', 'medaka_model']
         }
     }
 

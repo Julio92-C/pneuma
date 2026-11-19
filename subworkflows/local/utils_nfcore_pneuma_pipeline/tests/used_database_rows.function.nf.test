@@ -1,0 +1,41 @@
+nextflow_function {
+    name "Test usedDatabaseRows (run manifest of databases passed directly)"
+    script "../main.nf"
+    function "usedDatabaseRows"
+
+    test("an explicit --genomad_db is recorded") {
+        when {
+            function {
+                """
+                input[0] = [ kraken2_db: null, taxdump: null, host_index: null, database_manifest: null,
+                             genomad_db: "${projectDir}/tests/data/db_dir/genomad_db" ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            def rows = function.result
+            assert rows.collect { it[0] } == ['genomad_db']
+            assert rows[0][1] == '14' && rows[0][2] == 'supplied at run time'
+            assert rows[0][3] == "${projectDir}/tests/data/db_dir/genomad_db"
+        }
+    }
+
+    test("a geNomad database already in the --db_dir manifest at the same path is not recorded twice") {
+        when {
+            function {
+                """
+                def m = new File("$outputDir/database_manifest.tsv")
+                m.parentFile.mkdirs()
+                m.text = 'name\tversion\tpath\tsha256\ngenomad_db\t1.11\t${projectDir}/tests/data/db_dir/genomad_db\t' + 'a' * 64 + '\n'
+                input[0] = [ kraken2_db: null, taxdump: null, host_index: null, database_manifest: m.toString(),
+                             genomad_db: "${projectDir}/tests/data/db_dir/genomad_db" ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == []
+        }
+    }
+}
