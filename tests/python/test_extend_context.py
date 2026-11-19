@@ -47,8 +47,8 @@ def test_project_on_both_strands():
 def test_read_alignments_keeps_every_alignment_with_its_query_block(tmp_path):
     p = write(tmp_path / "a.paf", paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500)
               + paf("r1", 0, 5000, "-", "S1__contig_2", 0, 5000, 4000))
-    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000),
-                                                  ("S1__contig_2", 0, 5000, 0, 5000, "-", 4000, 5000)]}
+    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000, ""),
+                                                  ("S1__contig_2", 0, 5000, 0, 5000, "-", 4000, 5000, "")]}
 
 
 def alns(tmp_path, text):
@@ -189,9 +189,78 @@ def test_cli_min_identity_flag(tmp_path):
         assert rows(out.read_text())[0]["context_source"] == want
 
 
-def test_paf_optional_tags_are_ignored(tmp_path):
-    # minimap2 -c adds tags (NM, cg, ...) after column 12; only columns 1-12 are read
+def test_paf_cigar_tag_is_kept_other_tags_ignored(tmp_path):
+    # minimap2 -c adds tags (NM, cg, ...) after column 12; only the cg CIGAR is kept
     line = paf("r1", 0, 9000, "+", "S1__contig_1", 1000, 10000, 8500).rstrip("\n") + "\ttp:A:P\tNM:i:500\tcg:Z:9000M\n"
     p = write(tmp_path / "a.paf", line)
-    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000)]}
+    assert ec.read_alignments([p]) == {"S1__r1": [("S1__contig_1", 1000, 10000, 0, 9000, "+", 8500, 9000, "9000M")]}
     assert ec.read_best_alignments([p]) == {"S1__r1": ("S1__contig_1", 1000, 10000, 0, "+", 8500)}
+
+
+def cg(contig, ts, te, strand, cigar, qs=0, qe=9000):
+    return (contig, ts, te, qs, qe, strand, 8900, qe - qs, cigar)
+
+
+def test_project_through_a_deletion_on_the_plus_strand():
+    # 10 contig bases missing from the read after read base 3000: the gene image moves 10 bp right
+    aln = cg("c", 1000, 10010, "+", "3000M10D6000M")
+    assert ec.project(3001, 4000, aln) == (4011, 5010)
+    assert ec.project(3001, 4000, aln[:8] + ("",)) == (4001, 5000)        # no CIGAR: linear
+
+
+def test_project_through_an_insertion_on_the_plus_strand():
+    # read bases 3001-3010 are inserted: the gene start falls in the insertion -> next contig base
+    assert ec.project(3001, 4000, cg("c", 1000, 9990, "+", "3000M10I5990M")) == (4001, 4990)
+
+
+def test_project_minus_strand_all_match_equals_linear():
+    aln = cg("c", 1000, 10000, "-", "9000M")
+    assert ec.project(3001, 4000, aln) == (6001, 7000)
+    assert ec.project(3001, 4000, aln[:8] + ("",)) == (6001, 7000)
+
+
+def test_project_minus_strand_deletion_beyond_the_gene():
+    # the CIGAR runs along the contig: the first 6000 bases (read 3001-9000 reversed) carry the gene;
+    # a 10 bp deletion after them shifts only the linear estimate
+    aln = cg("c", 1000, 10010, "-", "6000M10D3000M")
+    assert ec.project(3001, 4000, aln) == (6001, 7000)
+    assert ec.project(3001, 4000, aln[:8] + ("",)) == (6011, 7010)
+
+
+def test_project_outside_the_block_extends_linearly():
+    aln = cg("c", 1000, 10000, "+", "9000M", qs=100, qe=9100)
+    assert ec.project(50, 60, aln) == (950, 960)
+
+
+def test_a_cigar_that_does_not_span_the_block_falls_back_to_linear():
+    aln = cg("c", 1000, 10010, "+", "100M")                               # 100 query bases for a 9000 bp block
+    assert ec.project(3001, 4000, aln) == (4001, 5000)
+
+
+def test_extend_uses_the_cigar_projection(tmp_path):
+    # a different gene overlaps the CIGAR image (4011-5010) but not the linear one (4001-5000)
+    line = paf("r1", 0, 9000, "+", "S1__contig_8", 1000, 10010, 8900).rstrip("\n") + "\tcg:Z:3000M10D6000M\n"
+    hits = contig_hits(("S1__contig_8", "qacEdelta1", 5005, 5600, "plasmid"))
+    (r,) = ec.extend(one_read("tet(L)", 3001, 4000), hits, alns(tmp_path, line), "card")
+    assert (r["contig_gene"], r["context_source"]) == ("qacEdelta1", "contig")
+    plain = paf("r1", 0, 9000, "+", "S1__contig_8", 1000, 10010, 8900)
+    (r,) = ec.extend(one_read("tet(L)", 3001, 4000), hits, alns(tmp_path, plain), "card")
+    assert r["contig_context"] == "no_contig_match"
+
+
+def test_context_conflict_when_a_contig_call_replaces_a_different_resolved_read_call(tmp_path):
+    al = alns(tmp_path, paf("r1", 0, 9000, "+", "S1__contig_5", 0, 9000, 8800))
+    read = rows(LOCI_HEAD + "S1\treads\tS1__r1\t9000\ttet(L)\tx\t1001\t1800\tchromosome\tgenomad\n")
+    (r,) = ec.extend(read, contig_hits(("S1__contig_5", "tet(L)", 1001, 1800, "plasmid")), al, "card")
+    assert (r["final_context"], r["context_conflict"]) == ("plasmid", "yes")
+    (r,) = ec.extend(one_read("tet(L)", 1001, 1800), contig_hits(("S1__contig_5", "tet(L)", 1001, 1800, "plasmid")),
+                     al, "card")
+    assert (r["final_context"], r["context_conflict"]) == ("plasmid", "no")           # read was unresolved
+
+
+def test_gc_delta_is_carried_from_the_read_call():
+    read = rows("sample\troute\tseq\tseq_len\tgene\tdrug_class\tstart\tend\tcategory\treason\tgc_delta\n"
+                "S1\treads\tS1__r1\t9000\ttet(L)\tx\t1001\t1800\tunresolved\tf\t0.042\n")
+    (r,) = ec.extend(read, [], {}, "card")
+    assert r["gc_delta"] == "0.042"
+    assert ec.extend(one_read("tet(L)", 1001, 1800), [], {}, "card")[0]["gc_delta"] == ""

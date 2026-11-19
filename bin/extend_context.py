@@ -3,13 +3,15 @@
 
 A read hit takes the call of a contig hit of the same database at the gene's projected position: of the read's
 alignments to its own sample's contigs with identity (matches / block length) >= --min-identity (0.8), the one whose
-query block overlaps the gene most (ties: more matches) carries the gene's read coordinates onto the contig
-(strand-aware); no such alignment over the gene means no contig match. A contig hit of the same gene matches within
---pad bp of the projected span; a hit of a different gene only when it overlaps the span. Among matching hits, the
-same gene wins, then the largest overlap (or the nearest), then a resolved call over an unresolved one. The
-contig call becomes the final call when it is resolved; otherwise (no contig match, or an unresolved contig) the read
-call is kept. CARD protein-variant / mutation models are flagged intrinsic_variant = yes: ABRicate finds the gene but
-cannot check the resistance mutation.
+query block overlaps the gene most (ties: more matches) carries the gene's read coordinates onto the contig,
+strand-aware: base by base through the alignment's CIGAR (minimap2 -c, `cg` tag), else linearly from the start of
+the aligned block. No such alignment over the gene means no contig match. A contig hit of the same gene matches
+within --pad bp of the projected span; a hit of a different gene only when it overlaps the span. Among matching
+hits, the same gene wins, then the largest overlap (or the nearest), then a resolved call over an unresolved one.
+The contig call becomes the final call when it is resolved; otherwise (no contig match, or an unresolved contig) the
+read call is kept. context_conflict = yes when a resolved contig call replaced a different resolved read call.
+CARD protein-variant / mutation models are flagged intrinsic_variant = yes: ABRicate finds the gene but cannot
+check the resistance mutation. gc_delta (gene GC minus read GC, arg_context.py) is carried from the read call.
 """
 import argparse
 import csv
@@ -21,8 +23,9 @@ RESOLVED = ("plasmid", "chromosomal_mge", "chromosome")
 CATEGORIES = list(RESOLVED) + ["unresolved"]
 COLUMNS = ["sample", "seq", "database", "gene", "drug_class", "read_len", "start", "end", "read_context",
            "read_reason", "contig", "contig_len", "contig_gene", "contig_context", "contig_reason",
-           "final_context", "context_source", "intrinsic_variant"]
+           "final_context", "context_source", "context_conflict", "intrinsic_variant", "gc_delta"]
 VARIANT = re.compile(r"mutant|mutation|conferring_resistance", re.IGNORECASE)
+CIGAR_OP = re.compile(r"(\d+)([MIDN=X])")
 
 
 def sample_of(seq):
@@ -51,9 +54,17 @@ def read_best_alignments(paths):
     return best
 
 
+def cigar_of(fields):
+    """The CIGAR of a PAF line (`cg:Z:` tag of minimap2 -c), or ""."""
+    for tag in fields[12:]:
+        if tag.startswith("cg:Z:"):
+            return tag[5:]
+    return ""
+
+
 def read_alignments(paths):
     """PAFs of recruited reads vs their sample's contigs -> {"<sample>__<read>": [(contig, ts, te, qs, qe, strand,
-    matches, block), ...]}, every alignment of the read (primary, secondary and supplementary) in file order."""
+    matches, block, cigar), ...]}, every alignment of the read (primary, secondary and supplementary) in file order."""
     alns = defaultdict(list)
     for path in paths:
         with open(path) as fh:
@@ -62,7 +73,7 @@ def read_alignments(paths):
                 if len(f) < 12:
                     continue
                 alns[sample_of(f[5]) + "__" + f[0]].append(
-                    (f[5], int(f[7]), int(f[8]), int(f[2]), int(f[3]), f[4], int(f[9]), int(f[10])))
+                    (f[5], int(f[7]), int(f[8]), int(f[2]), int(f[3]), f[4], int(f[9]), int(f[10]), cigar_of(f)))
     return dict(alns)
 
 
@@ -89,9 +100,46 @@ def gene_alignment(start, end, alns, min_identity=0.8):
     return best
 
 
+def query_to_target(qpos, aln, ops):
+    """0-based read position -> 0-based contig position through the CIGAR ops [(length, op), ...]. The CIGAR runs
+    along the contig, so on the minus strand the read is walked down from the end of its block. A position inside
+    an insertion takes the next aligned contig base; a position outside the aligned block is extended linearly."""
+    ts, te, qs, qe, strand = aln[1], aln[2], aln[3], aln[4], aln[5]
+    plus = strand == "+"
+    if plus and qpos < qs:
+        return ts - (qs - qpos)
+    if plus and qpos >= qe:
+        return te + (qpos - qe)
+    if not plus and qpos >= qe:
+        return ts - (qpos - qe + 1)
+    if not plus and qpos < qs:
+        return te - 1 + (qs - qpos)
+    q, t = (qs, ts) if plus else (qe, ts)
+    for n, op in ops:
+        if op in "M=X":
+            if plus and q <= qpos < q + n:
+                return t + (qpos - q)
+            if not plus and q - n <= qpos < q:
+                return t + (q - 1 - qpos)
+            q, t = (q + n if plus else q - n), t + n
+        elif op == "I":
+            if (plus and q <= qpos < q + n) or (not plus and q - n <= qpos < q):
+                return t
+            q = q + n if plus else q - n
+        else:                                   # D, N: contig bases without read bases
+            t += n
+    return t
+
+
 def project(start, end, aln):
-    """Gene span on the read -> span on the contig through the alignment (start of the aligned block as anchor).
-    Gene coordinates are 1-based inclusive, the PAF block is 0-based half-open, so the minus-strand image is shifted by 1."""
+    """Gene span on the read (1-based inclusive) -> span on the contig. Base by base through the CIGAR (aln[8]) when
+    it spans the aligned query block, else linearly from the start of the block (the PAF block is 0-based half-open,
+    so the minus-strand image is shifted by 1)."""
+    cigar = aln[8] if len(aln) > 8 else ""
+    ops = [(int(n), op) for n, op in CIGAR_OP.findall(cigar)]
+    if ops and sum(n for n, op in ops if op in "M=XI") == aln[4] - aln[3]:
+        a, b = query_to_target(start - 1, aln, ops) + 1, query_to_target(end - 1, aln, ops) + 1
+        return (a, b) if a <= b else (b, a)
     ts, te, qs, strand = aln[1], aln[2], aln[3], aln[5]
     a, b = start - qs, end - qs
     return (ts + a, ts + b) if strand == "+" else (te - b + 1, te - a + 1)
@@ -132,7 +180,10 @@ def extend(read_rows, contig_rows, alignments, db, pad=500, min_identity=0.8):
         row.update(hit)
         row["final_context"] = hit["contig_context"] if from_contig else r["category"]
         row["context_source"] = "contig" if from_contig else "read"
+        row["context_conflict"] = ("yes" if from_contig and r["category"] in RESOLVED
+                                   and r["category"] != hit["contig_context"] else "no")
         row["intrinsic_variant"] = "yes" if db == "card" and VARIANT.search(r["gene"]) else "no"
+        row["gc_delta"] = r.get("gc_delta", "")
         out.append(row)
     return out
 
@@ -142,7 +193,7 @@ def main(argv=None):
     ap.add_argument("--db", required=True, help="ABRicate database of these hits (card, vfdb, plasmidfinder...)")
     ap.add_argument("--read-loci", required=True, help="loci_reads_<db>.tsv (arg_context.py --route reads)")
     ap.add_argument("--contig-loci", required=True, help="loci_contigs_<db>.tsv (arg_context.py --route contigs)")
-    ap.add_argument("--paf", nargs="*", default=[], help="recruited reads -> their sample's contigs (minimap2 PAF)")
+    ap.add_argument("--paf", nargs="*", default=[], help="recruited reads -> their sample's contigs (minimap2 -c PAF)")
     ap.add_argument("--pad", type=int, default=500, help="bp tolerance around the projected gene span (same gene)")
     ap.add_argument("--min-identity", type=float, default=0.8,
                     help="minimum alignment identity (matches / block length) of a read alignment used")
@@ -157,8 +208,9 @@ def main(argv=None):
     n = len(rows) or 1
     on_contig = sum(r["contig_context"] != "no_contig_match" for r in rows)
     final = Counter(r["final_context"] for r in rows)
-    print("%s: %d hits, %.1f%% on a contig; final %s" % (a.db, len(rows), 100.0 * on_contig / n, ", ".join(
-        "%s=%d" % (c, final[c]) for c in CATEGORIES)), file=sys.stderr)
+    print("%s: %d hits, %.1f%% on a contig, %d read/contig conflicts; final %s" % (
+        a.db, len(rows), 100.0 * on_contig / n, sum(r["context_conflict"] == "yes" for r in rows),
+        ", ".join("%s=%d" % (c, final[c]) for c in CATEGORIES)), file=sys.stderr)
     return 0
 
 

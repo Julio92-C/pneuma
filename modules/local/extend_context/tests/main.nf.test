@@ -35,7 +35,13 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert path(process.out.context[0][1]).readLines().drop(1).every { it.contains('no_contig_match') }
+            def rows = path(process.out.context[0][1]).readLines()
+            def head = rows[0].split('\t') as List
+            def body = rows.drop(1).collect { it.split('\t', -1) }
+            assert body.size() == 3
+            assert body.every { it[head.indexOf('contig_context')] == 'no_contig_match' }
+            assert body.collect { it[head.indexOf('final_context')] } == ['unresolved', 'chromosome', 'plasmid']   // read calls kept
+            assert body.every { it[head.indexOf('context_conflict')] == 'no' }
         }
     }
 }
