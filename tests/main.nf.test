@@ -48,6 +48,7 @@ nextflow_pipeline {
             assert !staged.text.contains('EXCLUSIVE') && !staged.text.contains('SHARED')
             // the published Recentrifuge CSV stays raw
             assert path("$outputDir/contamination/pneuma.rcf.data.csv").readLines()[0].startsWith('Samples,')
+            assert new File("$outputDir/context/summary/arg_context_by_group.tsv").readLines()[0].startsWith('group_by	group	database')
         }
     }
 
@@ -145,6 +146,11 @@ nextflow_pipeline {
                 assert path("$outputDir/context/local_assembly/loci_contigs_${db}.tsv").readLines()[0].startsWith('sample	route	seq')
                 assert path("$outputDir/context/hit_context_${db}.tsv").readLines()[0].startsWith('sample	seq	database')
             }
+            assert path("$outputDir/context/hit_context.tsv").readLines()[0].startsWith('sample	seq	database	element	gene')
+            ['arg_context_by_sample', 'arg_context_by_class', 'gene_context', 'taxon_resolution'].each { t ->
+                assert path("$outputDir/context/summary/${t}.tsv").exists()
+            }
+            assert !path("$outputDir/context/summary/arg_context_by_group.tsv").exists()   // no --meridian_metadata here
             assert path("$outputDir/mobilome/plasmid_units.tsv").readLines() == ['unit	n_samples	samples	n_contigs	representative	length	repeat	replicons	mob_rep	relaxase	mpf	mobility	ARGs	VFs	IS_families	read_taxa	read_taxids	mean_rpm']
             assert path("$outputDir/mobilome/is_flanks.tsv").readLines().size() == 1
             ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].each { s ->

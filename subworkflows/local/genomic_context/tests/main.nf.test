@@ -26,6 +26,8 @@ nextflow_workflow {
         }
         then {
             assert workflow.success
+            assert workflow.out.hit_table.size() == 1
+            assert workflow.out.summary.size() == 1
             assert workflow.out.loci.size() == 2
             assert workflow.out.loci.collect { it[1] }.sort() == ['card', 'plasmidfinder']
             assert path(workflow.out.taxa[0]).readLines() == ["S1__r1\t562"]
@@ -58,6 +60,8 @@ nextflow_workflow {
         }
         then {
             assert workflow.success
+            assert workflow.out.hit_table.size() == 1
+            assert workflow.out.summary.size() == 1
             assert workflow.out.loci.size() == 2
             assert workflow.out.hit_context.size() == 0
             assert workflow.out.contig_loci.size() == 0

@@ -3,12 +3,14 @@ include { GENOMAD_ENDTOEND } from '../../../modules/local/genomad_endtoend/main'
 include { ARG_CONTEXT      } from '../../../modules/local/arg_context/main'
 include { CONTEXT_ASSEMBLY } from '../context_assembly/main'
 include { MOBILOME         } from '../mobilome/main'
+include { CONTEXT_SUMMARY  } from '../../../modules/local/context_summary/main'
 
 //
 // Layer 1 of the genomic-context analysis: every ABRicate hit on a Kraken2-classified read is placed as plasmid /
 // chromosomal_mge / chromosome / unresolved from geNomad on the pooled hit reads, with the plasmid-evidence rule
 // (a hallmark or conjugation gene in geNomad's genes table, or a PlasmidFinder / MOB-suite replicon on the read).
 // Layer 2 (`--context_local_assembly`) and the mobilome branch (`--mobilome`) follow in CONTEXT_ASSEMBLY / MOBILOME.
+// CONTEXT_SUMMARY then combines the calls of all databases into context/hit_context.tsv (with the read's Kraken2 taxon) and the summaries.
 //
 workflow GENOMIC_CONTEXT {
     take:
@@ -60,6 +62,12 @@ workflow GENOMIC_CONTEXT {
         }
     }
 
+    def ch_tables = params.context_local_assembly
+        ? ch_hit_context.map { _db, f -> f }
+        : ARG_CONTEXT.out.loci.map { _route, _db, f -> f }
+    CONTEXT_SUMMARY(ch_tables.collect().ifEmpty([]), ch_taxa.ifEmpty([]), file(taxdump, checkIfExists: true, type: 'dir'),
+                    params.meridian_metadata ? file(params.meridian_metadata, checkIfExists: true) : [])
+
     emit:
     loci       = ARG_CONTEXT.out.loci            // [ 'reads', db, loci_reads_<db>.tsv ]
     score_only = ARG_CONTEXT.out.score_only
@@ -70,6 +78,8 @@ workflow GENOMIC_CONTEXT {
     plasmid_candidates = ch_candidates
     plasmid_units      = ch_units
     is_flanks          = ch_is_flanks
+    hit_table          = CONTEXT_SUMMARY.out.hit_context   // context/hit_context.tsv
+    summary            = CONTEXT_SUMMARY.out.summary       // [ summary/*.tsv ]
     genomad    = GENOMAD_ENDTOEND.out.scores.map { _m, f -> f }
                      .combine(GENOMAD_ENDTOEND.out.virus.map { _m, f -> f })
                      .combine(GENOMAD_ENDTOEND.out.plasmids.map { _m, f -> f })
