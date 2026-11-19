@@ -104,7 +104,7 @@ nextflow_workflow {
         }
         then {
             assert workflow.success
-            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('	')[0] }
+            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('\t')[0] }
             assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder']
         }
     }
@@ -130,7 +130,7 @@ nextflow_workflow {
         }
         then {
             assert workflow.success
-            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('	')[0] }
+            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('\t')[0] }
             assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder', 'medaka_model']
         }
     }

@@ -200,8 +200,7 @@ nextflow_function {
         }
         then {
             assert function.failed
-            def err = function.stdout.join('
-')
+            def err = function.stdout.join('\n')
             assert err.contains('--medaka_model_path is required for pathogen reconstruction')
             assert err.count('--medaka_model_path is required') == 1
             assert err.contains('--mobsuite_db is required for the mobilome branch')
