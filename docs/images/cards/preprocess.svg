@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 660" width="1100" height="660" role="img" font-family="Helvetica, Arial, sans-serif">
+<title>PNEUMA module card: Preprocess: QC and host removal</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<rect x="1" y="1" width="1098" height="658" rx="16" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<rect x="24" y="22" width="10" height="28" rx="3" fill="#0072B2"/>
+<text x="44" y="43" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">Preprocess: QC and host removal</text>
+<text x="134" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">INPUTS</text>
+<text x="550" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">STEPS</text>
+<text x="966" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">OUTPUTS</text>
+<rect x="24" y="110" width="220" height="40" rx="20" fill="#ffffff" stroke="#0072B2" stroke-width="2"/>
+<text x="134" y="134" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">ONT reads (FASTQ, per run)</text>
+<line x1="244" y1="130" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,172 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#0072B2" stroke-width="2"/>
+<ellipse cx="134" cy="172" rx="110" ry="6" fill="#ffffff" stroke="#0072B2" stroke-width="2"/>
+<text x="134" y="190" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Host index (Hostile)</text>
+<line x1="244" y1="186" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="300" y="110" width="500" height="46" rx="8" fill="#ffffff" stroke="#0072B2" stroke-width="2.5"/>
+<text x="312" y="129" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">cat</text>
+<text x="312" y="147" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">one FASTQ per sample: its runs merged</text>
+<text x="312" y="172" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: a run's own quality is only seen before merging</text>
+<line x1="340" y1="180" x2="340" y2="207" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="203" font-size="11" font-weight="400" fill="#0072B2" text-anchor="end" font-style="italic">--run_porechop</text>
+<rect x="300" y="210" width="500" height="46" rx="8" fill="#ffffff" stroke="#0072B2" stroke-width="2.5" stroke-dasharray="7 5"/>
+<text x="312" y="229" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Porechop_ABI</text>
+<text x="312" y="247" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">are adapters left on the reads?</text>
+<text x="312" y="272" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: adapters only; no barcode demultiplexing</text>
+<line x1="340" y1="280" x2="340" y2="307" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="303" font-size="11" font-weight="400" fill="#0072B2" text-anchor="end" font-style="italic">--nanoq_min_length 100 · --nanoq_min_qscore 7</text>
+<rect x="300" y="310" width="500" height="46" rx="8" fill="#ffffff" stroke="#0072B2" stroke-width="2.5"/>
+<text x="312" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">nanoq</text>
+<text x="312" y="347" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">is each read long and accurate enough?</text>
+<text x="312" y="372" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: mean read quality; local errors stay</text>
+<line x1="340" y1="380" x2="340" y2="407" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="403" font-size="11" font-weight="400" fill="#0072B2" text-anchor="end" font-style="italic">human-t2t-hla index</text>
+<rect x="300" y="410" width="500" height="46" rx="8" fill="#ffffff" stroke="#0072B2" stroke-width="2.5"/>
+<text x="312" y="429" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Hostile</text>
+<text x="312" y="447" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which reads are human?</text>
+<text x="312" y="472" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: only the host in the index (--host_index for others)</text>
+<line x1="340" y1="480" x2="340" y2="507" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="503" font-size="11" font-weight="400" fill="#0072B2" text-anchor="end" font-style="italic">LOW_DEPTH below --min_reads 100</text>
+<rect x="300" y="510" width="500" height="46" rx="8" fill="#ffffff" stroke="#0072B2" stroke-width="2.5"/>
+<text x="312" y="529" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">NanoPlot · SeqKit stats</text>
+<text x="312" y="547" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">what is left after QC and host removal?</text>
+<text x="312" y="572" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: summaries only; nothing is filtered here</text>
+<line x1="800" y1="533" x2="852" y2="505" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="485" width="220" height="40" rx="20" fill="#ffffff" stroke="#0072B2" stroke-width="2"/>
+<text x="966" y="509" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Clean reads</text>
+<line x1="800" y1="533" x2="852" y2="561" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="541" width="220" height="40" fill="#ffffff" stroke="#0072B2" stroke-width="2"/>
+<rect x="856" y="541" width="220" height="8" fill="#0072B2"/>
+<text x="966" y="568" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">QC tables (MultiQC)</text>
+<text x="24" y="642" font-size="11" font-weight="400" fill="#57606a" text-anchor="start">Inputs and outputs: reads = pill, sequences = parallelogram, table = banded box, database = cylinder. Dashed step = optional (off by default).</text>
+</svg>

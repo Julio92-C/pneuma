@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 475" width="1100" height="475" role="img" font-family="Helvetica, Arial, sans-serif">
+<title>PNEUMA module card: Taxonomy and abundance</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<rect x="1" y="1" width="1098" height="473" rx="16" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<rect x="24" y="22" width="10" height="28" rx="3" fill="#009E73"/>
+<text x="44" y="43" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">Taxonomy and abundance</text>
+<text x="134" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">INPUTS</text>
+<text x="550" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">STEPS</text>
+<text x="966" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">OUTPUTS</text>
+<rect x="24" y="110" width="220" height="40" rx="20" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<text x="134" y="134" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Clean reads</text>
+<line x1="244" y1="130" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,172 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<ellipse cx="134" cy="172" rx="110" ry="6" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<text x="134" y="190" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2 PlusPF index</text>
+<line x1="244" y1="186" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,228 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<ellipse cx="134" cy="228" rx="110" ry="6" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<text x="134" y="246" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">NCBI taxdump</text>
+<line x1="244" y1="242" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="103" font-size="11" font-weight="400" fill="#009E73" text-anchor="end" font-style="italic">--kraken2_confidence 0</text>
+<rect x="300" y="110" width="500" height="46" rx="8" fill="#ffffff" stroke="#009E73" stroke-width="2.5"/>
+<text x="312" y="129" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Kraken2</text>
+<text x="312" y="147" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which taxon is each read?</text>
+<text x="312" y="172" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: taxa missing from the index go to a relative or unclassified</text>
+<line x1="340" y1="180" x2="340" y2="207" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="203" font-size="11" font-weight="400" fill="#009E73" text-anchor="end" font-style="italic">--bracken_level S · --bracken_threshold 10</text>
+<rect x="300" y="210" width="500" height="46" rx="8" fill="#ffffff" stroke="#009E73" stroke-width="2.5"/>
+<text x="312" y="229" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Bracken</text>
+<text x="312" y="247" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">how abundant is each species?</text>
+<text x="312" y="272" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: re-estimated counts, not proof of presence</text>
+<line x1="340" y1="280" x2="340" y2="307" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="300" y="310" width="500" height="46" rx="8" fill="#ffffff" stroke="#009E73" stroke-width="2.5"/>
+<text x="312" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">KrakenTools · Krona</text>
+<text x="312" y="347" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">the cohort tables and the interactive plot</text>
+<line x1="800" y1="333" x2="852" y2="277" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="257" width="220" height="40" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<rect x="856" y="257" width="220" height="8" fill="#009E73"/>
+<text x="966" y="284" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2 / Bracken tables</text>
+<line x1="800" y1="333" x2="852" y2="333" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="313" width="220" height="40" rx="20" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<text x="966" y="337" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2-classified reads</text>
+<line x1="800" y1="333" x2="852" y2="389" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="369" width="220" height="40" fill="#ffffff" stroke="#009E73" stroke-width="2"/>
+<rect x="856" y="369" width="220" height="8" fill="#009E73"/>
+<text x="966" y="396" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Krona HTML</text>
+<text x="24" y="457" font-size="11" font-weight="400" fill="#57606a" text-anchor="start">Inputs and outputs: reads = pill, sequences = parallelogram, table = banded box, database = cylinder. Dashed step = optional (off by default).</text>
+</svg>

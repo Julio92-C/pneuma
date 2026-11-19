@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 703" width="1100" height="703" role="img" font-family="Helvetica, Arial, sans-serif">
+<title>PNEUMA module card: Mobilome</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<rect x="1" y="1" width="1098" height="701" rx="16" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<rect x="24" y="22" width="10" height="28" rx="3" fill="#56B4E9"/>
+<text x="44" y="43" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">Mobilome</text>
+<text x="134" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">INPUTS</text>
+<text x="550" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">STEPS</text>
+<text x="966" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">OUTPUTS</text>
+<polygon points="36,110 244,110 232,150 24,150" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="134" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Local-assembly contigs</text>
+<line x1="244" y1="130" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="166" width="220" height="40" rx="20" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="190" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Recruited reads</text>
+<line x1="244" y1="186" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,228 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<ellipse cx="134" cy="228" rx="110" ry="6" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="246" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">MOB-suite database</text>
+<line x1="244" y1="242" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,284 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<ellipse cx="134" cy="284" rx="110" ry="6" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="302" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Medaka model</text>
+<line x1="244" y1="298" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="103" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">Flye circ. = Y</text>
+<rect x="300" y="110" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="129" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Circular plasmids</text>
+<text x="312" y="147" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which circular contigs carry a hit?</text>
+<text x="312" y="172" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: linear plasmid pieces are not drafts; repeat contigs flagged</text>
+<line x1="340" y1="180" x2="340" y2="207" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="203" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--polish_plasmids true</text>
+<rect x="300" y="210" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="229" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Medaka</text>
+<text x="312" y="247" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">polish the drafts against all of the sample's contigs</text>
+<text x="312" y="272" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: polishing does not join or close a draft</text>
+<line x1="340" y1="280" x2="340" y2="307" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="300" y="310" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">MOB-suite typer</text>
+<text x="312" y="347" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">replicon, relaxase, MPF and mobility of each contig</text>
+<text x="312" y="372" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: typing only: no host</text>
+<line x1="340" y1="380" x2="340" y2="407" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="403" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--context_is_window 500</text>
+<rect x="300" y="410" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="429" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">ISEScan · IS flanks</text>
+<text x="312" y="447" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which IS elements flank each ARG? composite transposon?</text>
+<text x="312" y="472" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: IS elements beyond the contig end are missed</text>
+<line x1="340" y1="480" x2="340" y2="507" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="503" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--plasmid_unit_min_identity 0.95</text>
+<rect x="300" y="510" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="529" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Plasmid units</text>
+<text x="312" y="547" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">is it the same plasmid in other samples?</text>
+<text x="312" y="572" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: drafts under 80% of each other's length never cluster</text>
+<line x1="800" y1="533" x2="852" y2="449" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="429" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="429" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="456" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">mobilome/plasmid_units.tsv</text>
+<line x1="800" y1="533" x2="852" y2="505" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="485" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="485" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="512" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">mobilome/is_flanks.tsv</text>
+<line x1="800" y1="533" x2="852" y2="561" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<polygon points="868,541 1076,541 1064,581 856,581" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="966" y="565" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Polished plasmid drafts</text>
+<line x1="800" y1="533" x2="852" y2="617" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="597" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="597" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="624" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">MultiQC: plasmid units</text>
+<text x="24" y="685" font-size="11" font-weight="400" fill="#57606a" text-anchor="start">Inputs and outputs: reads = pill, sequences = parallelogram, table = banded box, database = cylinder. Dashed step = optional (off by default).</text>
+</svg>
