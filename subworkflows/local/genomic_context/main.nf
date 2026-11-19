@@ -46,7 +46,7 @@ workflow GENOMIC_CONTEXT {
     def ch_units       = channel.empty()
     def ch_is_flanks   = channel.empty()
     if (params.context_local_assembly) {
-        CONTEXT_ASSEMBLY(ch_reads, HIT_READS.out.fasta, ARG_CONTEXT.out.loci, abricate_db, genomad_db, mobsuite_db)
+        CONTEXT_ASSEMBLY(ch_reads, HIT_READS.out.seeds, ARG_CONTEXT.out.loci, abricate_db, genomad_db, mobsuite_db)
         ch_contig_loci = CONTEXT_ASSEMBLY.out.contig_loci
         ch_hit_context = CONTEXT_ASSEMBLY.out.hit_context
         if (params.mobilome) {
@@ -63,7 +63,7 @@ workflow GENOMIC_CONTEXT {
     emit:
     loci       = ARG_CONTEXT.out.loci            // [ 'reads', db, loci_reads_<db>.tsv ]
     score_only = ARG_CONTEXT.out.score_only
-    hit_reads  = ch_fa                           // pooled hit reads (geNomad input; local assembly is seeded by the per-sample HIT_READS.out.fasta)
+    hit_reads  = ch_fa                           // pooled hit reads (geNomad input; the local assembly is seeded by the per-sample HIT_READS.out.seeds)
     taxa       = ch_taxa                         // read id -> Kraken2 taxid
     contig_loci        = ch_contig_loci    // [ 'contigs', db, loci_contigs_<db>.tsv ]
     hit_context        = ch_hit_context    // [ db, hit_context_<db>.tsv ]

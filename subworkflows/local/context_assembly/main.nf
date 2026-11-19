@@ -47,7 +47,7 @@ def warnFailedSamples(ch_attempted, ch_done, label, fallback) {
 workflow CONTEXT_ASSEMBLY {
     take:
     ch_reads       // [ meta, clean reads.fastq.gz ]
-    ch_hit_reads   // [ meta, <sample>.hit_reads.fa ]   (HIT_READS)
+    ch_hit_reads   // [ meta, <sample>.seed_reads.fa ]   (HIT_READS seeds: no CARD-variant-only reads)
     ch_read_loci   // [ 'reads', db, loci_reads_<db>.tsv ]
     abricate_db    // string or null (bundled ABRicate databases)
     genomad_db     // string

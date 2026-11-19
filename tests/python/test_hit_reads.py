@@ -29,3 +29,20 @@ def test_no_hits(tmp_path):
     assert (tmp_path / "S2.hit_reads.fa").read_text() == ""
     assert (tmp_path / "S2.taxa.tsv").read_text() == ""
     assert (tmp_path / "S2.hits.tsv").read_text().count("\n") == 1
+    assert (tmp_path / "S2.seed_reads.fa").read_text() == ""
+
+
+def test_seed_reads_leave_out_reads_with_only_card_variant_hits(tmp_path):
+    fa = tmp_path / "S1_kraken2ID_PFP.fasta"
+    fa.write_text(">r1_kraken:taxid|562\nACGTACGTAC\n>r2_kraken:taxid|78344\nGGGG\n>r3_kraken:taxid|562\nTTTTTT\n")
+    variant = "Bifidobacterium_adolescentis_rpoB_mutants_conferring_resistance_to_rifampicin"
+    csvf = tmp_path / "S1_abricate.csv"
+    csvf.write_text(HEAD
+                    + "S1_kraken2ID_PFP.fasta,r1_kraken:taxid|562,2,8,+,tet(M),1-7/7,===,0/0,100.00,99.00,card,X,p,tetracycline\n"
+                    + "S1_kraken2ID_PFP.fasta,r2_kraken:taxid|78344,1,4,+,%s,1-4/4,===,0/0,100.00,99.00,card,Y,p,rifamycin\n" % variant
+                    + "S1_kraken2ID_PFP.fasta,r3_kraken:taxid|562,1,6,+,%s,1-6/6,===,0/0,100.00,99.00,card,Y,p,rifamycin\n" % variant
+                    + "S1_kraken2ID_PFP.fasta,r3_kraken:taxid|562,1,6,+,ColRNAI_1,1-6/6,===,0/0,100.00,99.00,plasmidfinder,Z,p,\n")
+    assert hr.main(["--sample", "S1", "--fasta", str(fa), "--abricate", str(csvf), "--out-prefix", str(tmp_path / "S1")]) == 0
+    assert (tmp_path / "S1.hit_reads.fa").read_text() == ">S1__r1\nACGTACGTAC\n>S1__r2\nGGGG\n>S1__r3\nTTTTTT\n"
+    # r2 carries only a CARD protein-variant model: placed, but not a recruitment seed; r3 has a replicon too
+    assert (tmp_path / "S1.seed_reads.fa").read_text() == ">S1__r1\nACGTACGTAC\n>S1__r3\nTTTTTT\n"
