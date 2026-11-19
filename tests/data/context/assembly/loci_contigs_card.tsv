@@ -1,0 +1,3 @@
+sample	route	seq	seq_len	gene	drug_class	start	end	category	reason
+S1	contigs	S1__contig_1	50000	tet(L)	tetracycline	4101	5100	plasmid	mobsuite
+S1	contigs	S1__contig_9	50000	tet(W)	tetracycline	100	900	unresolved	low_score

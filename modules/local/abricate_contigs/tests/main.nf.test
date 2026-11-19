@@ -1,0 +1,43 @@
+nextflow_process {
+    name "Test ABRICATE_CONTIGS"
+    script "../main.nf"
+    process "ABRICATE_CONTIGS"
+
+    test("no contigs: header-only hits, empty FASTAs") {
+        when {
+            params { context_databases = 'card,plasmidfinder'; abricate_minid = 80; abricate_mincov = 80 }
+            process {
+                """
+                input[0] = []
+                input[1] = []
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.hits[0]).readLines() == [['#FILE', 'SEQUENCE', 'START', 'END', 'STRAND', 'GENE', 'COVERAGE',
+                'COVERAGE_MAP', 'GAPS', '%COVERAGE', '%IDENTITY', 'DATABASE', 'ACCESSION', 'PRODUCT', 'RESISTANCE'].join('\t')]
+            assert path(process.out.fasta[0]).text == ''
+            assert path(process.out.hit_fasta[0]).text == ''
+        }
+    }
+
+    test("contigs are pooled and measured") {
+        when {
+            params { context_databases = 'card'; abricate_minid = 80; abricate_mincov = 80 }
+            process {
+                """
+                def f = file("\${workDir}/S1.contigs.fa")
+                f.text = '>S1__contig_1\\nACGTACGTAC\\n>S1__contig_2\\nGGGCCC\\n'
+                input[0] = [ f ]
+                input[1] = []
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.lengths[0]).readLines() == ['S1__contig_1\t10', 'S1__contig_2\t6']
+            assert path(process.out.hits[0]).readLines().size() == 1   // random sequence: no hits
+        }
+    }
+}

@@ -1,0 +1,22 @@
+nextflow_process {
+    name "Test ISESCAN"
+    script "../main.nf"
+    process "ISESCAN"
+
+    test("empty FASTA: header-only table, isescan not run") {
+        when {
+            process {
+                """
+                def f = file("\${workDir}/hit_contigs.fa"); f.text = ''
+                input[0] = f
+                """
+            }
+        }
+        then {
+            assert process.success
+            def lines = path(process.out.tsv[0]).readLines()
+            assert lines.size() == 1
+            assert lines[0].startsWith('seqID\tfamily\tcluster\tisBegin\tisEnd')
+        }
+    }
+}

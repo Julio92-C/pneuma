@@ -306,7 +306,8 @@ def panelReferencesPath(p) {
 // amrfinderplus_db:, mobsuite_db:, medaka_model_path:, panel_references_dir:, genomad_db:] as strings or null.
 // Calls error() listing every problem found. kraken2_db, taxdump and host_index are mandatory; with
 // --genomic_context (on by default), so is genomad_db; with --pathogens, so are checkm2_db, bakta_db,
-// amrfinderplus_db, medaka_model_path and panel_references_dir (mobsuite_db only with --run_mobsuite).
+// amrfinderplus_db, medaka_model_path and panel_references_dir (mobsuite_db only with --run_mobsuite);
+// with the mobilome branch (on by default), so is mobsuite_db, and medaka_model_path unless --polish_plasmids false.
 //
 def resolveDatabases(p) {
     def res = [
@@ -397,6 +398,9 @@ def resolveDatabases(p) {
         if (p.pathogens) {
             resolvePathogenDatabases(p, root, res, problems, hint)
         }
+        if (mobilomeOn(p)) {
+            resolveMobilomeDatabases(p, root, res)
+        }
     }
 
     ['host_index', 'kraken2_db', 'taxdump'].each { k ->
@@ -406,6 +410,15 @@ def resolveDatabases(p) {
     }
     if (p.genomic_context && !res.genomad_db && !problems.any { pr -> pr.contains('--genomad_db') }) {
         problems.add("--genomad_db is required for the genomic context analysis (on by default): pass it, provide --db_dir containing genomad_db/, or run with --genomic_context false")
+    }
+    if (mobilomeOn(p)) {
+        def needed = ['mobsuite_db'] + (p.polish_plasmids ? ['medaka_model_path'] : [])
+        needed.each { k ->
+            if (!res[k] && !problems.any { pr -> pr.contains("--${k}") }) {
+                problems.add("--${k} is required for the mobilome branch (on by default): pass it, provide --db_dir containing it, or run with --mobilome false" +
+                             (k == 'medaka_model_path' ? ' (or --polish_plasmids false)' : ''))
+            }
+        }
     }
     if (p.pathogens) {
         def needed = ['checkm2_db', 'bakta_db', 'amrfinderplus_db', 'medaka_model_path', 'panel_references_dir'] +
@@ -447,12 +460,26 @@ def resolvePathogenDatabases(p, root, res, problems, hint) {
     }
     def amr = root.resolve('amrfinderplus/amrfinderdb.tar.gz')
     if (!res.amrfinderplus_db && amr.exists()) { res.amrfinderplus_db = amr.toString() }
+    resolveMobilomeDatabases(p, root, res)
+    def refs = root.resolve('panel_references')
+    if (!res.panel_references_dir && refs.isDirectory()) { res.panel_references_dir = refs.toString() }
+}
+
+//
+// The mobilome branch runs with the genomic context and its local assembly (all three on by default).
+//
+def mobilomeOn(p) {
+    return p.genomic_context && p.context_local_assembly && p.mobilome
+}
+
+//
+// MOB-suite database and Medaka model from --db_dir: shared by the pathogen module and the mobilome branch.
+//
+def resolveMobilomeDatabases(p, root, res) {
     def mob = root.resolve('mobsuite')
     if (!res.mobsuite_db && mob.isDirectory()) { res.mobsuite_db = mob.toString() }
     def model = root.resolve("medaka/${p.medaka_model}_model_pt.tar.gz")
     if (!res.medaka_model_path && model.exists()) { res.medaka_model_path = model.toString() }
-    def refs = root.resolve('panel_references')
-    if (!res.panel_references_dir && refs.isDirectory()) { res.panel_references_dir = refs.toString() }
 }
 
 //

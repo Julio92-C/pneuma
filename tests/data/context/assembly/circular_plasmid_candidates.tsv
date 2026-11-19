@@ -1,0 +1,4 @@
+contig	sample	length	coverage	reads	plasmid_score	chromosome_score	hallmarks	conjugation	replicons	mob_rep	relaxase	mpf	mobility	ARGs	VFs	read_taxa
+S1__contig_1	S1	20000	40	10	0.9	0.1	1		rep27		MOBV		mobilizable	tet(L)		1350:6
+S2__contig_3	S2	20000	20	5	0.9	0.1	1		rep27		MOBV		mobilizable	tet(L)		1350:2,1578:1
+S2__contig_5	S2	15000	9	2	0.8	0.1	0						non-mobilizable	ErmB		

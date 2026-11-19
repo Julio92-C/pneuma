@@ -1,0 +1,32 @@
+nextflow_workflow {
+    name "Test MOBILOME"
+    script "../main.nf"
+    workflow "MOBILOME"
+    options "-stub"
+
+    test("stub run gives one plasmid units table") {
+        when {
+            params { context_is_window = 500; plasmid_unit_min_identity = 0.95; polish_plasmids = true }
+            workflow {
+                """
+                input[0] = channel.of([ [id:'S1'], file("${projectDir}/tests/data/context/assembly/S1.assembly_info.txt", checkIfExists: true) ])
+                input[1] = channel.value(file("${projectDir}/tests/data/context/assembly/contig_hits.tsv", checkIfExists: true))
+                input[2] = channel.value(file("${projectDir}/tests/data/context/assembly/S1.assembly.fasta", checkIfExists: true))
+                input[3] = channel.value(file("${projectDir}/tests/data/context/assembly/S1.assembly.fasta", checkIfExists: true))
+                input[4] = channel.value(file("${projectDir}/tests/data/context/agg.tsv", checkIfExists: true))
+                input[5] = channel.value(file("${projectDir}/tests/data/context/genes.tsv", checkIfExists: true))
+                input[6] = []
+                input[7] = []
+                input[8] = channel.value(file("${projectDir}/tests/data/context/taxa.tsv", checkIfExists: true))
+                input[9] = channel.empty()
+                input[10] = channel.empty()
+                input[11] = null
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.units.size() == 1
+        }
+    }
+}

@@ -310,7 +310,13 @@
                 "skip_genomad_download": {
                     "type": "boolean",
                     "description": "--build_databases: skip the geNomad database."
-                }
+                },
+                "context_local_assembly": { "type": "boolean", "default": true, "description": "Assemble the reads around each sample's hit reads (minimap2 recruitment, Flye --meta) and carry contig calls back to the reads.", "fa_icon": "fas fa-toggle-on" },
+                "context_recruit_min_aln": { "type": "integer", "default": 1000, "minimum": 1, "description": "Bases a read must align to a hit read (round 1) or a recruited read (round 2) to be recruited." },
+                "mobilome": { "type": "boolean", "default": true, "description": "Plasmid drafts from circular contigs, MOB-suite typing, IS flanks and plasmid units across samples (needs --mobsuite_db; runs with --context_local_assembly).", "fa_icon": "fas fa-toggle-on" },
+                "polish_plasmids": { "type": "boolean", "default": true, "description": "Polish the circular plasmid drafts with Medaka (needs --medaka_model_path / --db_dir)." },
+                "context_is_window": { "type": "integer", "default": 500, "minimum": 0, "description": "Bases from an ARG searched for IS elements (composite transposons)." },
+                "plasmid_unit_min_identity": { "type": "number", "default": 0.95, "minimum": 0, "maximum": 1, "description": "MinHash identity above which two plasmid drafts are the same plasmid unit." }
             }
         },
         "meridian_options": {
@@ -680,14 +686,14 @@
                     "type": "string",
                     "format": "directory-path",
                     "exists": true,
-                    "description": "MOB-suite database directory (mob_init). Default: mobsuite/ in --db_dir. Needed with --run_mobsuite.",
+                    "description": "MOB-suite database directory (mob_init). Default: mobsuite/ in --db_dir. Needed by the mobilome branch (on by default; not with --mobilome false) and with --run_mobsuite.",
                     "fa_icon": "fas fa-database"
                 },
                 "medaka_model_path": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "description": "Medaka model file (<model>_model_pt.tar.gz). Default: medaka/<--medaka_model>_model_pt.tar.gz in --db_dir.",
+                    "description": "Medaka model file (<model>_model_pt.tar.gz). Default: medaka/<--medaka_model>_model_pt.tar.gz in --db_dir. Needed by the mobilome branch (on by default; not with --mobilome false or --polish_plasmids false) and with --pathogens.",
                     "fa_icon": "fas fa-database"
                 },
                 "panel_references_dir": {

@@ -136,11 +136,17 @@ nextflow_pipeline {
         then {
             assert workflow.success
             def top = new File("$outputDir").listFiles().findAll { f -> f.isDirectory() }.collect { f -> f.name }.sort()
-            assert top == ['contamination', 'context', 'functional', 'multiqc', 'pipeline_info', 'preprocess', 'taxonomy']
+            assert top == ['contamination', 'context', 'functional', 'mobilome', 'multiqc', 'pipeline_info', 'preprocess', 'taxonomy']
             assert path("$outputDir/taxonomy/krona").exists()
             ['card', 'vfdb', 'plasmidfinder'].each { db ->   // genomic context is on by default (no hits here: header-only tables)
                 assert path("$outputDir/context/reads/loci_reads_${db}.tsv").readLines()[0].startsWith('sample	route	seq')
             }
+            ['card', 'vfdb', 'plasmidfinder'].each { db ->
+                assert path("$outputDir/context/local_assembly/loci_contigs_${db}.tsv").readLines()[0].startsWith('sample	route	seq')
+                assert path("$outputDir/context/hit_context_${db}.tsv").readLines()[0].startsWith('sample	seq	database')
+            }
+            assert path("$outputDir/mobilome/plasmid_units.tsv").readLines() == ['unit	n_samples	samples	n_contigs	representative	length	replicons	mob_rep	relaxase	mpf	mobility	ARGs	VFs	IS_families	read_taxa	mean_rpm']
+            assert path("$outputDir/mobilome/is_flanks.tsv").readLines().size() == 1
             ['CNF0-0001', 'EBF0-0001', 'SPF0-0001'].each { s ->
                 def lines = path("$outputDir/functional/${s}_abricate.csv").readLines()
                 assert lines.count { l -> l.startsWith('#FILE') } == 1
@@ -172,7 +178,7 @@ nextflow_pipeline {
             }
             assert path("$outputDir/pathogens/panel/panel_resolved.tsv").readLines().size() == 26
             def top = new File("$outputDir").listFiles().findAll { f -> f.isDirectory() }.collect { f -> f.name }.sort()
-            assert top == ['contamination', 'context', 'functional', 'multiqc', 'pathogens', 'pipeline_info', 'preprocess', 'taxonomy']
+            assert top == ['contamination', 'context', 'functional', 'mobilome', 'multiqc', 'pathogens', 'pipeline_info', 'preprocess', 'taxonomy']
         }
     }
 

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Genomic context, layer 1 (`GENOMIC_CONTEXT`, on by default; `--genomic_context false` skips it): the reads carrying an ABRicate hit are pooled and classified with geNomad 1.13.0, and every hit is placed as plasmid / chromosomal_mge / chromosome / unresolved (`context/reads/loci_reads_<db>.tsv`). A plasmid call needs plasmid evidence on the read: a hallmark or conjugation gene in geNomad's gene table, or a PlasmidFinder / MOB-suite replicon. Parameters `--context_databases`, `--context_min_flank`, `--context_mge_window`, `--context_plasmid_min`, `--context_chrom_min`, `--genomad_splits`.
 - geNomad database in `--build_databases` (`genomad_db/`, `--skip_genomad_download`) and `--db_dir`; `--genomad_db` for an existing one.
 - `bin/hit_reads.py`; `bin/arg_context.py` reads plasmid evidence from geNomad's gene table, counts a PlasmidFinder hit on the same read as a replicon, and reports `gc_gene` / `gc_seq` / `gc_delta`.
+- Genomic context layer 2 (`--context_local_assembly`, default on): per sample, the reads overlapping the hit reads (`--context_recruit_min_aln`, two rounds) are assembled with Flye `--meta`; ABRicate, geNomad and MOB-suite type the contigs and each read hit is mapped to its contig. Final call per read hit in `context/hit_context_<db>.tsv` (`contig_context`, `final_context`, `context_source`); a contig call replaces the read call only when resolved. CARD protein-variant models are flagged `intrinsic_variant`. A sample whose Flye run fails keeps its read-level calls, and the run logs a warning naming those samples.
+- Mobilome branch (`--mobilome`, default on; needs `--mobsuite_db`, and `--medaka_model_path` unless `--polish_plasmids false`): circular hit contigs as plasmid drafts (`context/plasmid_drafts/`), Medaka polishing (a failed sample keeps its unpolished draft, with a warning), MOB-suite typing, ISEScan IS flanks around each ARG with composite-transposon calls (same IS family on both sides within `--context_is_window`, in any orientation; `orientation` column), and plasmid units across samples by MinHash identity (`--plasmid_unit_min_identity`) in `mobilome/`.
+
+### `Changed`
+
+- Default runs now need `--mobsuite_db` and `--medaka_model_path` (built by `--build_databases` without `--skip_pathogen_download`, and MOB-suite without `--skip_mobsuite_download`), or `--mobilome false`.
 
 ## v0.3.0 - 2026-11-08
 
