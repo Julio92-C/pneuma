@@ -109,6 +109,34 @@ nextflow_workflow {
         }
     }
 
+    test("stub: --polish_plasmids false with --skip_pathogen_download builds MOB-suite but not the Medaka model") {
+        options "-stub"
+        when {
+            params {
+                db_outdir = "$outputDir/db"
+                skip_kraken_download = true
+                skip_hostile_download = true
+                skip_pathogen_download = true
+                skip_genomad_download = true
+                polish_plasmids = false
+            }
+            workflow {
+                """
+                input[0] = null
+                input[1] = '2025-04'
+                input[2] = "$outputDir/db"
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            def names = path(workflow.out.manifest[0]).readLines().drop(1).collect { it.split('	')[0] }
+            assert names == ['ncbi_taxdump', 'abricate_card', 'abricate_vfdb', 'abricate_plasmidfinder', 'mobsuite_db']
+            assert path("$outputDir/db/mobsuite").exists()
+            assert !path("$outputDir/db/medaka").exists()
+        }
+    }
+
     test("stub: --skip_mobsuite_download still leaves MOB-suite out when the mobilome is on") {
         options "-stub"
         when {

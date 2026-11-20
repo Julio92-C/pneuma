@@ -196,7 +196,8 @@ def checkBuildDatabasesParams(p) {
     if (!p.skip_taxdump_download && !(p.taxdump_month ==~ /\d{4}-(0[1-9]|1[0-2])/)) {
         problems.add("--taxdump_month YYYY-MM is required (match the Kraken2 release month), or pass --skip_taxdump_download")
     }
-    if (p.skip_kraken_download && p.skip_taxdump_download && p.skip_hostile_download && p.skip_abricate_download && p.skip_pathogen_download) {
+    if (p.skip_kraken_download && p.skip_taxdump_download && p.skip_hostile_download && p.skip_abricate_download
+            && p.skip_pathogen_download && p.skip_genomad_download && !buildsMobsuiteDb(p) && !buildsMedakaModel(p)) {
         problems.add("every download is skipped; nothing to build")
     }
     if (!p.skip_pathogen_download && !(p.bakta_db_type in ['light', 'full'])) {
@@ -208,6 +209,22 @@ def checkBuildDatabasesParams(p) {
     if (p.input) {
         log.warn "--input is ignored with --build_databases (no analysis is run)"
     }
+}
+
+//
+// The Medaka model is built for the pathogen module or for the mobilome's plasmid polishing
+// (same condition as PREPARE_DATABASES).
+//
+def buildsMedakaModel(p) {
+    return !p.skip_pathogen_download || (mobilomeOn(p) && p.polish_plasmids)
+}
+
+//
+// MOB-suite is built for the pathogen module or the mobilome unless --skip_mobsuite_download
+// (same condition as PREPARE_DATABASES).
+//
+def buildsMobsuiteDb(p) {
+    return !p.skip_mobsuite_download && (!p.skip_pathogen_download || mobilomeOn(p))
 }
 
 //

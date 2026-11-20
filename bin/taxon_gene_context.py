@@ -8,7 +8,8 @@ Inputs
   --taxa         hit read id -> Kraken2 taxid (HIT_READS, pooled; optional)
   --taxdump      directory with nodes.dmp and names.dmp
 Taxon fields of the hit read: kraken_taxid, kraken_rank, kraken_name, species, genus, family, phylum and taxon_level
-(the most specific of species / genus / family / above_family; unclassified for taxid 0 or none).
+(the most specific of species / genus / family / above_family; unclassified for taxid 0 or none, and for a taxid
+that is not in the taxdump, e.g. a Kraken2 database and a taxdump from different releases).
 Host vote of a contig: each hit read placed on the contig votes once, for its species (its genus when it has no
 species); contig_taxon is the most-voted name, contig_vote its share of the contig's hit reads and contig_vote_reads
 the reads behind it. weak_vote = yes when that share is below --min-vote (0.5) or fewer than --min-vote-reads (2)
@@ -78,7 +79,7 @@ def lineage(taxid, taxonomy):
     for level in ("species", "genus", "family", "phylum"):
         anc = ancestor_at(taxid, level, parent, rank) if taxid else None
         fields[level] = name.get(anc, "") if anc else ""
-    if taxid in ("", "0"):
+    if taxid in ("", "0") or taxid not in parent:
         fields["taxon_level"] = "unclassified"
     else:
         fields["taxon_level"] = next((lv for lv in ("species", "genus", "family") if fields[lv]), "above_family")
@@ -162,6 +163,11 @@ def main(argv=None):
                     a.min_vote_reads)
     write(a.out, COLUMNS, rows)
     write(a.resolution, RESOLUTION_COLUMNS, resolution(rows))
+    unknown = set(r["kraken_taxid"] for r in rows if r["kraken_taxid"] not in ("", "0") and not r["kraken_name"]
+                  and r["taxon_level"] == "unclassified")
+    if unknown:
+        print("WARNING: %d read taxids are not in the taxdump; counted as unclassified" % len(unknown),
+              file=sys.stderr)
     on = [r for r in rows if r["weak_vote"] != "NA"]
     print("%d hits; %d on a contig, %d of them with a weak host vote" % (
         len(rows), len(on), sum(r["weak_vote"] == "yes" for r in on)), file=sys.stderr)

@@ -451,16 +451,21 @@ def parse_hit_context(path):
     return OrderedDict((db, OrderedDict(sorted(rows.items()))) for db, rows in sorted(data.items()))
 
 
+def safe_name(db):
+    return re.sub(r"[^A-Za-z0-9_]", "_", db)
+
+
 def write_context(path, db, data):
+    sid = safe_name(db)
     header = [
-        "id: 'genomic_context_%s'" % db,
+        "id: 'genomic_context_%s'" % sid,
         "section_name: 'Genomic context: %s'" % db,
         "description: 'Final genomic context of the %s hits on reads, per sample (context/hit_context.tsv): the call of "
         "the local-assembly contig when it is resolved, else the read call. CARD protein-variant models are included "
         "(intrinsic_variant in the table).'" % db,
         "plot_type: 'bargraph'",
         "pconfig:",
-        "    id: 'genomic_context_%s_plot'" % db,
+        "    id: 'genomic_context_%s_plot'" % sid,
         "    title: 'Genomic context of %s hits'" % db,
         "    ylab: 'Hits'",
     ]
@@ -477,7 +482,7 @@ def parse_context_evidence(paths):
             continue
         with open(p, newline="") as fh:
             cats = [r.get("category", "") for r in csv.DictReader(fh, delimiter="\t")]
-        row = data.setdefault(m.group(1), OrderedDict([("hits", 0), ("plasmid_score_only", 0), ("plasmid_evidence", 0)]))
+        row = data.setdefault(m.group(1), OrderedDict([("hits", 0), ("plasmid_score_only", ""), ("plasmid_evidence", 0)]))
         if m.group(2):
             row["plasmid_score_only"] = cats.count("plasmid")
         else:
@@ -598,7 +603,7 @@ def main(argv=None):
         written.append("meridian_stage_errors_mqc.tsv")
     context = parse_hit_context(args.hit_context[0]) if args.hit_context else {}
     for db, rows in context.items():
-        name = "genomic_context_%s_mqc.tsv" % re.sub(r"[^A-Za-z0-9_]", "_", db)
+        name = "genomic_context_%s_mqc.tsv" % safe_name(db)
         write_context(out(name), db, rows)
         written.append(name)
     evidence = parse_context_evidence(args.context_loci)
@@ -609,7 +614,7 @@ def main(argv=None):
     if units:
         write_plasmid_units(out("plasmid_units_mqc.tsv"), units)
         written.append("plasmid_units_mqc.tsv")
-    print("wrote: " +(", ".join(written) or "nothing"), file=sys.stderr)
+    print("wrote: " + (", ".join(written) or "nothing"), file=sys.stderr)
     if failed:
         print("ERROR: no rows could be built from: " + ", ".join(failed), file=sys.stderr)
         return 1

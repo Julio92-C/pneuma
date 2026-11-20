@@ -1,0 +1,39 @@
+nextflow_function {
+    name "Test checkBuildDatabasesParams (the 'nothing to build' guard)"
+    script "../main.nf"
+    function "checkBuildDatabasesParams"
+
+    test("the documented upgrade flag set still builds geNomad, MOB-suite and the Medaka model") {
+        when {
+            function {
+                """
+                input[0] = [ db_outdir: '/tmp/db', skip_kraken_download: true, skip_taxdump_download: true,
+                             skip_hostile_download: true, skip_abricate_download: true, skip_pathogen_download: true,
+                             skip_genomad_download: false, skip_mobsuite_download: false, genomic_context: true,
+                             context_local_assembly: true, mobilome: true, polish_plasmids: true,
+                             bakta_db_type: 'light', input: null ]
+                """
+            }
+        }
+        then {
+            assert function.success
+        }
+    }
+
+    test("every download skipped, including geNomad and MOB-suite, with no Medaka model to build, fails") {
+        when {
+            function {
+                """
+                input[0] = [ db_outdir: '/tmp/db', skip_kraken_download: true, skip_taxdump_download: true,
+                             skip_hostile_download: true, skip_abricate_download: true, skip_pathogen_download: true,
+                             skip_genomad_download: true, skip_mobsuite_download: true, genomic_context: true,
+                             context_local_assembly: true, mobilome: true, polish_plasmids: false,
+                             bakta_db_type: 'light', input: null ]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+}

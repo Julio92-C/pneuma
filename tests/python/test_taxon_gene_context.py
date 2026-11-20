@@ -40,6 +40,10 @@ def test_lineage_levels(tmp_path):
     assert tg.lineage("1", tax)["taxon_level"] == "above_family"
     assert tg.lineage("0", tax)["taxon_level"] == "unclassified"
     assert tg.lineage("", tax)["taxon_level"] == "unclassified"
+    unknown = tg.lineage("999999", tax)
+    assert unknown["taxon_level"] == "unclassified"
+    assert (unknown["kraken_name"], unknown["species"], unknown["genus"], unknown["family"], unknown["phylum"]) == (
+        "", "", "", "", "")
 
 
 def test_host_vote_and_weak_flag(tmp_path):

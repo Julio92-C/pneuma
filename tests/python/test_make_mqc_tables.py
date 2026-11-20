@@ -301,6 +301,13 @@ def test_plasmid_evidence_table(tmp_path):
     assert lines[-1] == "card\t4\t3\t1"
 
 
+def test_plasmid_evidence_without_score_only_partner_is_blank(tmp_path):
+    strict = loci(tmp_path / "loci_reads_card.tsv", ["plasmid", "unresolved", "chromosome"])
+    assert mqc.main(["--context-loci", strict, "--outdir", str(tmp_path)]) == 0
+    lines = (tmp_path / "genomic_context_evidence_mqc.tsv").read_text().splitlines()
+    assert lines[-1] == "card	3		1"
+
+
 def test_plasmid_units_table(tmp_path):
     f = tmp_path / "plasmid_units.tsv"
     f.write_text(UNITS)

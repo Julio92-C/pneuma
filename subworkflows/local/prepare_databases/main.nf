@@ -12,7 +12,7 @@ include { PREPARE_MLST_SCHEMES      } from '../../../modules/local/prepare_mlst_
 include { PREPARE_PANEL_REFERENCES  } from '../../../modules/local/prepare_panel_references/main'
 include { PREPARE_GENOMAD_DB        } from '../../../modules/local/prepare_genomad_db/main'
 include { DATABASE_MANIFEST         } from '../../../modules/local/database_manifest/main'
-include { panelReferencesPath; mobilomeOn } from '../utils_nfcore_pneuma_pipeline/main'
+include { panelReferencesPath; buildsMedakaModel; buildsMobsuiteDb } from '../utils_nfcore_pneuma_pipeline/main'
 
 //
 // Download and prepare the reference databases (--build_databases). Each database is published to
@@ -67,12 +67,11 @@ workflow PREPARE_DATABASES {
     }
     // MOB-suite and the Medaka model serve the pathogen module and the mobilome branch (on by default): built for
     // either, whatever --skip_pathogen_download says; --skip_mobsuite_download still leaves MOB-suite out.
-    def mobilome = mobilomeOn(params)
-    if (!params.skip_pathogen_download || (mobilome && params.polish_plasmids)) {
+    if (buildsMedakaModel(params)) {
         PREPARE_MEDAKA_MODEL(channel.value(params.medaka_model))
         ch_rows = ch_rows.mix(PREPARE_MEDAKA_MODEL.out.row)
     }
-    if (!params.skip_mobsuite_download && (!params.skip_pathogen_download || mobilome)) {
+    if (buildsMobsuiteDb(params)) {
         PREPARE_MOBSUITE_DB()
         ch_rows = ch_rows.mix(PREPARE_MOBSUITE_DB.out.row)
     }
