@@ -21,12 +21,44 @@ nextflow_workflow {
                 input[9] = channel.empty()
                 input[10] = channel.empty()
                 input[11] = null
+                input[12] = null
+                input[13] = channel.empty()
                 """
             }
         }
         then {
             assert workflow.success
             assert workflow.out.units.size() == 1
+        }
+    }
+
+    test("stub run: Medaka polishes the sample's contigs and the circles are cut out") {
+        when {
+            params { context_is_window = 500; plasmid_unit_min_identity = 0.95; polish_plasmids = true }
+            workflow {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = channel.of([ [id:'S1'], file("\$d/S1.assembly_info.txt", checkIfExists: true) ])
+                input[1] = channel.value(file("\$d/contig_hits.tsv", checkIfExists: true))
+                input[2] = channel.value(file("\$d/S1.assembly.fasta", checkIfExists: true))
+                input[3] = channel.value(file("\$d/S1.assembly.fasta", checkIfExists: true))
+                input[4] = channel.value(file("${projectDir}/tests/data/context/agg.tsv", checkIfExists: true))
+                input[5] = channel.value(file("${projectDir}/tests/data/context/genes.tsv", checkIfExists: true))
+                input[6] = []
+                input[7] = []
+                input[8] = channel.value(file("${projectDir}/tests/data/context/taxa.tsv", checkIfExists: true))
+                input[9] = channel.of([ [id:'S1'], file("\$d/S1.fastq", checkIfExists: true) ])
+                input[10] = channel.empty()
+                input[11] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+                input[12] = null
+                input[13] = channel.of([ [id:'S1'], file("\$d/S1.assembly.fasta", checkIfExists: true) ])
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.polished.size() == 1
+            assert workflow.out.polished[0][1].toString().endsWith('S1.circles.polished.fasta')
         }
     }
 }

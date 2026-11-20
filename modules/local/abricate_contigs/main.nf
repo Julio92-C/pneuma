@@ -37,7 +37,7 @@ process ABRICATE_CONTIGS {
         done
     fi
     awk -F'\t' 'NR > 1 {print \$2}' contig_hits.tsv | sort -u > hit_contigs.ids
-    awk 'NR == FNR {keep[\$1]; next} /^>/ {p = (substr(\$1, 2) in keep)} p' hit_contigs.ids all_contigs.fa > hit_contigs.fa
+    awk 'FILENAME == ARGV[1] {keep[\$1]; next} /^>/ {p = (substr(\$1, 2) in keep)} p' hit_contigs.ids all_contigs.fa > hit_contigs.fa
     """
 
     stub:

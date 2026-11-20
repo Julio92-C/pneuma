@@ -22,6 +22,6 @@ process CONTEXT_CONTIGS {
     stub:
     """
     : > ${meta.id}.contigs.fa
-    printf 'sample\tcontig\tlength\tcoverage\tcircular\n' > ${meta.id}.assembly_info.tsv
+    printf 'sample\tcontig\tlength\tcoverage\tcircular\trepeat\n' > ${meta.id}.assembly_info.tsv
     """
 }

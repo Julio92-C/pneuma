@@ -63,3 +63,27 @@ def test_na_inside_a_gene_name_is_kept():
     assert r["conjugation"] == "TraNA;MOB_NAx"
     plasmids = {"S1__contig_1": {"conjugation_genes": "NA"}}
     assert ci.candidates(info, hits, {}, plasmids, {}, {}, {})[0]["conjugation"] == ""
+
+
+def test_repeat_flag_and_a_draft_without_sequence(tmp_path, capsys):
+    info = write(tmp_path / "S1.assembly_info.tsv", "sample\tcontig\tlength\tcoverage\tcircular\trepeat\n"
+                 "S1\tS1__contig_1\t4000\t40\tyes\tyes\nS1\tS1__contig_3\t3000\t9\tyes\tno\n")
+    hits = write(tmp_path / "hits.tsv", ABR + hit("S1__contig_1", "tet(L)", "card") + hit("S1__contig_3", "ErmB", "card"))
+    fasta = write(tmp_path / "all.fa", ">S1__contig_1\n" + "A" * 4000 + "\n")          # contig_3 has no sequence
+    empty = write(tmp_path / "e.tsv", "")
+    prefix = tmp_path / "c"
+    assert ci.main(["--assembly-info", info, "--hits", hits, "--fasta", fasta, "--genomad-scores", empty,
+                    "--genomad-plasmids", empty, "--paf", "--out-prefix", str(prefix)]) == 0
+    rows = {r["contig"]: r for r in csv.DictReader(open(str(prefix) + ".tsv"), delimiter="\t")}
+    assert (rows["S1__contig_1"]["repeat"], rows["S1__contig_3"]["repeat"]) == ("yes", "no")
+    assert [l for l in open(str(prefix) + ".fa").read().splitlines() if l.startswith(">")] == [
+        ">S1__contig_1 sample=S1 length=4000 replicons=- ARGs=tet(L)"]
+    assert (tmp_path / "per_sample" / "S1.circles.fa").read_text().count(">") == 1
+    err = capsys.readouterr().err
+    assert "no sequence for 1 circular candidate(s)" in err and "S1__contig_3" in err
+
+
+def test_repeat_is_blank_for_an_old_assembly_info():
+    info = [{"contig": "S1__contig_1", "sample": "S1", "length": "4000", "coverage": "9", "circular": "yes"}]
+    hits = {"S1__contig_1": {"ARGs": {"tet(L)"}, "VFs": set(), "replicons": set()}}
+    assert ci.candidates(info, hits, {}, {}, {}, {}, {})[0]["repeat"] == ""

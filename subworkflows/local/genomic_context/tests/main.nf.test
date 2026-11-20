@@ -20,11 +20,14 @@ nextflow_workflow {
                 input[4] = null
                 input[5] = "${projectDir}/tests/data/db_dir/mobsuite"
                 input[6] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+                input[7] = "${projectDir}/tests/data/pathogen_fixture/taxdump"
                 """
             }
         }
         then {
             assert workflow.success
+            assert workflow.out.hit_table.size() == 1
+            assert workflow.out.summary.size() == 1
             assert workflow.out.loci.size() == 2
             assert workflow.out.loci.collect { it[1] }.sort() == ['card', 'plasmidfinder']
             assert path(workflow.out.taxa[0]).readLines() == ["S1__r1\t562"]
@@ -51,11 +54,14 @@ nextflow_workflow {
                 input[4] = null
                 input[5] = "${projectDir}/tests/data/db_dir/mobsuite"
                 input[6] = "${projectDir}/tests/data/db_dir/medaka/r1041_e82_400bps_bacterial_methylation_model_pt.tar.gz"
+                input[7] = "${projectDir}/tests/data/pathogen_fixture/taxdump"
                 """
             }
         }
         then {
             assert workflow.success
+            assert workflow.out.hit_table.size() == 1
+            assert workflow.out.summary.size() == 1
             assert workflow.out.loci.size() == 2
             assert workflow.out.hit_context.size() == 0
             assert workflow.out.contig_loci.size() == 0

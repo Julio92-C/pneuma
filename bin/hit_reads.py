@@ -7,10 +7,17 @@ Reads the Kraken2-tagged FASTA (TAG_READS) and the ABRicate CSV (ABRICATE_READS)
   <prefix>.hits.tsv       the hits in ABRicate tab format (one header), SEQUENCE renamed the same way
   <prefix>.lengths.tsv    id <TAB> length
   <prefix>.taxa.tsv       id <TAB> Kraken2 taxid
+  <prefix>.seed_reads.fa  the hit reads with at least one hit that is not a CARD protein-variant / mutation model
+                          (the local-assembly recruitment seeds: housekeeping genes such as rpoB would pull in genome
+                          reads that tell nothing about the context of mobile genes)
 """
 import argparse
 import csv
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from extend_context import VARIANT  # noqa: E402
 
 TAG = "_kraken:taxid|"
 HEADER = ["#FILE", "SEQUENCE", "START", "END", "STRAND", "GENE", "COVERAGE", "COVERAGE_MAP", "GAPS",
@@ -21,6 +28,12 @@ def split_tag(name):
     """r1_kraken:taxid|562 -> ("r1", "562"); an untagged id gets an empty taxid."""
     read, _, taxid = name.partition(TAG)
     return read, taxid
+
+
+def is_variant_model(row, header):
+    """A CARD protein-variant / mutation model hit (ABRicate cannot check the mutation)."""
+    rec = dict(zip(header, row))
+    return rec.get("DATABASE", "").lower() == "card" and bool(VARIANT.search(rec.get("GENE", "")))
 
 
 def read_hits(path):
@@ -46,6 +59,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     header, rows = read_hits(a.abricate)
     hit_ids = {r[1] for r in rows}
+    seed_ids = {r[1] for r in rows if not is_variant_model(r, header)}
     prefix = a.sample + "__"
     with open(a.out_prefix + ".hits.tsv", "w", newline="") as fh:
         w = csv.writer(fh, delimiter="\t", lineterminator="\n")
@@ -55,7 +69,8 @@ def main(argv=None):
     n = 0
     with open(a.fasta) as fi, open(a.out_prefix + ".hit_reads.fa", "w", newline="\n") as fa, \
             open(a.out_prefix + ".lengths.tsv", "w", newline="\n") as ln, \
-            open(a.out_prefix + ".taxa.tsv", "w", newline="\n") as tx:
+            open(a.out_prefix + ".taxa.tsv", "w", newline="\n") as tx, \
+            open(a.out_prefix + ".seed_reads.fa", "w", newline="\n") as sd:
         name, seq = None, []
 
         def flush():
@@ -66,6 +81,8 @@ def main(argv=None):
                 fa.write(">%s%s\n%s\n" % (prefix, read, s))
                 ln.write("%s%s\t%d\n" % (prefix, read, len(s)))
                 tx.write("%s%s\t%s\n" % (prefix, read, taxid))
+                if name in seed_ids:
+                    sd.write(">%s%s\n%s\n" % (prefix, read, s))
                 n += 1
 
         for line in fi:

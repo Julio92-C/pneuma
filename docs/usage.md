@@ -60,14 +60,15 @@ or `--host_index my_host.fasta`. The required files are checked at start-up (`ha
 
 Pathogen reconstruction is opt-in: `--pathogens` defaults to `false`. A run without it needs none of the
 pathogen-reconstruction databases below, except two used by the mobilome branch (on by default, see
-[Mobilome](#mobilome)): `--mobsuite_db` and `--medaka_model_path`. `--build_databases` builds both only without
-`--skip_pathogen_download` (and the MOB-suite database only without `--skip_mobsuite_download`); otherwise pass them,
+[Mobilome](#mobilome)): `--mobsuite_db` and `--medaka_model_path`. `--build_databases` builds the Medaka model unless
+`--skip_pathogen_download` is given and either `--mobilome false` or `--polish_plasmids false` is set, and MOB-suite unless
+`--skip_mobsuite_download` is given, or `--skip_pathogen_download` with `--mobilome false`; otherwise pass them,
 or run with `--mobilome false` (or `--polish_plasmids false` to drop only the Medaka model). With `--pathogens` the analysis run needs the
 Phase 2 databases: `--checkm2_db`, `--bakta_db`, `--amrfinderplus_db`, `--medaka_model_path` and
 `--panel_references_dir` (plus `--mobsuite_db` with `--run_mobsuite`). `--build_databases` builds them (CheckM2, Bakta
 `--bakta_db_type light|full`, AMRFinderPlus, the Medaka model, an MLST scheme record, the panel
 reference genomes and, unless `--skip_mobsuite_download`, MOB-suite) and `--db_dir` fills them. Use
-`--skip_pathogen_download` to leave them out of a database build. With `--pathogens` and a
+`--skip_pathogen_download` to leave the pathogen databases out of a database build (with the mobilome on, MOB-suite, unless `--skip_mobsuite_download`, and the Medaka model, unless `--polish_plasmids false`, are still built). With `--pathogens` and a
 missing database the run stops with "--checkm2_db is required for pathogen reconstruction ...". `--pathogen_panel` and
 `--panel_references` default to the files bundled in `assets/`.
 
@@ -265,37 +266,35 @@ chooses which ABRicate databases' hits are placed; `--genomad_splits` (default 8
 
 On by default (`--context_local_assembly true`). A single read often ends before it shows what surrounds a gene,
 so per sample the clean reads are mapped (minimap2) to the hit reads and the reads overlapping them by at least
-`--context_recruit_min_aln` bp (1000) are recruited; a second round recruits the reads overlapping those, which walks
+`--context_recruit_min_aln` bp (1000) are recruited; the seeds are the hit reads, except reads whose only hits are CARD protein-variant models (housekeeping genes such as rpoB, which would pull genome reads into the assembly); a second round recruits the reads overlapping those, which walks
 out along a plasmid backbone. The recruited reads are assembled with Flye `--meta` (`--flye_mode`, default
 `--nano-hq`). ABRicate, geNomad and MOB-suite type the pooled contigs, and the contig call is carried back to each
 read hit by mapping the recruited reads to the contigs of the same sample: the result is `final_context` in
 `context/hit_context_<db>.tsv`. Only alignments with identity (matches / block length, from base-level minimap2
-alignments, `-c`) >= 80% place a read hit on a contig, through the one that covers the gene best; there the contig hit of the same gene is taken (within 500 bp), or a
+alignments, `-c`) >= 80% place a read hit on a contig, through the one that covers the gene best, base by base along its CIGAR; there the contig hit of the same gene is taken (within 500 bp), or a
 hit of a different gene only when it overlaps the projected gene. A contig call replaces the read call only when it is resolved; an `unresolved` contig
 call never overrides a resolved read call. Samples without hit reads are skipped. If Flye fails for a sample the run
-continues with that sample's read-level calls and logs a warning naming the samples (a stronger one if it failed for
-every sample, which usually points to a configuration problem such as `--flye_mode` or memory). Turn the whole layer
+continues with that sample's read-level calls and logs a warning naming the samples; too few recruited reads is the usual cause (if a sample has many hits, check `--flye_mode` and memory). Turn the whole layer
 off with `--context_local_assembly false`.
 
 #### Mobilome
 
 On by default (`--mobilome true`, needs `--context_local_assembly`). Circular contigs that carry a hit are written as
-plasmid-draft candidates (`context/plasmid_drafts/`) and polished with Medaka (`--polish_plasmids`, default true;
-failed samples keep the unpolished draft, with a warning naming them and a stronger one if every sample failed).
+plasmid-draft candidates (`context/plasmid_drafts/`) and polished with Medaka against all of the sample's contigs (so reads of a chromosomal copy of an IS element or gene stay on the chromosome) and cut out again (`--polish_plasmids`, default true;
+failed samples keep the unpolished draft, and the run logs one warning naming them and the usual cause: check `--medaka_model_path` and the memory in the task logs).
 ISEScan finds insertion sequences on the hit contigs, and `is_flanks.tsv` lists the IS elements within
 `--context_is_window` bp (500) of each ARG. A **composite transposon** is called when the same IS family flanks the
 ARG on both sides within that window, in any orientation (inverted pairs as in Tn9 / IS1, and direct repeats as for
 IS26); the `orientation` column says `inverted`, `direct` or `unknown`. Drafts from different samples are grouped
 into plasmid units by MinHash identity >= `--plasmid_unit_min_identity` (0.95; rotation- and strand-invariant).
 
-The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--medaka_model_path`; both are built by
-`--build_databases` (`--skip_pathogen_download` leaves out both; `--skip_mobsuite_download` leaves out the MOB-suite database). Without them the run stops at start-up and says so; run
+The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--medaka_model_path`; `--build_databases`
+builds the Medaka model unless both `--skip_pathogen_download` is given and (`--mobilome false` or `--polish_plasmids false`),
+and MOB-suite unless `--skip_mobsuite_download`, or `--skip_pathogen_download` with `--mobilome false`. Without them the run stops at start-up and says so; run
 with `--mobilome false` (or `--polish_plasmids false`) to go on without. For R9.4.1 data use `--flye_mode --nano-raw`
 and an R9.4.1 `--medaka_model`.
 
-**Upgrading from v0.3.x.** Default runs now need `--mobsuite_db` and `--medaka_model_path`, even without
-`--pathogens`. A database folder built with `--skip_pathogen_download` (or `--skip_mobsuite_download`) lacks them:
-rebuild it without those flags, pass existing copies explicitly, or run with `--mobilome false`.
+**Upgrading from v0.3.x.** Default runs now need `--mobsuite_db` and `--medaka_model_path`, even without `--pathogens`. Re-run `--build_databases` on the database folder (add `--skip_kraken_download --skip_taxdump_download --skip_hostile_download --skip_abricate_download --skip_pathogen_download` to fetch only geNomad, MOB-suite and the Medaka model), pass existing copies explicitly, or run with `--mobilome false`.
 
 | Parameter | Default | Purpose |
 | --- | --- | --- |
@@ -305,6 +304,18 @@ rebuild it without those flags, pass existing copies explicitly, or run with `--
 | `--polish_plasmids` | `true` | Medaka polishing of the circular drafts |
 | `--context_is_window` | `500` | bp from an ARG searched for IS elements |
 | `--plasmid_unit_min_identity` | `0.95` | MinHash identity for two drafts to be one plasmid unit |
+
+#### Outputs for analysis and MERIDIAN
+
+`context/hit_context.tsv` holds every read hit of every `--context_databases` database in one table, with its final
+call and the read's Kraken2 taxon (taxid from the read, names and lineage from `--taxdump`). For a hit placed on a
+contig, the hit reads on that contig vote for a host (their species, or genus): `contig_taxon`, `contig_vote` (share)
+and `contig_vote_reads`; `weak_vote` is `yes` when the share is below 0.5, fewer than 2 reads voted or two taxa tie, which is common
+for plasmid genes (Kraken2 names the host of a plasmid gene weakly). `context/summary/` gives the shares of each
+context per sample, per drug class (CARD) and per gene, with the CARD protein-variant hits counted apart
+(`n_intrinsic`), and, when `--meridian_metadata` and `--meridian_group` are set (also with `--skip_meridian`), per
+group of each `--meridian_group` column. MERIDIAN v1.3.1 does not read `hit_context.tsv` yet; it is the hand-off for
+MERIDIAN v1.4.0.
 
 ### Pathogen reconstruction
 
@@ -346,6 +357,8 @@ extracted reads) are reported as `LOW_COVERAGE` with a note. MOB-suite writes no
 without plasmids, so a missing `mobsuite/` entry means "no plasmid found".
 
 ## 4. Outputs
+
+Each subworkflow has a module card (inputs, tool steps with their defaults and blind spots, outputs) in [docs/images/cards/](images/cards/): [preprocess](images/cards/preprocess.svg), [taxonomy](images/cards/taxonomy.svg), [contamination](images/cards/contamination.svg), [functional](images/cards/functional.svg), [genomic context](images/cards/genomic_context.svg), [mobilome](images/cards/mobilome.svg), [pathogens](images/cards/pathogens.svg), [MERIDIAN](images/cards/meridian.svg).
 
 - `multiqc/` `multiqc_report.html` (QC, host removal, taxonomy, contamination, ABRicate hits, pathogen sections and software versions)
 - `preprocess/` nanoq stats, host-free reads, NanoPlot, seqkit stats

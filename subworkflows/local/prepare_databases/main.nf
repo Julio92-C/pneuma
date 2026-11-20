@@ -12,13 +12,14 @@ include { PREPARE_MLST_SCHEMES      } from '../../../modules/local/prepare_mlst_
 include { PREPARE_PANEL_REFERENCES  } from '../../../modules/local/prepare_panel_references/main'
 include { PREPARE_GENOMAD_DB        } from '../../../modules/local/prepare_genomad_db/main'
 include { DATABASE_MANIFEST         } from '../../../modules/local/database_manifest/main'
-include { panelReferencesPath       } from '../utils_nfcore_pneuma_pipeline/main'
+include { panelReferencesPath; buildsMedakaModel; buildsMobsuiteDb } from '../utils_nfcore_pneuma_pipeline/main'
 
 //
 // Download and prepare the reference databases (--build_databases). Each database is published to
 // --db_outdir by its own process (see conf/modules.config); database_manifest.tsv is written last
 // and keeps the rows of an existing manifest for databases not rebuilt in this run.
 // --skip_*_download leaves a database out (no download, no new manifest row).
+// MOB-suite and the Medaka model are built whenever the pathogen module or the mobilome needs them.
 //
 workflow PREPARE_DATABASES {
     take:
@@ -59,15 +60,20 @@ workflow PREPARE_DATABASES {
             .mix(BAKTA_BAKTADBDOWNLOAD.out.db.map { dir -> [ 'bakta_db', '08', '', "bakta/${dir.name}".toString(), dir ] })
             .mix(AMRFINDERPLUS_UPDATE.out.db.map { tgz -> [ 'amrfinderplus_db', '09', '', "amrfinderplus/${tgz.name}".toString(), tgz ] })
         DATABASE_ROW(ch_downloaded)
-        PREPARE_MEDAKA_MODEL(channel.value(params.medaka_model))
         PREPARE_MLST_SCHEMES()
         PREPARE_PANEL_REFERENCES(file(panelReferencesPath(params), checkIfExists: true))
-        ch_rows = ch_rows.mix(DATABASE_ROW.out.row, PREPARE_MEDAKA_MODEL.out.row,
-                              PREPARE_MLST_SCHEMES.out.row, PREPARE_PANEL_REFERENCES.out.row)
-        if (!params.skip_mobsuite_download) {
-            PREPARE_MOBSUITE_DB()
-            ch_rows = ch_rows.mix(PREPARE_MOBSUITE_DB.out.row)
-        }
+        ch_rows = ch_rows.mix(DATABASE_ROW.out.row, PREPARE_MLST_SCHEMES.out.row,
+                              PREPARE_PANEL_REFERENCES.out.row)
+    }
+    // MOB-suite and the Medaka model serve the pathogen module and the mobilome branch (on by default): built for
+    // either, whatever --skip_pathogen_download says; --skip_mobsuite_download still leaves MOB-suite out.
+    if (buildsMedakaModel(params)) {
+        PREPARE_MEDAKA_MODEL(channel.value(params.medaka_model))
+        ch_rows = ch_rows.mix(PREPARE_MEDAKA_MODEL.out.row)
+    }
+    if (buildsMobsuiteDb(params)) {
+        PREPARE_MOBSUITE_DB()
+        ch_rows = ch_rows.mix(PREPARE_MOBSUITE_DB.out.row)
     }
 
     if (!params.skip_genomad_download) {

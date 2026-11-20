@@ -1,0 +1,6 @@
+sample	seq	database	gene	final_context
+S1	S1__r1	card	tet(M)	plasmid
+S1	S1__r2	card	tet(M)	plasmid
+S1	S1__r3	card	mef(A)	unresolved
+S2	S2__r1	card	ErmB	chromosome
+S1	S1__r4	vfdb	fimH	chromosome

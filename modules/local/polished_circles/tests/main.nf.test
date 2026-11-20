@@ -1,0 +1,36 @@
+nextflow_process {
+    name "Test POLISHED_CIRCLES"
+    script "../main.nf"
+    process "POLISHED_CIRCLES"
+
+    test("the circular drafts are cut out of the polished contigs") {
+        when {
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = [ [id:'S1'], file("\$d/S1.polished.fasta", checkIfExists: true), file("\$d/S1.circles.fa", checkIfExists: true) ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.fasta[0][1]).readLines().findAll { it.startsWith('>') } == ['>S1__contig_1', '>S1__contig_3']
+        }
+    }
+
+    test("a draft missing from the polished contigs gives a warning, not a failure") {
+        when {
+            process {
+                """
+                def d = "${projectDir}/tests/data/context/assembly"
+                input[0] = [ [id:'S1'], file("\$d/S1.polished.fasta", checkIfExists: true), file("\$d/S1.circles_missing.fa", checkIfExists: true) ]
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.fasta[0][1]).readLines().findAll { it.startsWith('>') } == ['>S1__contig_1']
+            assert path(process.out.fasta[0][1]).toRealPath().parent.resolve('.command.err').toFile().text.contains('1 of 2 circular drafts found')
+        }
+    }
+}

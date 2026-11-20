@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 975" width="1100" height="975" role="img" font-family="Helvetica, Arial, sans-serif">
+<title>PNEUMA module card: Pathogen reconstruction (opt-in)</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<rect x="1" y="1" width="1098" height="973" rx="16" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<rect x="24" y="22" width="10" height="28" rx="3" fill="#CC79A7"/>
+<text x="44" y="43" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">Pathogen reconstruction (opt-in)</text>
+<text x="134" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">INPUTS</text>
+<text x="550" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">STEPS</text>
+<text x="966" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">OUTPUTS</text>
+<rect x="24" y="110" width="220" height="40" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<rect x="24" y="110" width="220" height="8" fill="#CC79A7"/>
+<text x="134" y="137" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2 assignments</text>
+<line x1="244" y1="130" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="166" width="220" height="40" rx="20" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<text x="134" y="190" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2-classified reads</text>
+<line x1="244" y1="186" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="222" width="220" height="40" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<rect x="24" y="222" width="220" height="8" fill="#CC79A7"/>
+<text x="134" y="249" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Pathogen panel (WHO priority)</text>
+<line x1="244" y1="242" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,284 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<ellipse cx="134" cy="284" rx="110" ry="6" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<text x="134" y="302" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">CheckM2 · Bakta · AMRFinderPlus</text>
+<line x1="244" y1="298" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="103" font-size="11" font-weight="400" fill="#CC79A7" text-anchor="end" font-style="italic">--pathogen_min_reads 10 · --pathogen_min_est_depth 2.5</text>
+<rect x="300" y="110" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="129" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Panel candidates</text>
+<text x="312" y="147" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which panel species have enough reads?</text>
+<text x="312" y="172" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: species outside the panel are not rebuilt</text>
+<line x1="340" y1="180" x2="340" y2="207" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="203" font-size="11" font-weight="400" fill="#CC79A7" text-anchor="end" font-style="italic">--include-children</text>
+<rect x="300" y="210" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="229" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">KrakenTools extract</text>
+<text x="312" y="247" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">the reads of each candidate clade</text>
+<text x="312" y="272" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: reads Kraken2 put elsewhere are left behind</text>
+<line x1="340" y1="280" x2="340" y2="307" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="303" font-size="11" font-weight="400" fill="#CC79A7" text-anchor="end" font-style="italic">--gate_min_depth 10 · --gate_min_breadth 0.5</text>
+<rect x="300" y="310" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Coverage gate (minimap2)</text>
+<text x="312" y="347" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">is there enough depth and breadth to assemble?</text>
+<text x="312" y="372" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: patient-level pooling only when no sample passes</text>
+<line x1="340" y1="380" x2="340" y2="407" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="403" font-size="11" font-weight="400" fill="#CC79A7" text-anchor="end" font-style="italic">--flye_mode --nano-hq</text>
+<rect x="300" y="410" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="429" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Flye · Medaka</text>
+<text x="312" y="447" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">a draft genome per sample x species</text>
+<text x="312" y="472" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: mixed strains collapse into one consensus</text>
+<line x1="340" y1="480" x2="340" y2="507" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="300" y="510" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="529" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">CheckM2 · QUAST</text>
+<text x="312" y="547" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">how complete and how contaminated is the draft?</text>
+<line x1="340" y1="580" x2="340" y2="607" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="603" font-size="11" font-weight="400" fill="#CC79A7" text-anchor="end" font-style="italic">ani_min per species</text>
+<rect x="300" y="610" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="629" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">skani</text>
+<text x="312" y="647" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">is the draft the panel species or a close relative?</text>
+<text x="312" y="672" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: confusables within 0.5 ANI points stay unresolved</text>
+<line x1="340" y1="680" x2="340" y2="707" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="300" y="710" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5"/>
+<text x="312" y="729" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">MLST · AMRFinderPlus · ABRicate · Bakta</text>
+<text x="312" y="747" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">sequence type, resistance, virulence, annotation</text>
+<line x1="340" y1="780" x2="340" y2="807" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="803" font-size="11" font-weight="400" fill="#CC79A7" text-anchor="end" font-style="italic">--run_mobsuite</text>
+<rect x="300" y="810" width="500" height="46" rx="8" fill="#ffffff" stroke="#CC79A7" stroke-width="2.5" stroke-dasharray="7 5"/>
+<text x="312" y="829" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">MOB-suite</text>
+<text x="312" y="847" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">the plasmids of the draft genome</text>
+<line x1="800" y1="833" x2="852" y2="777" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="757" width="220" height="40" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<rect x="856" y="757" width="220" height="8" fill="#CC79A7"/>
+<text x="966" y="784" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">pathogen_cohort.tsv</text>
+<line x1="800" y1="833" x2="852" y2="833" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="813" width="220" height="40" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<rect x="856" y="813" width="220" height="8" fill="#CC79A7"/>
+<text x="966" y="840" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Per-sample HTML report</text>
+<line x1="800" y1="833" x2="852" y2="889" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<polygon points="868,869 1076,869 1064,909 856,909" fill="#ffffff" stroke="#CC79A7" stroke-width="2"/>
+<text x="966" y="893" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Pathogen assemblies</text>
+<text x="24" y="957" font-size="11" font-weight="400" fill="#57606a" text-anchor="start">Inputs and outputs: reads = pill, sequences = parallelogram, table = banded box, database = cylinder. Dashed step = optional (off by default).</text>
+</svg>

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1003" width="1100" height="1003" role="img" font-family="Helvetica, Arial, sans-serif">
+<title>PNEUMA module card: Genomic context</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<rect x="1" y="1" width="1098" height="1001" rx="16" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<rect x="24" y="22" width="10" height="28" rx="3" fill="#56B4E9"/>
+<text x="44" y="43" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">Genomic context</text>
+<text x="134" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">INPUTS</text>
+<text x="550" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">STEPS</text>
+<text x="966" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">OUTPUTS</text>
+<rect x="24" y="110" width="220" height="40" rx="20" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="134" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2-tagged hit reads</text>
+<line x1="244" y1="130" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="166" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="24" y="166" width="220" height="8" fill="#56B4E9"/>
+<text x="134" y="193" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">ABRicate hits</text>
+<line x1="244" y1="186" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="222" width="220" height="40" rx="20" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="246" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Clean reads</text>
+<line x1="244" y1="242" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M24,284 v28 a110,6 0 0 0 220,0 v-28" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<ellipse cx="134" cy="284" rx="110" ry="6" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<text x="134" y="302" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">geNomad database</text>
+<line x1="244" y1="298" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="103" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--context_databases card,vfdb,plasmidfinder</text>
+<rect x="300" y="110" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="129" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Hit reads</text>
+<text x="312" y="147" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which reads carry a hit, and which are seeds?</text>
+<text x="312" y="172" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: CARD variant models are not recruitment seeds</text>
+<line x1="340" y1="180" x2="340" y2="207" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="203" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--context_plasmid_min 0.7 · --context_chrom_min 0.7</text>
+<rect x="300" y="210" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="229" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">geNomad</text>
+<text x="312" y="247" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">does each hit read look like plasmid, virus or chromosome?</text>
+<text x="312" y="272" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: scores alone call chromosomal operons plasmid: evidence rule</text>
+<line x1="340" y1="280" x2="340" y2="307" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="303" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--context_min_flank 1000 · --context_mge_window 10000</text>
+<rect x="300" y="310" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">ARG context (reads)</text>
+<text x="312" y="347" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">where is each gene: plasmid, MGE or chromosome?</text>
+<text x="312" y="372" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: most single reads end too close to the gene: unresolved</text>
+<line x1="340" y1="380" x2="340" y2="407" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="403" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--context_recruit_min_aln 1000</text>
+<rect x="300" y="410" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="429" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Read recruitment (minimap2)</text>
+<text x="312" y="447" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which reads overlap the seeds? (two rounds)</text>
+<text x="312" y="472" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: a region with few reads cannot be extended</text>
+<line x1="340" y1="480" x2="340" y2="507" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="503" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">--flye_mode --nano-hq</text>
+<rect x="300" y="510" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="529" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Flye --meta</text>
+<text x="312" y="547" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">can the region around the hit be assembled?</text>
+<text x="312" y="572" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: low-coverage samples fail and keep their read calls</text>
+<line x1="340" y1="580" x2="340" y2="607" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="300" y="610" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="629" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Contig typing</text>
+<text x="312" y="647" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">ABRicate, geNomad and MOB-suite on the contigs</text>
+<line x1="340" y1="680" x2="340" y2="707" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="703" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">identity &gt;= 0.8 · CIGAR projection</text>
+<rect x="300" y="710" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="729" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Extend context</text>
+<text x="312" y="747" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which contig call does each read hit take?</text>
+<text x="312" y="772" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: an unresolved contig never overrides a read call</text>
+<line x1="340" y1="780" x2="340" y2="807" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="803" font-size="11" font-weight="400" fill="#56B4E9" text-anchor="end" font-style="italic">weak_vote: share &lt; 0.5 or &lt; 2 reads</text>
+<rect x="300" y="810" width="500" height="46" rx="8" fill="#ffffff" stroke="#56B4E9" stroke-width="2.5"/>
+<text x="312" y="829" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">Context summary</text>
+<text x="312" y="847" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">which taxon, and how strong is the host vote?</text>
+<text x="312" y="872" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: Kraken2 names the host of a plasmid gene weakly</text>
+<line x1="800" y1="833" x2="852" y2="749" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="729" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="729" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="756" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">context/hit_context.tsv</text>
+<line x1="800" y1="833" x2="852" y2="805" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="785" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="785" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="812" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">context/summary/</text>
+<line x1="800" y1="833" x2="852" y2="861" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="841" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="841" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="868" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">loci_* tables</text>
+<line x1="800" y1="833" x2="852" y2="917" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="897" width="220" height="40" fill="#ffffff" stroke="#56B4E9" stroke-width="2"/>
+<rect x="856" y="897" width="220" height="8" fill="#56B4E9"/>
+<text x="966" y="924" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">MultiQC: Genomic context</text>
+<text x="24" y="985" font-size="11" font-weight="400" fill="#57606a" text-anchor="start">Inputs and outputs: reads = pill, sequences = parallelogram, table = banded box, database = cylinder. Dashed step = optional (off by default).</text>
+</svg>

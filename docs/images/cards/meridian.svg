@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 440" width="1100" height="440" role="img" font-family="Helvetica, Arial, sans-serif">
+<title>PNEUMA module card: MERIDIAN hand-off</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<rect x="1" y="1" width="1098" height="438" rx="16" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+<rect x="24" y="22" width="10" height="28" rx="3" fill="#D4A017"/>
+<text x="44" y="43" font-size="18" font-weight="700" fill="#1f2328" text-anchor="start">MERIDIAN hand-off</text>
+<text x="134" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">INPUTS</text>
+<text x="550" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">STEPS</text>
+<text x="966" y="80" font-size="10" font-weight="700" fill="#57606a" text-anchor="middle">OUTPUTS</text>
+<rect x="24" y="110" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="24" y="110" width="220" height="8" fill="#D4A017"/>
+<text x="134" y="137" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">summary_reportClean.csv</text>
+<line x1="244" y1="130" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="166" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="24" y="166" width="220" height="8" fill="#D4A017"/>
+<text x="134" y="193" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Kraken2 / Bracken tables</text>
+<line x1="244" y1="186" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="222" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="24" y="222" width="220" height="8" fill="#D4A017"/>
+<text x="134" y="249" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">pneuma.rcf.data.csv</text>
+<line x1="244" y1="242" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="278" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="24" y="278" width="220" height="8" fill="#D4A017"/>
+<text x="134" y="305" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">Metadata (--meridian_metadata)</text>
+<line x1="244" y1="298" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="24" y="334" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="24" y="334" width="220" height="8" fill="#D4A017"/>
+<text x="134" y="361" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">context/hit_context.tsv</text>
+<line x1="244" y1="354" x2="296" y2="133" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="103" font-size="11" font-weight="400" fill="#D4A017" text-anchor="end" font-style="italic">one comparison per column</text>
+<rect x="300" y="110" width="500" height="46" rx="8" fill="#ffffff" stroke="#D4A017" stroke-width="2.5"/>
+<text x="312" y="129" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">MERIDIAN config</text>
+<text x="312" y="147" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">is each --meridian_group column usable?</text>
+<text x="312" y="172" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: checks the metadata columns, not the study design</text>
+<line x1="340" y1="180" x2="340" y2="207" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="800" y="203" font-size="11" font-weight="400" fill="#D4A017" text-anchor="end" font-style="italic">--meridian_container v1.3.1</text>
+<rect x="300" y="210" width="500" height="46" rx="8" fill="#ffffff" stroke="#D4A017" stroke-width="2.5"/>
+<text x="312" y="229" font-size="13" font-weight="700" fill="#1f2328" text-anchor="start">MERIDIAN (container)</text>
+<text x="312" y="247" font-size="12" font-weight="400" fill="#1f2328" text-anchor="start">diversity, differential abundance, resistome, networks</text>
+<text x="312" y="272" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" font-style="italic">blind spot: does not read hit_context.tsv yet; one TPM denominator for all</text>
+<line x1="800" y1="233" x2="852" y2="205" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="185" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="856" y="185" width="220" height="8" fill="#D4A017"/>
+<text x="966" y="212" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">meridian/&lt;group&gt;/Reports/</text>
+<line x1="800" y1="233" x2="852" y2="261" stroke="#57606a" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="856" y="241" width="220" height="40" fill="#ffffff" stroke="#D4A017" stroke-width="2"/>
+<rect x="856" y="241" width="220" height="8" fill="#D4A017"/>
+<text x="966" y="268" font-size="12" font-weight="400" fill="#1f2328" text-anchor="middle">MERIDIAN HTML report</text>
+<text x="24" y="422" font-size="11" font-weight="400" fill="#57606a" text-anchor="start">Inputs and outputs: reads = pill, sequences = parallelogram, table = banded box, database = cylinder. Dashed step = optional (off by default).</text>
+</svg>

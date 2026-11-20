@@ -12,6 +12,8 @@ Inputs
   --taxa              hit read id -> Kraken2 taxid (HIT_READS; optional)
 Writes <prefix>.tsv, <prefix>.fa and per_sample/<sample>.circles.fa (next to <prefix>; the Medaka input).
 Hits of databases other than vfdb / plasmidfinder are listed as ARGs.
+A candidate whose sequence is missing from --fasta stays in the table but is left out of the FASTA files, with a warning;
+repeat = Flye's repeat flag of the contig.
 """
 import argparse
 import csv
@@ -21,7 +23,7 @@ from collections import Counter, defaultdict
 
 from extend_context import read_best_alignments
 
-COLUMNS = ["contig", "sample", "length", "coverage", "reads", "plasmid_score", "chromosome_score", "hallmarks",
+COLUMNS = ["contig", "sample", "length", "coverage", "repeat", "reads", "plasmid_score", "chromosome_score", "hallmarks",
            "conjugation", "replicons", "mob_rep", "relaxase", "mpf", "mobility", "ARGs", "VFs", "read_taxa"]
 ELEMENT = {"vfdb": "VFs", "plasmidfinder": "replicons"}
 
@@ -99,6 +101,7 @@ def candidates(info, hits, scores, plasmids, mob, best, taxa):
         s, p, m, h = scores.get(c, {}), plasmids.get(c, {}), mob.get(c, {}), hits[c]
         conj = clean(p.get("conjugation_genes", ""))
         rows.append({"contig": c, "sample": r["sample"], "length": int(r["length"]), "coverage": r["coverage"],
+                     "repeat": r.get("repeat", ""),
                      "reads": reads[c], "plasmid_score": s.get("plasmid_score", ""),
                      "chromosome_score": s.get("chromosome_score", ""), "hallmarks": p.get("n_hallmarks", ""),
                      "conjugation": "" if conj == "NA" else conj,
@@ -135,10 +138,16 @@ def main(argv=None):
         w = csv.DictWriter(fh, fieldnames=COLUMNS, delimiter="\t", lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
+    missing = [r["contig"] for r in rows if not seqs.get(r["contig"])]
+    if missing:
+        print("WARNING: no sequence for %d circular candidate(s) in %s (left out of the FASTA files): %s" % (
+            len(missing), a.fasta, ", ".join(missing[:10])), file=sys.stderr)
     per_sample = defaultdict(list)
     with open(a.out_prefix + ".fa", "w", newline="\n") as fo:
         for r in rows:
             seq = seqs.get(r["contig"], "")
+            if not seq:
+                continue
             fo.write(">%s sample=%s length=%d replicons=%s ARGs=%s\n%s" % (
                 r["contig"], r["sample"], len(seq), r["replicons"] or "-", r["ARGs"] or "-", wrap(seq)))
             per_sample[r["sample"]].append(">%s\n%s" % (r["contig"], wrap(seq)))

@@ -1,6 +1,7 @@
 //
 // The reads of one sample that carry an ABRicate hit, renamed "<sample>__<read>" so samples can be pooled for
 // geNomad; the Kraken2 taxid moves to a side table (geNomad uses "|" in provirus names).
+// Seeds for the local assembly leave out reads whose only hits are CARD protein-variant models.
 //
 process HIT_READS {
     tag "$meta.id"
@@ -15,6 +16,7 @@ process HIT_READS {
     tuple val(meta), path("${meta.id}.hits.tsv")    , emit: hits
     tuple val(meta), path("${meta.id}.lengths.tsv") , emit: lengths
     tuple val(meta), path("${meta.id}.taxa.tsv")    , emit: taxa
+    tuple val(meta), path("${meta.id}.seed_reads.fa"), emit: seeds
     tuple val("${task.process}"), val('python'), eval("python --version | sed 's/Python //'"), topic: versions, emit: versions_python
 
     script:

@@ -8,16 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 - Samplesheet column `subject` (the host unit samples are grouped by: patient, animal, pen...); `patient` stays as its alias and outputs keep the name `patient`.
-- `bin/arg_context.py`, `bin/arg_context_summary.py`, `bin/bin_recovery.py` (prototype, not yet wired into the workflow): genomic context of ARGs (plasmid / chromosomal MGE / chromosome / unresolved) from reads and from community contigs, and community bins with read-vote species and depth/breadth across a subject's samples.
+- `bin/arg_context.py`, `bin/bin_recovery.py` (prototype, not yet wired into the workflow): genomic context of ARGs (plasmid / chromosomal MGE / chromosome / unresolved) from reads and from community contigs, and community bins with read-vote species and depth/breadth across a subject's samples.
 - Genomic context, layer 1 (`GENOMIC_CONTEXT`, on by default; `--genomic_context false` skips it): the reads carrying an ABRicate hit are pooled and classified with geNomad 1.13.0, and every hit is placed as plasmid / chromosomal_mge / chromosome / unresolved (`context/reads/loci_reads_<db>.tsv`). A plasmid call needs plasmid evidence on the read: a hallmark or conjugation gene in geNomad's gene table, or a PlasmidFinder / MOB-suite replicon. Parameters `--context_databases`, `--context_min_flank`, `--context_mge_window`, `--context_plasmid_min`, `--context_chrom_min`, `--genomad_splits`.
 - geNomad database in `--build_databases` (`genomad_db/`, `--skip_genomad_download`) and `--db_dir`; `--genomad_db` for an existing one.
 - `bin/hit_reads.py`; `bin/arg_context.py` reads plasmid evidence from geNomad's gene table, counts a PlasmidFinder hit on the same read as a replicon, and reports `gc_gene` / `gc_seq` / `gc_delta`.
 - Genomic context layer 2 (`--context_local_assembly`, default on): per sample, the reads overlapping the hit reads (`--context_recruit_min_aln`, two rounds) are assembled with Flye `--meta`; ABRicate, geNomad and MOB-suite type the contigs and each read hit is mapped to its contig. Final call per read hit in `context/hit_context_<db>.tsv` (`contig_context`, `final_context`, `context_source`); a contig call replaces the read call only when resolved. CARD protein-variant models are flagged `intrinsic_variant`. A sample whose Flye run fails keeps its read-level calls, and the run logs a warning naming those samples.
 - Mobilome branch (`--mobilome`, default on; needs `--mobsuite_db`, and `--medaka_model_path` unless `--polish_plasmids false`): circular hit contigs as plasmid drafts (`context/plasmid_drafts/`), Medaka polishing (a failed sample keeps its unpolished draft, with a warning), MOB-suite typing, ISEScan IS flanks around each ARG with composite-transposon calls (same IS family on both sides within `--context_is_window`, in any orientation; `orientation` column), and plasmid units across samples by MinHash identity (`--plasmid_unit_min_identity`) in `mobilome/`.
+- `context/hit_context.tsv`: every read hit of every context database in one table, the MERIDIAN hand-off, with the hit read's Kraken2 taxon and lineage (`--taxdump`; `taxon_level`) and a contig host vote (`contig_taxon`, `contig_vote`, `contig_vote_reads`, `weak_vote`), and `context/summary/` (`arg_context_by_sample.tsv`, `arg_context_by_class.tsv`, `gene_context.tsv`, `taxon_resolution.tsv`, and `arg_context_by_group.tsv` with `--meridian_metadata` / `--meridian_group`), with CARD protein-variant hits counted apart (`n_intrinsic`). `bin/taxon_gene_context.py`; `bin/arg_context_summary.py` now summarises `hit_context.tsv`.
+- MultiQC "Genomic context" sections: stacked final-context bars per sample for each context database, the plasmid-evidence rule (plasmid read calls with and without it), and the plasmid units.
+- `hit_context_<db>.tsv`: `context_conflict` (a resolved contig call replaced a different resolved read call) and `gc_delta`. Flye's `repeat` flag in the assembly info and the plasmid-draft candidates.
+- Module cards for every subworkflow (`docs/images/cards/`, `docs/images/make_module_cards.py`).
+- `pipeline_info/database_manifest.tsv` records an explicitly passed `--genomad_db` (path and sha256).
 
 ### `Changed`
 
-- Default runs now need `--mobsuite_db` and `--medaka_model_path` (built by `--build_databases` without `--skip_pathogen_download`, and MOB-suite without `--skip_mobsuite_download`), or `--mobilome false`.
+- `plasmid_units.tsv`: `read_taxa` now names the taxa (`read_taxids` is added with the taxids) and the Flye `repeat` flag is inserted as a column.
+- `--meridian_metadata` is opened and its `--meridian_group` columns are checked by the genomic-context summary even with `--skip_meridian`; a missing column fails the run.
+- Medaka polishes each sample's full local-assembly contigs before the circular drafts are cut out (a longer Medaka step); the polished full contigs are not published.
+- Default runs now need `--mobsuite_db` and `--medaka_model_path`, or `--mobilome false`. `--build_databases` builds both whenever the mobilome is on, also with `--skip_pathogen_download` (`--skip_mobsuite_download` still leaves MOB-suite out).
+- A read hit is carried onto its contig base by base along the alignment's CIGAR (minimap2 `-c`), not linearly; reads whose only hits are CARD protein-variant models no longer seed the read recruitment; Medaka polishes the plasmid drafts against all of the sample's contigs and the circles are cut out afterwards.
+- The warning for samples whose Flye or Medaka step produced nothing names the usual cause (too few recruited reads for Flye) instead of presenting it as a configuration problem.
+- With `--pathogens`, a database the pathogen module and the mobilome both need is reported once, as a pathogen database.
 
 ## v0.3.0 - 2026-11-08
 

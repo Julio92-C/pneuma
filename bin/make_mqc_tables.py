@@ -7,6 +7,9 @@ Inputs (all optional, any number of files each):
   --abricate  <sample>_abricate.csv        per-sample ABRicate --csv outputs
   --rcf-stat  pneuma_controls.rcf.stat.csv Recentrifuge statistics (CSV)
   --pathogen-cohort pathogen_cohort.tsv  PNEUMA pathogen report (cohort TSV)
+  --hit-context    context/hit_context.tsv      genomic context of every read hit
+  --plasmid-units  mobilome/plasmid_units.tsv   plasmid units across samples
+  --context-loci   loci_reads_<db>.tsv and loci_reads_<db>_score_only.tsv (read calls with / without the evidence rule)
 
 Outputs (written to --outdir, only when the matching input is present):
   pneuma_general_stats_mqc.tsv  columns for the General Statistics table:
@@ -19,6 +22,9 @@ Outputs (written to --outdir, only when the matching input is present):
                                 confirmed / why not -> typed, at sample and patient level
   meridian_stage_errors_mqc.tsv "MERIDIAN failed stages" (only when a comparison has failed stages;
                                 input: --meridian-stage-errors <comparison>.stage_errors.csv ...)
+  genomic_context_<db>_mqc.tsv   "Genomic context: <db>" (stacked bars: final context of the hits per sample)
+  genomic_context_evidence_mqc.tsv "Genomic context: plasmid-evidence rule" (plasmid read calls with / without it)
+  plasmid_units_mqc.tsv          "Plasmid units" (one row per unit)
 
 Sample names are taken from the file names so that they match the names
 MultiQC derives for its own modules.
@@ -27,6 +33,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 from collections import Counter, OrderedDict
 
@@ -420,6 +427,120 @@ def write_pathogen(path, data):
     _write(path, header, PATHOGEN_STATUSES + ["typed", "pooled"], data)
 
 
+CONTEXT_CATEGORIES = ["plasmid", "chromosomal_mge", "chromosome", "unresolved"]
+LOCI_NAME = re.compile(r"loci_reads_(.+?)(_score_only)?\.tsv$")
+UNIT_FIELDS = [("n_samples", "Samples", "{:,.0f}"), ("samples", "Sample ids", None), ("length", "Length (bp)", "{:,.0f}"),
+               ("repeat", "Flye repeat", None), ("replicons", "Replicons", None), ("mobility", "Mobility", None),
+               ("ARGs", "ARGs", None), ("VFs", "VFs", None), ("IS_families", "IS families", None),
+               ("read_taxa", "Read taxa (top 3)", None), ("mean_rpm", "Mean RPM", "{:,.2f}")]
+
+
+def parse_hit_context(path):
+    """{db: {sample: {category: hits}}} from context/hit_context.tsv."""
+    data = OrderedDict()
+    with open(str(path), newline="") as fh:
+        reader = csv.DictReader(fh, delimiter="\t")
+        if reader.fieldnames and "final_context" not in reader.fieldnames:
+            _warn(path, "not a hit_context.tsv (no 'final_context' column)")
+            return data
+        for r in reader:
+            row = data.setdefault(r["database"], OrderedDict()).setdefault(
+                r["sample"], OrderedDict((c, 0) for c in CONTEXT_CATEGORIES))
+            if r["final_context"] in row:
+                row[r["final_context"]] += 1
+    return OrderedDict((db, OrderedDict(sorted(rows.items()))) for db, rows in sorted(data.items()))
+
+
+def safe_name(db):
+    return re.sub(r"[^A-Za-z0-9_]", "_", db)
+
+
+def write_context(path, db, data):
+    sid = safe_name(db)
+    header = [
+        "id: 'genomic_context_%s'" % sid,
+        "section_name: 'Genomic context: %s'" % db,
+        "description: 'Final genomic context of the %s hits on reads, per sample (context/hit_context.tsv): the call of "
+        "the local-assembly contig when it is resolved, else the read call. CARD protein-variant models are included "
+        "(intrinsic_variant in the table).'" % db,
+        "plot_type: 'bargraph'",
+        "pconfig:",
+        "    id: 'genomic_context_%s_plot'" % sid,
+        "    title: 'Genomic context of %s hits'" % db,
+        "    ylab: 'Hits'",
+    ]
+    _write(path, header, CONTEXT_CATEGORIES, data)
+
+
+def parse_context_evidence(paths):
+    """{db: {hits, plasmid_score_only, plasmid_evidence}} from the read-level loci tables of each database."""
+    data = OrderedDict()
+    for p in sorted(str(x) for x in paths):
+        m = LOCI_NAME.search(os.path.basename(p))
+        if not m:
+            _warn(p, "not a loci_reads_<db>[_score_only].tsv")
+            continue
+        with open(p, newline="") as fh:
+            cats = [r.get("category", "") for r in csv.DictReader(fh, delimiter="\t")]
+        row = data.setdefault(m.group(1), OrderedDict([("hits", 0), ("plasmid_score_only", ""), ("plasmid_evidence", 0)]))
+        if m.group(2):
+            row["plasmid_score_only"] = cats.count("plasmid")
+        else:
+            row["hits"], row["plasmid_evidence"] = len(cats), cats.count("plasmid")
+    return data
+
+
+def write_context_evidence(path, data):
+    header = [
+        "id: 'genomic_context_evidence'",
+        "section_name: 'Genomic context: plasmid-evidence rule'",
+        "description: 'Read-level plasmid calls per database from geNomad scores alone and with the plasmid-evidence "
+        "rule (a hallmark or conjugation gene, or a replicon, on the read). The difference is the score-only plasmid "
+        "calls without evidence, which become unresolved.'",
+        "plot_type: 'table'",
+        "pconfig:",
+        "    id: 'genomic_context_evidence_table'",
+        "    title: 'Plasmid-evidence rule'",
+        "    col1_header: 'Database'",
+        "headers:",
+        "    hits:",
+        "        title: 'Read hits'",
+        "        format: '{:,.0f}'",
+        "    plasmid_score_only:",
+        "        title: 'Plasmid (score only)'",
+        "        format: '{:,.0f}'",
+        "    plasmid_evidence:",
+        "        title: 'Plasmid (evidence rule)'",
+        "        format: '{:,.0f}'",
+    ]
+    _write(path, header, ["hits", "plasmid_score_only", "plasmid_evidence"], data)
+
+
+def parse_plasmid_units(path):
+    with open(str(path), newline="") as fh:
+        rows = list(csv.DictReader(fh, delimiter="\t"))
+    return OrderedDict((r["unit"], OrderedDict((k, r.get(k, "")) for k, _t, _f in UNIT_FIELDS))
+                       for r in rows if r.get("unit"))
+
+
+def write_plasmid_units(path, data):
+    header = [
+        "id: 'plasmid_units'",
+        "section_name: 'Plasmid units'",
+        "description: 'Circular plasmid drafts grouped across samples by MinHash identity (mobilome/plasmid_units.tsv). "
+        "Flye repeat = yes: a member contig is a repeat in the assembly graph (check before trusting the circle).'",
+        "plot_type: 'table'",
+        "pconfig:",
+        "    id: 'plasmid_units_table'",
+        "    title: 'Plasmid units'",
+        "    col1_header: 'Plasmid unit'",
+        "headers:",
+    ]
+    for key, title, fmt in UNIT_FIELDS:
+        header += ["    %s:" % key, "        title: '%s'" % title] + (["        format: '%s'" % fmt] if fmt else [])
+    _write(path, header, [k for k, _t, _f in UNIT_FIELDS], data)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--hostile", nargs="*", default=[])
@@ -428,6 +549,9 @@ def main(argv=None):
     parser.add_argument("--rcf-stat", nargs="*", default=[])
     parser.add_argument("--pathogen-cohort", nargs="*", default=[])
     parser.add_argument("--meridian-stage-errors", nargs="*", default=[])
+    parser.add_argument("--hit-context", nargs="*", default=[])
+    parser.add_argument("--plasmid-units", nargs="*", default=[])
+    parser.add_argument("--context-loci", nargs="*", default=[])
     parser.add_argument("--outdir", default=".")
     args = parser.parse_args(argv)
 
@@ -477,6 +601,19 @@ def main(argv=None):
     if stage_errors:
         write_stage_errors(out("meridian_stage_errors_mqc.tsv"), stage_errors)
         written.append("meridian_stage_errors_mqc.tsv")
+    context = parse_hit_context(args.hit_context[0]) if args.hit_context else {}
+    for db, rows in context.items():
+        name = "genomic_context_%s_mqc.tsv" % safe_name(db)
+        write_context(out(name), db, rows)
+        written.append(name)
+    evidence = parse_context_evidence(args.context_loci)
+    if any(r["hits"] for r in evidence.values()):
+        write_context_evidence(out("genomic_context_evidence_mqc.tsv"), evidence)
+        written.append("genomic_context_evidence_mqc.tsv")
+    units = parse_plasmid_units(args.plasmid_units[0]) if args.plasmid_units else {}
+    if units:
+        write_plasmid_units(out("plasmid_units_mqc.tsv"), units)
+        written.append("plasmid_units_mqc.tsv")
     print("wrote: " + (", ".join(written) or "nothing"), file=sys.stderr)
     if failed:
         print("ERROR: no rows could be built from: " + ", ".join(failed), file=sys.stderr)

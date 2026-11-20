@@ -15,7 +15,7 @@ nextflow_process {
         then {
             assert process.success
             assert path(process.out.fasta[0][1]).readLines().findAll { it.startsWith('>') } == ['>S1__contig_1', '>S1__contig_2']
-            assert path(process.out.info[0][1]).readLines()[1] == 'S1\tS1__contig_1\t10\t30\tyes'
+            assert path(process.out.info[0][1]).readLines()[1] == 'S1\tS1__contig_1\t10\t30\tyes\tno'
         }
     }
 }

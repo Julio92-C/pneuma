@@ -18,6 +18,8 @@ Per-sample file names start with the sample name from the samplesheet (`SAMPLE-0
 - [`multiqc/`](#multiqc): one report for all stages
 - [`pipeline_info/`](#pipeline-information)
 
+Module cards for each subworkflow: [docs/images/cards/](images/cards/).
+
 ### Preprocess
 
 <details markdown="1">
@@ -97,25 +99,37 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
 - `context/hit_context_<db>.tsv` (one per database in `--context_databases`; local assembly): one row per read hit, with the final call.
   - `sample`, `seq`, `database`, `gene`, `drug_class`, `read_len`, `start`, `end`.
   - `read_context`, `read_reason`: the read-level call and its evidence (same values as `category` / `reason` above).
-  - `contig`, `contig_len`, `contig_gene`, `contig_context`, `contig_reason`: the contig the read maps to (same sample only), the matching gene on it and the contig's call. Only read alignments with identity (matches / alignment block length) >= 80% are used; the gene is carried onto the contig through the one of those that covers it best. A contig hit of the same gene matches within 500 bp of that position; a hit of a different gene only when it overlaps it. Among matching hits, the same gene wins, then the largest overlap, then a resolved call. `contig_context` is `no_contig_match` when no alignment of >= 80% identity covers the gene or no contig hit matches.
+  - `contig`, `contig_len`, `contig_gene`, `contig_context`, `contig_reason`: the contig the read maps to (same sample only), the matching gene on it and the contig's call. Only read alignments with identity (matches / alignment block length) >= 80% are used; the gene is carried onto the contig through the one of those that covers it best. A contig hit of the same gene matches within 500 bp of that position; a hit of a different gene only when it overlaps it. Among matching hits, the same gene wins, then the largest overlap, then a resolved call. `contig_context` is `no_contig_match` when no alignment of >= 80% identity covers the gene or no contig hit matches. The gene is carried onto the contig base by base along the alignment's CIGAR.
   - `final_context`: `plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`. The contig call replaces the read call only when it is resolved.
   - `context_source`: where `final_context` comes from (`read` or `contig`).
-  - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`.
+  - `context_conflict`: `yes` when a resolved contig call replaced a different resolved read call (the read and contig disagreed).
+  - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`. Reads whose only hits are CARD protein-variant models are not local-assembly seeds, so they are usually not mapped to the contigs and keep their read call (`contig_context = no_contig_match`); filter on `intrinsic_variant`.
+  - `gc_delta`: from the read call (gene GC minus read GC).
+- `context/hit_context.tsv`: every read hit of every context database in one table (the MERIDIAN hand-off): the columns of `hit_context_<db>.tsv` with `element` (`AMR`, `VFs`, `MGEs`) after `database`, then
+  - `kraken_taxid`, `kraken_rank`, `kraken_name`, `species`, `genus`, `family`, `phylum`: the hit read's Kraken2 taxon and its lineage (`--taxdump`);
+  - `taxon_level`: the most specific of `species`, `genus`, `family`, `above_family`, or `unclassified`;
+  - `contig_taxon`, `contig_vote`, `contig_vote_reads`: the host vote of the hit reads on the hit's contig (each read votes once, for its species or genus); `weak_vote`: `yes` when the share is below 0.5, fewer than 2 reads voted or two taxa tie for the most votes, `no`, or `NA` for a hit not on a contig. With `--context_local_assembly false` the table is built from the read calls: `contig_context` is `no_contig_match`, `weak_vote` is `NA`, and `contig`, `contig_len`, `contig_gene`, `contig_reason` and the other vote columns are empty.
+- `context/summary/`
+  - `arg_context_by_sample.tsv`: `sample`, `database`, `category`, `n_hits`, `fraction`, `n_intrinsic`, `intrinsic_share` (CARD protein-variant hits among them).
+  - `arg_context_by_class.tsv`: CARD hits per drug class (a multi-class gene counts in each class), same columns without `sample` / `database`.
+  - `arg_context_by_group.tsv` (with `--meridian_metadata` and `--meridian_group`): `group_by`, `group`, `database`, `category`, `n_samples`, `n_hits`, `pooled_fraction`, `mean_sample_fraction`, `n_intrinsic`.
+  - `gene_context.tsv`: per database and gene, `n_hits`, `n_samples`, hits per category, `n_intrinsic`.
+  - `taxon_resolution.tsv`: per element and final context, the share of hits whose read is named to species, genus, family, only above family, or unclassified.
 - `context/local_assembly/`
   - `recruitment/<sample>.r1.recruit.tsv`, `<sample>.r2.recruit.tsv`: `sample`, `round`, `recruited`, `total_reads` for each recruitment round.
-  - `contigs/`: the Flye `--meta` contigs of each sample (`<sample>.contigs.fa`, `<sample>.assembly_info.tsv`).
+  - `contigs/`: the Flye `--meta` contigs of each sample (`<sample>.contigs.fa`, `<sample>.assembly_info.tsv` with columns `sample`, `contig`, `length`, `coverage`, `circular`, `repeat` (Flye's repeat flag)).
   - `all_contigs.fa`, `contig_hits.tsv`: the pooled contigs and the ABRicate hits on them.
   - `genomad/*.tsv`: geNomad scores, virus and plasmid summaries and gene table of the contigs that carry a hit.
   - `mobsuite/hit_contigs.mobtyper.txt`: MOB-suite typing of those contigs.
   - `loci_contigs_<db>.tsv`, `loci_contigs_<db>_score_only.tsv`: the contig calls (same columns as `loci_reads_<db>.tsv`).
 - `context/plasmid_drafts/` (mobilome)
-  - `circular_plasmid_candidates.tsv`: circular contigs with a hit, one row each: `contig`, `sample`, `length`, `coverage`, `reads`, `plasmid_score`, `chromosome_score`, `hallmarks`, `conjugation`, `replicons`, `mob_rep`, `relaxase`, `mpf`, `mobility`, `ARGs`, `VFs`, `read_taxa`. `reads` counts the recruited reads whose best alignment is on the contig.
+  - `circular_plasmid_candidates.tsv`: circular contigs with a hit, one row each: `contig`, `sample`, `length`, `coverage`, `repeat`, `reads`, `plasmid_score`, `chromosome_score`, `hallmarks`, `conjugation`, `replicons`, `mob_rep`, `relaxase`, `mpf`, `mobility`, `ARGs`, `VFs`, `read_taxa`. `reads` counts the recruited reads whose best alignment is on the contig.
   - `circular_plasmid_candidates.fa`: the sequences of those drafts (unpolished), with `sample`, `length`, `replicons` and `ARGs` in the header.
   - `per_sample/<sample>.circles.fa`: the same drafts split by sample (the Medaka input).
-  - `polished/<sample>.circles.polished.fasta`: the Medaka-polished drafts (when `--polish_plasmids`; a sample whose polishing failed keeps its unpolished draft).
+  - `polished/<sample>.circles.polished.fasta`: the drafts cut out of the sample's contigs after Medaka polished all of them (when `--polish_plasmids`; a sample whose polishing failed keeps its unpolished draft).
 - `mobilome/`
-  - `plasmid_units.tsv`: one row per plasmid unit (drafts from any sample with MinHash identity >= `--plasmid_unit_min_identity`): `unit`, `n_samples`, `samples`, `n_contigs`, `representative`, `length`, the union of `replicons`, `mob_rep`, `relaxase`, `mpf`, then `mobility`, `ARGs`, `VFs`, `IS_families`, `read_taxa`, `mean_rpm`: recruited reads (best alignment on the draft) per million clean reads, summed over a sample's drafts in the unit and averaged over the samples that have a draft in it. Units are built from the unpolished drafts (`circular_plasmid_candidates.fa`), not the Medaka-polished ones.
-  - `plasmid_unit_members.tsv`: one row per draft in a unit: `unit`, `contig`, `sample`, `length`, `coverage`, `reads`, `rpm` (that draft's reads per million clean reads of its sample).
+  - `plasmid_units.tsv`: one row per plasmid unit (drafts from any sample with MinHash identity >= `--plasmid_unit_min_identity`): `unit`, `n_samples`, `samples`, `n_contigs`, `representative`, `length`, `repeat` (`yes` when Flye flagged any member contig), the union of `replicons`, `mob_rep`, `relaxase`, `mpf`, then `mobility`, `ARGs`, `VFs`, `IS_families`, `read_taxa` (the top three Kraken2 taxa of the hit reads on the drafts, by name), `read_taxids` (the same with taxids), `mean_rpm`: recruited reads (best alignment on the draft) per million clean reads, summed over a sample's drafts in the unit and averaged over the samples that have a draft in it. Units are built from the unpolished drafts (`circular_plasmid_candidates.fa`), not the Medaka-polished ones.
+  - `plasmid_unit_members.tsv`: one row per draft in a unit: `unit`, `contig`, `sample`, `length`, `coverage`, `repeat`, `reads`, `rpm` (that draft's reads per million clean reads of its sample).
   - `is_flanks.tsv`: one row per CARD hit on a contig: `sample`, `contig`, `gene`, `start`, `end`, `strand`, then `left_is` / `left_family` / `left_strand` / `left_distance` and the same four for `right_`, `composite_transposon` (`yes` when the same IS family flanks the gene on both sides within `--context_is_window`, in any orientation) and `orientation` (`inverted`, `direct` or `unknown`; empty when not composite).
   - `isescan/hit_contigs.isescan.tsv`: ISEScan's IS table for the hit contigs (header only when it found none).
 
@@ -194,8 +208,9 @@ Only produced when `--skip_meridian` is not set. See the [MERIDIAN repository](h
 | 8 | Bracken | Bracken reports | top taxa after re-estimation (the plot title says Kraken2 because Bracken writes the same report format) |
 | 9 | Recentrifuge | `pneuma_controls.rcf.stat.csv` (custom table) | per-sample read and score statistics of the control-mode run; only when the samplesheet marks negative controls |
 | 10 | ABRicate hits | `*_abricate.csv` (custom table) | hits per sample for `card`, `vfdb` and `plasmidfinder`, total hits and distinct genes; samples without hits show zeros |
-| 11 | Pathogen reconstruction: QUAST, CheckM2, Pathogen status | `pathogens/qc/` and `pathogen_cohort.tsv` (custom table) | QUAST and CheckM2 sections plus the "Pathogen status per sample" table (counts per status, typed species, pooled results); only with `--pathogens`. QUAST and CheckM2 appear once there are assemblies |
-| 12 | Software versions, workflow summary, methods | pipeline | versions of every tool and the parameters of the run |
+| 11 | Genomic context: `<db>`, plasmid-evidence rule, Plasmid units | `context/hit_context.tsv`, `loci_reads_<db>*.tsv`, `mobilome/plasmid_units.tsv` (custom tables) | stacked bars of the final context per sample for each context database; plasmid read calls from geNomad scores alone vs with the evidence rule; one row per plasmid unit. Only when there are hits |
+| 12 | Pathogen reconstruction: QUAST, CheckM2, Pathogen status | `pathogens/qc/` and `pathogen_cohort.tsv` (custom table) | QUAST and CheckM2 sections plus the "Pathogen status per sample" table (counts per status, typed species, pooled results); only with `--pathogens`. QUAST and CheckM2 appear once there are assemblies |
+| 13 | Software versions, workflow summary, methods | pipeline | versions of every tool and the parameters of the run |
 
 The custom tables are written by [`bin/make_mqc_tables.py`](../bin/make_mqc_tables.py) (process `MULTIQC_TABLES`) and the section order is set in [`assets/multiqc_config.yml`](../assets/multiqc_config.yml).
 

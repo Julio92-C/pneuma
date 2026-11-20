@@ -249,3 +249,69 @@ def test_no_stage_error_table_without_failures(tmp_path):
     ok.write_text('"stage","error"\n')
     assert mqc.main(["--meridian-stage-errors", str(ok), "--outdir", str(tmp_path)]) == 0
     assert not (tmp_path / "meridian_stage_errors_mqc.tsv").exists()
+
+
+HIT_CONTEXT = "".join("\t".join(r) + "\n" for r in [
+    ("sample", "seq", "database", "gene", "final_context"),
+    ("S1", "S1__r1", "card", "tet(M)", "plasmid"),
+    ("S1", "S1__r2", "card", "tet(M)", "plasmid"),
+    ("S1", "S1__r3", "card", "mef(A)", "unresolved"),
+    ("S2", "S2__r1", "card", "ErmB", "chromosome"),
+    ("S1", "S1__r4", "vfdb", "fimH", "chromosome"),
+])
+LOCI_HEAD = "sample\troute\tseq\tseq_len\tgene\tdrug_class\tstart\tend\tcategory\treason\n"
+UNITS = ("unit\tn_samples\tsamples\tn_contigs\trepresentative\tlength\trepeat\treplicons\tmob_rep\trelaxase\tmpf"
+         "\tmobility\tARGs\tVFs\tIS_families\tread_taxa\tread_taxids\tmean_rpm\n"
+         "PU001\t2\tS1,S2\t2\tS1__contig_1\t10200\tno\trep27\t\tMOBV\t\tmobilizable\ttet(L)\t\tIS6\tEnterococcus:8\t1350:8\t10.0\n")
+
+
+def loci(path, cats):
+    path.write_text(LOCI_HEAD + "".join("S1\treads\tS1__r%d\t9000\tg\tx\t1\t2\t%s\tr\n" % (i, c) for i, c in enumerate(cats)))
+    return str(path)
+
+
+def test_genomic_context_bars_per_database(tmp_path):
+    f = tmp_path / "hit_context.tsv"
+    f.write_text(HIT_CONTEXT)
+    assert mqc.main(["--hit-context", str(f), "--outdir", str(tmp_path)]) == 0
+    card = (tmp_path / "genomic_context_card_mqc.tsv").read_text().splitlines()
+    assert "# id: 'genomic_context_card'" in card and "# plot_type: 'bargraph'" in card
+    i = card.index("Sample\tplasmid\tchromosomal_mge\tchromosome\tunresolved")
+    assert card[i + 1:] == ["S1\t2\t0\t0\t1", "S2\t0\t0\t1\t0"]
+    assert (tmp_path / "genomic_context_vfdb_mqc.tsv").read_text().splitlines()[-1] == "S1\t0\t0\t1\t0"
+
+
+def test_no_hits_no_genomic_context_section(tmp_path):
+    f = tmp_path / "hit_context.tsv"
+    f.write_text(HIT_CONTEXT.splitlines()[0] + "\n")
+    u = tmp_path / "plasmid_units.tsv"
+    u.write_text(UNITS.splitlines()[0] + "\n")
+    s = loci(tmp_path / "loci_reads_card.tsv", [])
+    assert mqc.main(["--hit-context", str(f), "--plasmid-units", str(u), "--context-loci", s,
+                     "--outdir", str(tmp_path)]) == 0
+    assert not list(tmp_path.glob("*_mqc.tsv"))
+
+
+def test_plasmid_evidence_table(tmp_path):
+    strict = loci(tmp_path / "loci_reads_card.tsv", ["plasmid", "unresolved", "unresolved", "chromosome"])
+    score = loci(tmp_path / "loci_reads_card_score_only.tsv", ["plasmid", "plasmid", "plasmid", "chromosome"])
+    assert mqc.main(["--context-loci", strict, score, "--outdir", str(tmp_path)]) == 0
+    lines = (tmp_path / "genomic_context_evidence_mqc.tsv").read_text().splitlines()
+    assert "# id: 'genomic_context_evidence'" in lines
+    assert lines[-1] == "card\t4\t3\t1"
+
+
+def test_plasmid_evidence_without_score_only_partner_is_blank(tmp_path):
+    strict = loci(tmp_path / "loci_reads_card.tsv", ["plasmid", "unresolved", "chromosome"])
+    assert mqc.main(["--context-loci", strict, "--outdir", str(tmp_path)]) == 0
+    lines = (tmp_path / "genomic_context_evidence_mqc.tsv").read_text().splitlines()
+    assert lines[-1] == "card	3		1"
+
+
+def test_plasmid_units_table(tmp_path):
+    f = tmp_path / "plasmid_units.tsv"
+    f.write_text(UNITS)
+    assert mqc.main(["--plasmid-units", str(f), "--outdir", str(tmp_path)]) == 0
+    text = (tmp_path / "plasmid_units_mqc.tsv").read_text()
+    assert "id: 'plasmid_units'" in text and "col1_header: 'Plasmid unit'" in text
+    assert text.splitlines()[-1] == "PU001\t2\tS1,S2\t10200\tno\trep27\tmobilizable\ttet(L)\t\tIS6\tEnterococcus:8\t10.0"

@@ -1,0 +1,2 @@
+unit	n_samples	samples	n_contigs	representative	length	repeat	replicons	mob_rep	relaxase	mpf	mobility	ARGs	VFs	IS_families	read_taxa	read_taxids	mean_rpm
+PU001	2	S1,S2	2	S1__contig_1	10200	no	rep27		MOBV		mobilizable	tet(L)		IS6	Enterococcus:8	1350:8	10.0
