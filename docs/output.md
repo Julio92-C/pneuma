@@ -103,12 +103,12 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
   - `final_context`: `plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`. The contig call replaces the read call only when it is resolved.
   - `context_source`: where `final_context` comes from (`read` or `contig`).
   - `context_conflict`: `yes` when a resolved contig call replaced a different resolved read call (the read and contig disagreed).
-  - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`.
+  - `intrinsic_variant`: `yes` for CARD protein-variant models (ABRicate finds the gene but cannot check the resistance mutation), otherwise `no`. Reads whose only hits are CARD protein-variant models are not local-assembly seeds, so they are usually not mapped to the contigs and keep their read call (`contig_context = no_contig_match`); filter on `intrinsic_variant`.
   - `gc_delta`: from the read call (gene GC minus read GC).
 - `context/hit_context.tsv`: every read hit of every context database in one table (the MERIDIAN hand-off): the columns of `hit_context_<db>.tsv` with `element` (`AMR`, `VFs`, `MGEs`) after `database`, then
   - `kraken_taxid`, `kraken_rank`, `kraken_name`, `species`, `genus`, `family`, `phylum`: the hit read's Kraken2 taxon and its lineage (`--taxdump`);
   - `taxon_level`: the most specific of `species`, `genus`, `family`, `above_family`, or `unclassified`;
-  - `contig_taxon`, `contig_vote`, `contig_vote_reads`: the host vote of the hit reads on the hit's contig (each read votes once, for its species or genus); `weak_vote`: `yes` when the share is below 0.5 or fewer than 2 reads voted, `no`, or `NA` for a hit not on a contig. With `--context_local_assembly false` the table is built from the read calls (contig columns empty).
+  - `contig_taxon`, `contig_vote`, `contig_vote_reads`: the host vote of the hit reads on the hit's contig (each read votes once, for its species or genus); `weak_vote`: `yes` when the share is below 0.5 or fewer than 2 reads voted, `no`, or `NA` for a hit not on a contig. With `--context_local_assembly false` the table is built from the read calls: `contig_context` is `no_contig_match`, `weak_vote` is `NA`, and `contig`, `contig_len`, `contig_gene`, `contig_reason` and the other vote columns are empty.
 - `context/summary/`
   - `arg_context_by_sample.tsv`: `sample`, `database`, `category`, `n_hits`, `fraction`, `n_intrinsic`, `intrinsic_share` (CARD protein-variant hits among them).
   - `arg_context_by_class.tsv`: CARD hits per drug class (a multi-class gene counts in each class), same columns without `sample` / `database`.
@@ -208,7 +208,7 @@ Only produced when `--skip_meridian` is not set. See the [MERIDIAN repository](h
 | 8 | Bracken | Bracken reports | top taxa after re-estimation (the plot title says Kraken2 because Bracken writes the same report format) |
 | 9 | Recentrifuge | `pneuma_controls.rcf.stat.csv` (custom table) | per-sample read and score statistics of the control-mode run; only when the samplesheet marks negative controls |
 | 10 | ABRicate hits | `*_abricate.csv` (custom table) | hits per sample for `card`, `vfdb` and `plasmidfinder`, total hits and distinct genes; samples without hits show zeros |
-| 11 | Genomic context: <db>, plasmid-evidence rule, Plasmid units | `context/hit_context.tsv`, `loci_reads_<db>*.tsv`, `mobilome/plasmid_units.tsv` (custom tables) | stacked bars of the final context per sample for each context database; plasmid read calls from geNomad scores alone vs with the evidence rule; one row per plasmid unit. Only when there are hits |
+| 11 | Genomic context: `<db>`, plasmid-evidence rule, Plasmid units | `context/hit_context.tsv`, `loci_reads_<db>*.tsv`, `mobilome/plasmid_units.tsv` (custom tables) | stacked bars of the final context per sample for each context database; plasmid read calls from geNomad scores alone vs with the evidence rule; one row per plasmid unit. Only when there are hits |
 | 12 | Pathogen reconstruction: QUAST, CheckM2, Pathogen status | `pathogens/qc/` and `pathogen_cohort.tsv` (custom table) | QUAST and CheckM2 sections plus the "Pathogen status per sample" table (counts per status, typed species, pooled results); only with `--pathogens`. QUAST and CheckM2 appear once there are assemblies |
 | 13 | Software versions, workflow summary, methods | pipeline | versions of every tool and the parameters of the run |
 

@@ -60,15 +60,15 @@ or `--host_index my_host.fasta`. The required files are checked at start-up (`ha
 
 Pathogen reconstruction is opt-in: `--pathogens` defaults to `false`. A run without it needs none of the
 pathogen-reconstruction databases below, except two used by the mobilome branch (on by default, see
-[Mobilome](#mobilome)): `--mobsuite_db` and `--medaka_model_path`. `--build_databases` builds both whenever the
-mobilome is on, also with `--skip_pathogen_download` (the MOB-suite database is left out with `--skip_mobsuite_download`,
-the Medaka model with `--polish_plasmids false`); otherwise pass them,
+[Mobilome](#mobilome)): `--mobsuite_db` and `--medaka_model_path`. `--build_databases` builds the Medaka model unless
+`--skip_pathogen_download` is given and either `--mobilome false` or `--polish_plasmids false` is set, and MOB-suite unless
+`--skip_mobsuite_download` is given, or `--skip_pathogen_download` with `--mobilome false`; otherwise pass them,
 or run with `--mobilome false` (or `--polish_plasmids false` to drop only the Medaka model). With `--pathogens` the analysis run needs the
 Phase 2 databases: `--checkm2_db`, `--bakta_db`, `--amrfinderplus_db`, `--medaka_model_path` and
 `--panel_references_dir` (plus `--mobsuite_db` with `--run_mobsuite`). `--build_databases` builds them (CheckM2, Bakta
 `--bakta_db_type light|full`, AMRFinderPlus, the Medaka model, an MLST scheme record, the panel
 reference genomes and, unless `--skip_mobsuite_download`, MOB-suite) and `--db_dir` fills them. Use
-`--skip_pathogen_download` to leave the pathogen databases out of a database build (the mobilome's MOB-suite database and Medaka model are still built). With `--pathogens` and a
+`--skip_pathogen_download` to leave the pathogen databases out of a database build (with the mobilome on, MOB-suite, unless `--skip_mobsuite_download`, and the Medaka model, unless `--polish_plasmids false`, are still built). With `--pathogens` and a
 missing database the run stops with "--checkm2_db is required for pathogen reconstruction ...". `--pathogen_panel` and
 `--panel_references` default to the files bundled in `assets/`.
 
@@ -281,15 +281,16 @@ off with `--context_local_assembly false`.
 
 On by default (`--mobilome true`, needs `--context_local_assembly`). Circular contigs that carry a hit are written as
 plasmid-draft candidates (`context/plasmid_drafts/`) and polished with Medaka against all of the sample's contigs (so reads of a chromosomal copy of an IS element or gene stay on the chromosome) and cut out again (`--polish_plasmids`, default true;
-failed samples keep the unpolished draft, with a warning naming them and a stronger one if every sample failed).
+failed samples keep the unpolished draft, and the run logs one warning naming them and the usual cause: check `--medaka_model_path` and the memory in the task logs).
 ISEScan finds insertion sequences on the hit contigs, and `is_flanks.tsv` lists the IS elements within
 `--context_is_window` bp (500) of each ARG. A **composite transposon** is called when the same IS family flanks the
 ARG on both sides within that window, in any orientation (inverted pairs as in Tn9 / IS1, and direct repeats as for
 IS26); the `orientation` column says `inverted`, `direct` or `unknown`. Drafts from different samples are grouped
 into plasmid units by MinHash identity >= `--plasmid_unit_min_identity` (0.95; rotation- and strand-invariant).
 
-The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--medaka_model_path`; both are built by
-`--build_databases` whenever the mobilome is on, also with `--skip_pathogen_download` (`--skip_mobsuite_download` leaves out the MOB-suite database). Without them the run stops at start-up and says so; run
+The mobilome needs `--mobsuite_db` and, unless `--polish_plasmids false`, `--medaka_model_path`; `--build_databases`
+builds the Medaka model unless both `--skip_pathogen_download` is given and (`--mobilome false` or `--polish_plasmids false`),
+and MOB-suite unless `--skip_mobsuite_download`, or `--skip_pathogen_download` with `--mobilome false`. Without them the run stops at start-up and says so; run
 with `--mobilome false` (or `--polish_plasmids false`) to go on without. For R9.4.1 data use `--flye_mode --nano-raw`
 and an R9.4.1 `--medaka_model`.
 
