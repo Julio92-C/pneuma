@@ -123,8 +123,8 @@ add("<desc>Tube-map overview of the PNEUMA pipeline. A blue QC and host removal 
     "pooling when no sample passes), Flye and Medaka, CheckM2 and QUAST, skani "
     "species confirmation, MLST, AMRFinderPlus, ABRicate and Bakta (MOB-suite "
     "optional), ending in the Pathogen report; QUAST, CheckM2 and the pathogen "
-    "status are reported in MultiQC. On the genomic context line, Extend context (the final context per sample) "
-    "and Plasmid units are reported in MultiQC.</desc>")
+    "status are reported in MultiQC. On the genomic context line, ARG context (the plasmid-evidence rule), Extend "
+    "context (the final context per sample) and Plasmid units are reported in MultiQC.</desc>")
 add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="18" fill="{BG}" '
     f'stroke="#d0d7de" stroke-width="2"/>')
 text(30, 42, ["PNEUMA: ONT metagenomics for low-biomass respiratory samples"],
@@ -233,7 +233,8 @@ text(RX, Y0 - 20, ["Report"], size=12, weight="700")
 stage(MX, Y0 - 44, "DOWNSTREAM", anchor="middle")
 
 # ---------------------------------------------------------------- genomic context
-# read layer (on the diagonal) + local assembly (lane); Extend context (final calls per sample) is reported in MultiQC
+# read layer (on the diagonal) + local assembly (lane); ARG context (plasmid-evidence rule) and Extend context
+# (final calls per sample) are reported in MultiQC
 sq = lambda y: BX + y - Y0            # x on the branch diagonal at height y
 for name, (x, y), (lx, ly, anc) in [
         ("Hit reads", (sq(284), 284), (sq(284) - 12, 288, "end")),
@@ -243,7 +244,7 @@ for name, (x, y), (lx, ly, anc) in [
 for lines, x, side in [(["ARG", "context"], 896, 1), (["Read recruitment"], 940, -1),
                        (["Flye", "--meta"], 984, 1), (["Contig", "typing"], 1028, -1),
                        (["Extend", "context"], 1082, -1)]:
-    station(x, YG, fill=C_GC if lines == ["Extend", "context"] else "#ffffff")
+    station(x, YG, fill=C_GC if lines in (["ARG", "context"], ["Extend", "context"]) else "#ffffff")
     if side > 0:
         text(x, YG + 22, lines, size=12, weight="700")
     else:

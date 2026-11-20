@@ -12,8 +12,8 @@ Taxon fields of the hit read: kraken_taxid, kraken_rank, kraken_name, species, g
 that is not in the taxdump, e.g. a Kraken2 database and a taxdump from different releases).
 Host vote of a contig: each hit read placed on the contig votes once, for its species (its genus when it has no
 species); contig_taxon is the most-voted name, contig_vote its share of the contig's hit reads and contig_vote_reads
-the reads behind it. weak_vote = yes when that share is below --min-vote (0.5) or fewer than --min-vote-reads (2)
-reads voted for it; NA for a hit that is not on a contig (the read's own taxon is the only evidence).
+the reads behind it. weak_vote = yes when that share is below --min-vote (0.5), fewer than --min-vote-reads (2)
+reads voted for it, or another taxon has as many votes (a tie; contig_taxon is then the first name alphabetically); NA for a hit that is not on a contig (the read's own taxon is the only evidence).
 Writes --out (hit_context.tsv) and --resolution (taxon_resolution.tsv: per element and final context, the share of
 hits whose read is named to species, genus, family, only above family, or unclassified).
 """
@@ -97,10 +97,11 @@ def host_votes(rows, fields):
     for contig, votes in voters.items():
         counts = Counter(v for v in votes.values() if v)
         if not counts:
-            out[contig] = ("", 0.0, 0)
+            out[contig] = ("", 0.0, 0, False)
             continue
-        taxon, n = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[0]
-        out[contig] = (taxon, n / len(votes), n)
+        ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        taxon, n = ranked[0]
+        out[contig] = (taxon, n / len(votes), n, len(ranked) > 1 and ranked[1][1] == n)
     return out
 
 
@@ -116,9 +117,9 @@ def annotate(rows, taxa, taxonomy, min_vote=0.5, min_vote_reads=2):
         row["element"] = ELEMENT.get(r["database"], r["database"])
         row.update(fields[r["seq"]])
         if r.get("contig"):
-            taxon, share, n = votes[r["contig"]]
+            taxon, share, n, tied = votes[r["contig"]]
             row.update(contig_taxon=taxon, contig_vote="%.3f" % share, contig_vote_reads=n,
-                       weak_vote="yes" if share < min_vote or n < min_vote_reads else "no")
+                       weak_vote="yes" if tied or share < min_vote or n < min_vote_reads else "no")
         else:
             row.update(contig_taxon="", contig_vote="", contig_vote_reads="", weak_vote="NA")
         out.append(row)

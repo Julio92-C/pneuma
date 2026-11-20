@@ -74,6 +74,18 @@ def test_host_vote_and_weak_flag(tmp_path):
     assert (all_amr["hits"], all_amr["species_pct"]) == ("6", "100.0")
 
 
+def test_a_tied_host_vote_is_weak():
+    rows = [dict(seq="S1__r%d" % i, contig="S1__contig_1") for i in range(1, 5)]
+    fields = {"S1__r1": {"species": "Escherichia coli", "genus": "Escherichia"},
+              "S1__r2": {"species": "Escherichia coli", "genus": "Escherichia"},
+              "S1__r3": {"species": "Klebsiella pneumoniae", "genus": "Klebsiella"},
+              "S1__r4": {"species": "Klebsiella pneumoniae", "genus": "Klebsiella"}}
+    # 2 vs 2: share 0.5 and 2 reads pass the share and read floors, but the tie makes the vote weak
+    assert tg.host_votes(rows, fields)["S1__contig_1"] == ("Escherichia coli", 0.5, 2, True)
+    fields["S1__r4"] = {"species": "Escherichia coli", "genus": "Escherichia"}
+    assert tg.host_votes(rows, fields)["S1__contig_1"] == ("Escherichia coli", 0.75, 3, False)
+
+
 def test_read_loci_fill_in_a_database_without_a_hit_context_table(tmp_path):
     head = "sample\troute\tseq\tseq_len\tgene\tdrug_class\tstart\tend\tcategory\treason\n"
     hc = write_rows(tmp_path / "hit_context_card.tsv", ec.COLUMNS, [hc_row(seq="S1__r1")])

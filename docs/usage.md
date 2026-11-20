@@ -310,7 +310,7 @@ and an R9.4.1 `--medaka_model`.
 `context/hit_context.tsv` holds every read hit of every `--context_databases` database in one table, with its final
 call and the read's Kraken2 taxon (taxid from the read, names and lineage from `--taxdump`). For a hit placed on a
 contig, the hit reads on that contig vote for a host (their species, or genus): `contig_taxon`, `contig_vote` (share)
-and `contig_vote_reads`; `weak_vote` is `yes` when the share is below 0.5 or fewer than 2 reads voted, which is common
+and `contig_vote_reads`; `weak_vote` is `yes` when the share is below 0.5, fewer than 2 reads voted or two taxa tie, which is common
 for plasmid genes (Kraken2 names the host of a plasmid gene weakly). `context/summary/` gives the shares of each
 context per sample, per drug class (CARD) and per gene, with the CARD protein-variant hits counted apart
 (`n_intrinsic`), and, when `--meridian_metadata` and `--meridian_group` are set (also with `--skip_meridian`), per
