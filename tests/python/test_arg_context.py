@@ -157,6 +157,44 @@ def test_plasmidfinder_hit_on_the_read_is_replicon_evidence(tmp_path):
     assert (row["category"], row["reason"], row["mob_detail"]) == ("plasmid", "genomad+mobsuite", "rep27_2_repA(pSGG1)")
 
 
+@pytest.mark.parametrize("kw,expected", [
+    (dict(scores=(0.95, 0.0, 0.0), needs_replicon=True), ("unresolved", "plasmid_no_replicon")),
+    (dict(scores=(0.95, 0.0, 0.0), needs_replicon=True, mob_molecule="plasmid"), ("plasmid", "genomad+mobsuite")),
+    (dict(scores=(0.4, 0.5, 0.0), needs_replicon=True, mob_molecule="plasmid"), ("plasmid", "mobsuite")),
+    (dict(scores=(0.95, 0.0, 0.0), needs_replicon=True, in_provirus=True), ("chromosomal_mge", "provirus")),
+    (dict(scores=(0.0, 0.95, 0.0), needs_replicon=True), ("chromosome", "genomad")),
+    (dict(scores=(0.95, 0.0, 0.0), needs_replicon=False), ("plasmid", "genomad")),
+])
+def test_classify_needs_replicon(kw, expected):
+    assert ac.classify(**kw) == expected
+
+
+def test_main_contigs_plasmid_needs_replicon(tmp_path):
+    """Chicken batch 2 (v0.4.0 validation): long contigs with only relaxase / Mob hallmarks (ICE / IME-like, tet(W))
+    were called plasmid. On contigs a plasmid call now needs a replicon (MOB-suite or a PlasmidFinder hit)."""
+    abr = write(tmp_path / "abr.tsv", ABR_HEAD +
+                abr_row("S1__contig_1", 20000, 22000, "tet(W)", res="tetracycline") +
+                abr_row("S1__contig_2", 3000, 4000, "tet(L)", res="tetracycline") +
+                abr_row("S1__contig_2", 6000, 6500, "rep27_2_repA(pSGG1)", db="plasmidfinder", res=""))
+    lengths = write(tmp_path / "len.tsv", "S1__contig_1\t39000\nS1__contig_2\t10000\n")
+    scores = write(tmp_path / "agg.tsv", "seq_name\tchromosome_score\tplasmid_score\tvirus_score\n"
+                   "S1__contig_1\t0.01\t0.98\t0.01\nS1__contig_2\t0.02\t0.97\t0.01\n")
+    genes = write(tmp_path / "genes.tsv", "gene\tstart\tend\tplasmid_hallmark\tannotation_conjscan\tannotation_description\n"
+                  "S1__contig_1_1\t1000\t2200\t1\tMOBQ\tTi-type conjugative transfer relaxase TraA\n"
+                  "S1__contig_2_1\t500\t1500\t1\tNA\tMobC-like protein\n")
+    common = ["--route", "contigs", "--abricate", abr, "--lengths", lengths, "--genomad-scores", scores,
+              "--genomad-genes", genes, "--genomad-plasmids", genes, "--min-flank", "0"]
+    out = tmp_path / "loci.tsv"
+    assert ac.main(common + ["--plasmid-needs-replicon", "--out", str(out)]) == 0
+    rows = {r["seq"]: (r["category"], r["reason"]) for r in csv.DictReader(open(out), delimiter="\t")}
+    assert rows == {"S1__contig_1": ("unresolved", "plasmid_no_replicon"),
+                    "S1__contig_2": ("plasmid", "genomad+mobsuite")}
+    # without the option the hallmark alone still makes a plasmid call (reads route behaviour is unchanged)
+    out2 = tmp_path / "loci2.tsv"
+    assert ac.main(common + ["--out", str(out2)]) == 0
+    assert {r["seq"]: r["category"] for r in csv.DictReader(open(out2), delimiter="\t")}["S1__contig_1"] == "plasmid"
+
+
 def test_gc_delta_from_fasta(tmp_path):
     seq = "A" * 1000 + "GC" * 500 + "A" * 1000          # gene 1001-2000 is all GC
     fa = write(tmp_path / "r.fa", ">S1__r\n" + seq + "\n")

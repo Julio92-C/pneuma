@@ -19,12 +19,14 @@ process ARG_CONTEXT {
     // mob_recon contig reports and mob_typer --multi tables are told apart by name (both routes may carry either)
     def mob_arg = !mob ? '' : (mob.name.endsWith('contig_report.txt') ? "--mob-contigs ${mob}" : "--mob-typer ${mob}")
     def flank = route == 'reads' ? params.context_min_flank : 0
+    // contigs: a plasmid call needs a replicon (relaxase / Mob hallmarks are shared with ICEs / IMEs)
+    def replicon = route == 'contigs' ? '--plasmid-needs-replicon' : ''
     def common = "--route ${route} --abricate ${hits} --abricate-db ${db} --lengths ${lengths} --fasta ${fasta} " +
                  "--genomad-scores ${scores} --genomad-virus ${virus} --genomad-genes ${genes} ${mob_arg} " +
                  "--min-flank ${flank} --mge-window ${params.context_mge_window} " +
                  "--plasmid-min ${params.context_plasmid_min} --chrom-min ${params.context_chrom_min}"
     """
-    arg_context.py ${common} --genomad-plasmids ${genes} --out loci_${route}_${db}.tsv
+    arg_context.py ${common} --genomad-plasmids ${genes} ${replicon} --out loci_${route}_${db}.tsv
     arg_context.py ${common} --out loci_${route}_${db}_score_only.tsv
     """
 

@@ -272,7 +272,7 @@ out along a plasmid backbone. The recruited reads are assembled with Flye `--met
 read hit by mapping the recruited reads to the contigs of the same sample: the result is `final_context` in
 `context/hit_context_<db>.tsv`. Only alignments with identity (matches / block length, from base-level minimap2
 alignments, `-c`) >= 80% place a read hit on a contig, through the one that covers the gene best, base by base along its CIGAR; there the contig hit of the same gene is taken (within 500 bp), or a
-hit of a different gene only when it overlaps the projected gene. A contig call replaces the read call only when it is resolved; an `unresolved` contig
+hit of a different gene only when it overlaps the projected gene. On a contig a plasmid call also needs a replicon (MOB-suite, or a PlasmidFinder hit on the contig): relaxase and Mob genes count as plasmid hallmarks for geNomad but are shared with integrative elements (ICEs, IMEs) that the long contigs reach, so a contig with a plasmid score and hallmarks but no replicon is `unresolved` (`plasmid_no_replicon`) and the read call is kept. A contig call replaces the read call only when it is resolved; an `unresolved` contig
 call never overrides a resolved read call. Samples without hit reads are skipped. If Flye fails for a sample the run
 continues with that sample's read-level calls and logs a warning naming the samples; too few recruited reads is the usual cause (if a sample has many hits, check `--flye_mode` and memory). Turn the whole layer
 off with `--context_local_assembly false`.

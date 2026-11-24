@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Medaka polishes each sample's full local-assembly contigs before the circular drafts are cut out (a longer Medaka step); the polished full contigs are not published.
 - Default runs now need `--mobsuite_db` and `--medaka_model_path`, or `--mobilome false`. `--build_databases` builds both whenever the mobilome is on, also with `--skip_pathogen_download` (`--skip_mobsuite_download` still leaves MOB-suite out).
 - A read hit is carried onto its contig base by base along the alignment's CIGAR (minimap2 `-c`), not linearly; reads whose only hits are CARD protein-variant models no longer seed the read recruitment; Medaka polishes the plasmid drafts against all of the sample's contigs and the circles are cut out afterwards.
+- On local-assembly contigs a plasmid call needs a replicon (MOB-suite or PlasmidFinder); a contig with a geNomad plasmid score and only relaxase / Mob hallmarks is `unresolved` (`plasmid_no_replicon`) and the hit keeps its read call. In the chicken batch 2 validation such contigs (ICE / IME-like, mostly carrying tet(W)) had raised the CARD plasmid share from 29% to 46% (30.5% when the run's hit table is re-scored with the rule).
 - The warning for samples whose Flye or Medaka step produced nothing names the usual cause (too few recruited reads for Flye) instead of presenting it as a configuration problem.
 - With `--pathogens`, a database the pathogen module and the mobilome both need is reported once, as a pathogen database.
 

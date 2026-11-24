@@ -90,7 +90,7 @@ The tagged read FASTA files that feed ABRicate are intermediate and not publishe
   - `loci_reads_<db>.tsv` (one per database in `--context_databases`): one row per ABRicate hit, with its call.
     - `sample`, `route` (`reads`), `seq` (`<sample>__<read id>`), `seq_len`, `gene`, `drug_class`, `start`, `end`.
     - `category`: `plasmid`, `chromosomal_mge`, `chromosome` or `unresolved`.
-    - `reason`: the evidence behind the call (`genomad`, `genomad+mobsuite`, `mobsuite`, `provirus`, `mge_genes_nearby`) or why it is unresolved (`short_flank`, `plasmid_score_only`, `low_scores`, `no_scores`, `conflict_mob_plasmid_genomad_chromosome`).
+    - `reason`: the evidence behind the call (`genomad`, `genomad+mobsuite`, `mobsuite`, `provirus`, `mge_genes_nearby`) or why it is unresolved (`short_flank`, `plasmid_score_only`, `plasmid_no_replicon` (contigs only: plasmid score and hallmarks but no replicon), `low_scores`, `no_scores`, `conflict_mob_plasmid_genomad_chromosome`).
     - `plasmid_score`, `chromosome_score`, `virus_score`: geNomad scores of the read.
     - `in_provirus`, `mge_genes` (integrase / transposase genes within `--context_mge_window`), `mob_molecule`, `mob_detail` (replicons on the read).
     - `gc_gene`, `gc_seq`, `gc_delta`: GC content of the gene, of the read and their difference (a horizontal-transfer signal).

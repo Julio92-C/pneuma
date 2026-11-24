@@ -176,11 +176,13 @@ def gc(seq):
 
 
 def classify(scores, mob_molecule="", in_provirus=False, mge_near=False, flank_ok=True,
-             plasmid_min=0.7, chrom_min=0.7, plasmid_supported=True):
+             plasmid_min=0.7, chrom_min=0.7, plasmid_supported=True, needs_replicon=False):
     """scores = (plasmid, chromosome, virus) from geNomad, or None when geNomad has no row.
 
     plasmid_supported=False: the sequence has no plasmid hallmark / conjugation gene, so a geNomad plasmid
-    score alone does not make a plasmid call (a replicon from MOB-suite / PlasmidFinder still does)."""
+    score alone does not make a plasmid call (a replicon from MOB-suite / PlasmidFinder still does).
+    needs_replicon=True (contigs): a geNomad plasmid call also needs a replicon. Relaxase / Mob hallmarks are shared
+    with integrative elements (ICEs, IMEs), which long local-assembly contigs reach (chicken batch 2: tet(W))."""
     if not flank_ok:
         return "unresolved", "short_flank"
     pl, ch, _vi = scores if scores else (0.0, 0.0, 0.0)
@@ -188,6 +190,8 @@ def classify(scores, mob_molecule="", in_provirus=False, mge_near=False, flank_o
     mob_pl = mob_molecule == "plasmid"
     score_only = g_pl and not plasmid_supported and not mob_pl
     g_pl = g_pl and not score_only
+    no_replicon = g_pl and needs_replicon and not mob_pl
+    g_pl = g_pl and not no_replicon
     if mob_pl and g_ch:
         return "unresolved", "conflict_mob_plasmid_genomad_chromosome"
     if g_pl or mob_pl:
@@ -200,6 +204,8 @@ def classify(scores, mob_molecule="", in_provirus=False, mge_near=False, flank_o
         return "chromosome", "genomad"
     if score_only:
         return "unresolved", "plasmid_score_only"
+    if no_replicon:
+        return "unresolved", "plasmid_no_replicon"
     return "unresolved", "low_scores" if scores else "no_scores"
 
 
@@ -217,9 +223,9 @@ def gc_fields(seq, span):
 
 
 def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge_window=10000,
-         plasmid_min=0.7, chrom_min=0.7, plasmid_evidence=None, seqs=None):
+         plasmid_min=0.7, chrom_min=0.7, plasmid_evidence=None, seqs=None, needs_replicon=False):
     """plasmid_evidence: None = geNomad plasmid scores are used as they are; a set = only those sequences may get
-    a plasmid call from the geNomad score (see classify)."""
+    a plasmid call from the geNomad score (see classify). needs_replicon: see classify."""
     rows = []
     for h in hits:
         seq, span = h["seq"], (h["start"], h["end"])
@@ -233,7 +239,8 @@ def loci(route, hits, lengths, scores, proviruses, mge, mob, min_flank=1000, mge
                        if overlaps(span, (a, b), mge_window) and not overlaps(span, (a, b))})
         molecule, detail = mob.get(seq, ("", ""))
         supported = plasmid_evidence is None or seq in plasmid_evidence
-        cat, reason = classify(s, molecule, in_pro, bool(near), flank_ok, plasmid_min, chrom_min, supported)
+        cat, reason = classify(s, molecule, in_pro, bool(near), flank_ok, plasmid_min, chrom_min, supported,
+                               needs_replicon)
         rows.append({"sample": sample_of(seq), "route": route, "seq": seq, "seq_len": n, "gene": h["gene"],
                      "drug_class": h["drug_class"], "start": span[0], "end": span[1], "category": cat,
                      "reason": reason,
@@ -261,6 +268,9 @@ def main(argv=None):
                     help="<prefix>_genes.tsv (preferred) or <prefix>_plasmid_summary.tsv: when given, a geNomad plasmid "
                          "call needs a plasmid hallmark or conjugation gene on the sequence (or a replicon from MOB-suite / "
                          "a PlasmidFinder hit in --abricate)")
+    ap.add_argument("--plasmid-needs-replicon", action="store_true",
+                    help="a geNomad plasmid call also needs a replicon (MOB-suite / PlasmidFinder); used for contigs, "
+                         "whose relaxase / Mob hallmarks may belong to integrative elements")
     ap.add_argument("--fasta", default="", help="FASTA of the classified sequences (adds gc_gene / gc_seq / gc_delta)")
     ap.add_argument("--min-flank", type=int, default=1000, help="bp required on both sides of the gene")
     ap.add_argument("--mge-window", type=int, default=10000, help="bp around the gene searched for MGE genes")
@@ -276,7 +286,7 @@ def main(argv=None):
                 read_proviruses(a.genomad_virus), read_mge_genes(a.genomad_genes), mob,
                 a.min_flank, a.mge_window, a.plasmid_min, a.chrom_min,
                 read_plasmid_evidence(a.genomad_plasmids) if a.genomad_plasmids else None,
-                read_fasta(a.fasta) if a.fasta else None)
+                read_fasta(a.fasta) if a.fasta else None, a.plasmid_needs_replicon)
     with open(a.out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=LOCUS_COLUMNS, delimiter="\t", lineterminator="\n")
         w.writeheader()
